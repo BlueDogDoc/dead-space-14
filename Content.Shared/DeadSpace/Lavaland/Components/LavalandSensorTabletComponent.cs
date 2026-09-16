@@ -15,6 +15,8 @@ public sealed partial class LavalandSensorTabletComponent : Component
     [DataField] public Color LavaColor = Color.OrangeRed;
     [DataField] public Color FloorColor = new(80, 55, 45);
     [DataField] public Color RockColor = new(150, 105, 75);
+    [DataField] public Color BaseFloorColor = new(40, 75, 90);
+    [DataField] public Color BaseWallColor = new(115, 210, 230);
     [DataField] public float MobPointSize = 0.65f;
     [DataField] public float TerrainPointSize = 0.52f;
     [DataField] public TimeSpan UpdateInterval = TimeSpan.FromSeconds(1);

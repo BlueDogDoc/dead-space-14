@@ -20,6 +20,9 @@ public enum LavalandRadarPointKind : byte
     Fauna,
     LivingMiner,
     DeadMiner,
+    BaseFloor,
+    BaseWall,
+    Lava,
 }
 
 [Serializable, NetSerializable]

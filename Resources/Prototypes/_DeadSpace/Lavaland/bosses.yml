@@ -1027,6 +1027,101 @@
     tags:
     - CannotSuicide
 
+# Standalone mini-boss: it does not use LavalandBoss or LavalandBossArena.
+- type: entity
+  parent: [ BaseMobAsteroid, BaseMobLavalandFauna ]
+  id: MobLavalandMadMiner
+  name: безумный шахтёр
+  description: Шахтёр, который слишком долго пробыл на Лаваленде. От него не получится просто убежать.
+  suffix: Lavaland, Mini-boss
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Sprite
+    drawdepth: Mobs
+    sprite: _DeadSpace/Lavaland/Mobs/MadMiner.rsi
+    layers:
+    - state: demonic_miner
+  - type: MobThresholds
+    thresholds:
+      0: Alive
+      1250: Dead
+  - type: LavalandMadMiner
+    maxHealth: 1250
+    hookImpactDamage:
+      types:
+        Blunt: 30
+    music:
+    - /Audio/_DeadSpace/Lavaland/Bosses/colossus_fight.ogg
+    - /Audio/_DeadSpace/Lavaland/Bosses/bubblegum_fight.ogg
+    blinkSound: /Audio/Effects/teleport_departure.ogg
+    hookSound: /Audio/_DeadSpace/Necromorfs/TheCircle/Weapon/sfx/hook-sfx/shot_hook.ogg
+  - type: NpcFactionMember
+    factions:
+    - SimpleHostile
+  - type: HTN
+    rootTask:
+      task: SimpleHostileCompound
+    blackboard:
+      VisionRadius: !type:Single
+        160
+      AggroVisionRadius: !type:Single
+        160
+      NavSmash: !type:Bool
+        true
+  - type: MeleeWeapon
+    resistanceBypass: true
+    attackRate: 1.15
+    animation: WeaponArcPunch
+    damage:
+      types:
+        Blunt: 25
+        Structural: 45
+  - type: MovementSpeedModifier
+    baseWalkSpeed: 3.2
+    baseSprintSpeed: 4.8
+  - type: StunImmune
+  - type: NoSlip
+  - type: RequireProjectileTarget
+  - type: Tag
+    tags:
+    - CannotSuicide
+
+- type: entity
+  parent: BaseBullet
+  id: LavalandMadMinerKineticBolt
+  name: перегруженный кинетический заряд
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Sprite
+    noRot: false
+    sprite: Objects/Weapons/Guns/Projectiles/magic.rsi
+    layers:
+    - state: chronobolt
+      shader: unshaded
+  - type: Projectile
+    damage:
+      types:
+        Blunt: 18
+        Structural: 35
+  - type: TimedDespawn
+    lifetime: 1.2
+
+- type: entity
+  parent: BaseBullet
+  id: LavalandMadMinerHookVisual
+  name: цепная рука безумного шахтёра
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Sprite
+    noRot: false
+    sprite: _DeadSpace/Necromorfs/TheCircle/Weapon/melee/hand-hook.rsi
+    state: hook
+  - type: Projectile
+    damage:
+      types: {}
+  - type: TimedDespawn
+    lifetime: 0.45
+
 # Colossus
 
 - type: lavalandBossArena

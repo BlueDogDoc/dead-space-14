@@ -49,6 +49,12 @@ public sealed class LavalandJaunterSystem : EntitySystem
         if (args.Handled)
             return;
 
+        if (EntityManager.System<LavalandMadMinerSystem>().TryInterceptJaunter(args.User, ent.Owner))
+        {
+            args.Handled = true;
+            return;
+        }
+
         args.Handled = true;
 
         if (TryComp<UseDelayComponent>(ent.Owner, out var delay) &&
@@ -64,6 +70,7 @@ public sealed class LavalandJaunterSystem : EntitySystem
     private void OnChasmFallingAttempt(ChasmFallingAttemptEvent args)
     {
         if (args.Cancelled ||
+            EntityManager.System<LavalandMadMinerSystem>().TryRescueFromChasm(args.Tripper, args) ||
             !_jaunter.TryFindEquippedJaunter(args.Tripper, out var jaunter) ||
             _timing.CurTime < jaunter.Comp.NextAutomaticUse)
         {

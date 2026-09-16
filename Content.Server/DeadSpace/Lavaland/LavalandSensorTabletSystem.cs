@@ -10,6 +10,9 @@ using Content.Shared.Medical.SuitSensors;
 using Content.Shared.Mining.Components;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
+using Content.Shared.Inventory;
+using Content.Shared.Wall;
+using Robust.Shared.Containers;
 using Robust.Server.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
@@ -25,6 +28,9 @@ public sealed class LavalandSensorTabletSystem : EntitySystem
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly UserInterfaceSystem _ui = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly InventorySystem _inventory = default!;
+    [Dependency] private readonly SharedContainerSystem _containers = default!;
+    [Dependency] private readonly IMapManager _mapManager = default!;
 
     public override void Initialize()
     {
@@ -59,20 +65,46 @@ public sealed class LavalandSensorTabletSystem : EntitySystem
         var points = new List<LavalandRadarPoint>();
         var scannedEntities = new HashSet<EntityUid>();
         var scannedTiles = new HashSet<(EntityUid Grid, Vector2i Tile)>();
+        var users = new HashSet<EntityUid>();
+        var outposts = EntityQueryEnumerator<LavalandOutpostComponent, MapGridComponent>();
+        while (outposts.MoveNext(out var gridUid, out _, out var baseGrid))
+        {
+            foreach (var tile in _map.GetAllTiles(gridUid, baseGrid))
+            {
+                if (tile.Tile.IsEmpty)
+                    continue;
+                var position = _transform.ToMapCoordinates(_map.ToCenterCoordinates(tile)).Position;
+                points.Add(new LavalandRadarPoint(position, ent.Comp.BaseFloorColor,
+                    ent.Comp.TerrainPointSize, LavalandRadarPointKind.BaseFloor));
+                var anchored = _map.GetAnchoredEntitiesEnumerator(gridUid, baseGrid, tile.GridIndices);
+                while (anchored.MoveNext(out var structure))
+                {
+                    if (structure is { } wall && HasComp<WallComponent>(wall))
+                        points.Add(new LavalandRadarPoint(position, ent.Comp.BaseWallColor,
+                            ent.Comp.TerrainPointSize, LavalandRadarPointKind.BaseWall));
+                }
+            }
+        }
 
         var sensors = EntityQueryEnumerator<SuitSensorComponent>();
-        while (sensors.MoveNext(out _, out var sensor))
+        while (sensors.MoveNext(out var sensorUid, out var sensor))
         {
             if (sensor.Mode != SuitSensorMode.SensorCords || sensor.User is not { } user ||
+                !IsEquippedSensor(sensorUid, sensor, user) ||
                 !TryComp<TransformComponent>(user, out var userXform) ||
                 userXform.MapUid is not { } mapUid || !HasComp<LavalandMapComponent>(mapUid) ||
-                userXform.GridUid is not { } grid || !TryComp<MapGridComponent>(grid, out var gridComp))
+                !users.Add(user))
             {
                 continue;
             }
 
             var userPosition = _transform.GetWorldPosition(userXform);
-            AddTerrain(points, scannedTiles, grid, gridComp, userXform.Coordinates, ent.Comp);
+            var grids = new List<Entity<MapGridComponent>>();
+            _mapManager.FindGridsIntersecting(userXform.MapID,
+                Box2.CenteredAround(userPosition, new Vector2(ent.Comp.ScanRadius * 2)),
+                ref grids, includeMap: true);
+            foreach (var grid in grids)
+                AddTerrain(points, scannedTiles, grid.Owner, grid.Comp, userXform.Coordinates, ent.Comp);
             AddNearbyEntities(points, scannedEntities, user, userPosition, userXform.MapID, ent.Comp);
 
             var dead = TryComp<MobStateComponent>(user, out var mobState) && mobState.CurrentState == MobState.Dead;
@@ -84,6 +116,17 @@ public sealed class LavalandSensorTabletSystem : EntitySystem
 
         _ui.SetUiState(ent.Owner, LavalandSensorTabletUiKey.Key,
             new LavalandSensorTabletState(points, ent.Comp.ScanRadius));
+    }
+
+    private bool IsEquippedSensor(EntityUid uid, SuitSensorComponent sensor, EntityUid user)
+    {
+        if (TerminatingOrDeleted(user) || _containers.IsEntityOrParentInContainer(user))
+            return false;
+        if (_inventory.TryGetSlotEntity(user, sensor.ActivationSlot, out var equipped) && equipped == uid)
+            return true;
+        return sensor.ActivationContainer != null &&
+               _containers.TryGetContainingContainer(uid, out var container) &&
+               container.Owner == user && container.ID == sensor.ActivationContainer;
     }
 
     private void AddTerrain(List<LavalandRadarPoint> points,
@@ -119,7 +162,7 @@ public sealed class LavalandSensorTabletSystem : EntitySystem
                 var worldPosition = _transform.ToMapCoordinates(new EntityCoordinates(grid,
                     new Vector2(indices.X + 0.5f, indices.Y + 0.5f))).Position;
                 points.Add(new LavalandRadarPoint(worldPosition, color, tablet.TerrainPointSize,
-                    LavalandRadarPointKind.Terrain));
+                    color == tablet.LavaColor ? LavalandRadarPointKind.Lava : LavalandRadarPointKind.Terrain));
             }
         }
     }
@@ -156,6 +199,12 @@ public sealed class LavalandSensorTabletSystem : EntitySystem
                 color = tablet.RockColor;
                 size = tablet.TerrainPointSize;
                 kind = LavalandRadarPointKind.Rock;
+            }
+            else if (MetaData(candidate).EntityPrototype?.ID == "FloorLavaEntity")
+            {
+                color = tablet.LavaColor;
+                size = tablet.TerrainPointSize;
+                kind = LavalandRadarPointKind.Lava;
             }
             else
             {
