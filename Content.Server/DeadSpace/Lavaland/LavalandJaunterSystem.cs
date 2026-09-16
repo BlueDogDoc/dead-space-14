@@ -69,9 +69,13 @@ public sealed class LavalandJaunterSystem : EntitySystem
 
     private void OnChasmFallingAttempt(ChasmFallingAttemptEvent args)
     {
-        if (args.Cancelled ||
-            EntityManager.System<LavalandMadMinerSystem>().TryRescueFromChasm(args.Tripper, args) ||
-            !_jaunter.TryFindEquippedJaunter(args.Tripper, out var jaunter) ||
+        if (args.Cancelled)
+            return;
+
+        var hasJaunter = _jaunter.TryFindEquippedJaunter(args.Tripper, out var jaunter);
+        if (EntityManager.System<LavalandMadMinerSystem>().TryRescueFromChasm(
+                args.Tripper, args, hasJaunter ? jaunter.Owner : null) ||
+            !hasJaunter ||
             _timing.CurTime < jaunter.Comp.NextAutomaticUse)
         {
             return;

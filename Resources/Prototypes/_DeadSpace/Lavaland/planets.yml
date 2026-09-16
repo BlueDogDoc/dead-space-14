@@ -67,9 +67,6 @@
   - LavalandOreDiamond
   - LavalandOreBluespaceCrystal
   - LavalandOreGibtonite
-  - LavalandChasms
-  - LavalandChasmsMedium
-  - LavalandChasmsLarge
   faunaEnabled: true
   faunaInitialSpawnCount: 300
   faunaSoftCap: 300

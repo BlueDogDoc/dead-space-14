@@ -1,6 +1,7 @@
 // Мёртвый Космос, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
 
 using Content.Shared.Damage;
+using System.Numerics;
 using Robust.Shared.Audio;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -16,13 +17,27 @@ public sealed partial class LavalandMadMinerComponent : Component
     [DataField] public float ChaseRange = 160f;
     [DataField] public float BlinkDistance = 4.5f;
     [DataField] public TimeSpan BlinkCooldown = TimeSpan.FromSeconds(1.25);
+    [DataField] public TimeSpan BlinkDuration = TimeSpan.FromSeconds(0.45);
+    [DataField] public TimeSpan BlinkStallTimeout = TimeSpan.FromSeconds(0.15);
     [DataField] public TimeSpan FeintCooldown = TimeSpan.FromSeconds(3.5);
     [DataField] public TimeSpan ShootCooldown = TimeSpan.FromSeconds(1.4);
     [DataField] public TimeSpan HookCooldown = TimeSpan.FromSeconds(7);
+    [DataField] public float HookAttackChance = 0.22f;
     [DataField] public TimeSpan HookDuration = TimeSpan.FromSeconds(5);
-    [DataField] public float HookForce = 18f;
+    [DataField] public float HookForce = 5f;
+    [DataField] public float HookMaxLength = 10f;
+    [DataField] public float HookStretchForce = 0.5f;
+    [DataField] public float HookRetreatDistance = 9f;
+    [DataField] public float HookSplashRadius = 3.5f;
+    [DataField] public TimeSpan HookRemoveTime = TimeSpan.FromSeconds(1);
     [DataField] public float HookImpactRange = 1.35f;
-    [DataField] public float HookKnockback = 14f;
+    [DataField] public float HookKnockback = 9f;
+    [DataField] public float HookRetaliationSpeed = 1.3f;
+    [DataField] public float SplitPursuitNearRadius = 8f;
+    [DataField] public float SplitPursuitFarDistance = 14f;
+    [DataField] public float SplitPursuitDistanceGap = 8f;
+    [DataField] public float SplitPursuitVeryFarDistance = 25f;
+    [DataField] public TimeSpan SplitPursuitCooldown = TimeSpan.FromSeconds(10);
     [DataField] public DamageSpecifier HookImpactDamage = new();
     [DataField] public EntProtoId Projectile = "LavalandMadMinerKineticBolt";
     [DataField] public EntProtoId HookProjectile = "LavalandMadMinerHookVisual";
@@ -36,7 +51,11 @@ public sealed partial class LavalandMadMinerComponent : Component
     [DataField] public float ExplosivePkaChance = 0.85f;
 
     [ViewVariables] public EntityUid? Target;
-    [ViewVariables] public EntityUid? HookTarget;
+    [ViewVariables] public readonly Dictionary<EntityUid, EntityUid> HookTargets = new();
+    [ViewVariables] public EntityUid? HookAttacker;
+    public readonly Dictionary<EntityUid, Vector2> SplitDragOffsets = new();
+    public TimeSpan SplitDragUntil;
+    public TimeSpan NextSplitPursuit;
     [ViewVariables] public bool Active;
     [ViewVariables] public bool RewardsSpawned;
     [ViewVariables] public TimeSpan NextThink;
@@ -45,6 +64,7 @@ public sealed partial class LavalandMadMinerComponent : Component
     [DataField(customTypeSerializer: typeof(TimeOffsetSerializer))] public TimeSpan NextShot;
     [DataField(customTypeSerializer: typeof(TimeOffsetSerializer))] public TimeSpan NextHook;
     [DataField(customTypeSerializer: typeof(TimeOffsetSerializer))] public TimeSpan HookEnds;
+    [DataField(customTypeSerializer: typeof(TimeOffsetSerializer))] public TimeSpan HookPullStarts;
     public int AttackPattern;
     public int HudId;
     public SoundSpecifier? SelectedMusic;

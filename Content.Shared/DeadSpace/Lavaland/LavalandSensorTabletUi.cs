@@ -23,6 +23,7 @@ public enum LavalandRadarPointKind : byte
     BaseFloor,
     BaseWall,
     Lava,
+    MorkiteSearchArea,
 }
 
 [Serializable, NetSerializable]

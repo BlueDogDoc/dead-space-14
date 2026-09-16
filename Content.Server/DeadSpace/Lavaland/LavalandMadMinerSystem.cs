@@ -1,20 +1,28 @@
 // Мёртвый Космос, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
 
 using System.Numerics;
+using System.Linq;
 using Content.Server.DeadSpace.Lavaland.Components;
+using Content.Server.DeadSpace.Blink;
 using Content.Server.Weapons.Ranged.Systems;
+using Content.Server.NPC.HTN;
 using Content.Shared.Chasm;
 using Content.Shared.Damage;
 using Content.Shared.Damage.Components;
 using Content.Shared.Damage.Systems;
 using Content.Shared.DeadSpace.Lavaland.Bosses;
 using Content.Shared.DeadSpace.Lavaland.Components;
+using Content.Shared.DeadSpace.Lavaland;
+using Content.Shared.DoAfter;
 using Content.Shared.FixedPoint;
+using Content.Shared.Ghost;
+using Content.Shared.Interaction;
 using Content.Shared.Maps;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
 using Content.Shared.MouseRotator;
 using Content.Shared.Physics;
+using Content.Shared.Verbs;
 using Robust.Server.Player;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
@@ -26,6 +34,7 @@ using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
+using Robust.Shared.Utility;
 
 namespace Content.Server.DeadSpace.Lavaland;
 
@@ -34,7 +43,10 @@ public sealed class LavalandMadMinerSystem : EntitySystem
     private static readonly float[] ShotgunSpread = [-18f, -9f, 0f, 9f, 18f];
 
     [Dependency] private readonly DamageableSystem _damage = default!;
+    [Dependency] private readonly BlinkSystem _blink = default!;
+    [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
     [Dependency] private readonly GunSystem _gun = default!;
+    [Dependency] private readonly HTNSystem _htn = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedContainerSystem _containers = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
@@ -52,6 +64,10 @@ public sealed class LavalandMadMinerSystem : EntitySystem
         base.Initialize();
         SubscribeLocalEvent<LavalandMadMinerComponent, MapInitEvent>(OnMapInit);
         SubscribeLocalEvent<LavalandMadMinerComponent, MobStateChangedEvent>(OnMobStateChanged);
+        SubscribeLocalEvent<LavalandMadMinerComponent, DamageChangedEvent>(OnDamageChanged);
+        SubscribeLocalEvent<LavalandMadMinerHookedComponent, GetVerbsEvent<AlternativeVerb>>(OnHookedGetVerbs);
+        SubscribeLocalEvent<LavalandMadMinerHookedComponent, LavalandRemoveMadMinerHookDoAfterEvent>(OnHookRemoved);
+        SubscribeLocalEvent<LavalandMadMinerHookVisualComponent, InteractHandEvent>(OnHookVisualInteract);
         SubscribeLocalEvent<ChasmFallingAttemptEvent>(OnChasmFalling);
     }
 
@@ -84,7 +100,13 @@ public sealed class LavalandMadMinerSystem : EntitySystem
             if (!miner.Active)
                 StartFight(uid, miner, now);
 
+            TryBeginSplitPursuit(uid, miner, now);
             ProcessHook(uid, miner, target, now);
+            if (miner.HookTargets.Count > 0)
+            {
+                SendHud(uid, miner);
+                continue;
+            }
             var from = _transform.GetWorldPosition(xform);
             var to = _transform.GetWorldPosition(target);
             var distance = Vector2.Distance(from, to);
@@ -95,7 +117,11 @@ public sealed class LavalandMadMinerSystem : EntitySystem
                 Feint(uid, miner, target, now);
 
             if (now >= miner.NextHook && distance <= 14f)
-                BeginHook(uid, miner, target, now);
+            {
+                miner.NextHook = now + miner.HookCooldown;
+                if (_random.Prob(miner.HookAttackChance))
+                    BeginHook(uid, miner, target, now);
+            }
             else if (now >= miner.NextShot && distance <= 16f)
                 FirePattern(uid, miner, target, now);
 
@@ -112,6 +138,7 @@ public sealed class LavalandMadMinerSystem : EntitySystem
         foreach (var session in _players.Sessions)
         {
             if (session.AttachedEntity is not { Valid: true } player || IsDead(player) ||
+                HasComp<GhostComponent>(player) ||
                 Transform(player).MapID != xform.MapID)
                 continue;
             var distance = Vector2.DistanceSquared(origin, _transform.GetWorldPosition(player));
@@ -121,6 +148,74 @@ public sealed class LavalandMadMinerSystem : EntitySystem
             target = player;
         }
         return target.IsValid();
+    }
+
+    private void TryBeginSplitPursuit(EntityUid uid, LavalandMadMinerComponent miner, TimeSpan now)
+    {
+        if (now < miner.NextSplitPursuit || now < miner.SplitDragUntil)
+            return;
+
+        var origin = _transform.GetWorldPosition(uid);
+        var map = Transform(uid).MapID;
+        var nearby = new List<EntityUid>();
+        EntityUid farthest = default;
+        var farDistance = 0f;
+        foreach (var session in _players.Sessions)
+        {
+            if (session.AttachedEntity is not { Valid: true } player || IsDead(player) ||
+                HasComp<GhostComponent>(player) || !HasComp<MobStateComponent>(player) ||
+                Transform(player).MapID != map)
+                continue;
+            var distance = Vector2.Distance(origin, _transform.GetWorldPosition(player));
+            if (distance > miner.ChaseRange)
+                continue;
+            if (distance <= miner.SplitPursuitNearRadius)
+                nearby.Add(player);
+            if (distance <= farDistance)
+                continue;
+            farDistance = distance;
+            farthest = player;
+        }
+
+        if (!farthest.IsValid() || nearby.Count == 0 || farDistance < miner.SplitPursuitFarDistance)
+            return;
+        var distantDirection = _transform.GetWorldPosition(farthest) - origin;
+        var separated = farDistance >= miner.SplitPursuitVeryFarDistance;
+        foreach (var player in nearby)
+        {
+            var closeDirection = _transform.GetWorldPosition(player) - origin;
+            if (farDistance - closeDirection.Length() >= miner.SplitPursuitDistanceGap &&
+                Vector2.Dot(closeDirection, distantDirection) <= 0f)
+                separated = true;
+        }
+        if (!separated)
+            return;
+
+        ClearHooks(miner);
+        if (TryComp<HTNComponent>(uid, out var htn))
+            _htn.SetHTNEnabled((uid, htn), false);
+        miner.Target = farthest;
+        miner.NextSplitPursuit = now + miner.SplitPursuitCooldown;
+        miner.SplitDragUntil = now + miner.BlinkDuration;
+        miner.HookPullStarts = miner.SplitDragUntil;
+        miner.HookEnds = miner.SplitDragUntil + miner.HookDuration;
+        miner.NextHook = miner.HookEnds + miner.HookCooldown;
+        foreach (var player in nearby)
+        {
+            AddHookTarget(uid, miner, player);
+            miner.SplitDragOffsets[player] = _transform.GetWorldPosition(player) - origin;
+        }
+        if (miner.HookSound != null)
+            _audio.PlayPvs(miner.HookSound, uid);
+        BlinkBehind(uid, miner, farthest, now);
+        if (TryComp<PhysicsComponent>(uid, out var body))
+        {
+            foreach (var player in nearby)
+            {
+                if (TryComp<PhysicsComponent>(player, out var victimBody))
+                    _physics.SetLinearVelocity(player, body.LinearVelocity, body: victimBody);
+            }
+        }
     }
 
     private void StartFight(EntityUid uid, LavalandMadMinerComponent miner, TimeSpan now)
@@ -141,7 +236,7 @@ public sealed class LavalandMadMinerSystem : EntitySystem
     {
         miner.Active = false;
         miner.Target = null;
-        miner.HookTarget = null;
+        ClearHooks(miner);
         foreach (var session in _players.Sessions)
         {
             RaiseNetworkEvent(new LavalandBossHudHideEvent(miner.HudId), session.Channel);
@@ -155,26 +250,34 @@ public sealed class LavalandMadMinerSystem : EntitySystem
             ? goal.ToVec()
             : _transform.GetWorldRotation(target).ToVec();
         var destination = _transform.GetMapCoordinates(target).Offset(-facing * 1.3f);
-        _transform.SetMapCoordinates(uid, destination);
-        if (miner.BlinkSound != null)
-            _audio.PlayPvs(miner.BlinkSound, uid);
-        miner.NextBlink = now + miner.BlinkCooldown;
+        var distance = Vector2.Distance(_transform.GetMapCoordinates(uid).Position, destination.Position);
+        var speed = Math.Max(28f, distance / Math.Max(0.05f, (float) miner.BlinkDuration.TotalSeconds));
+        if (_blink.TryStartDash(uid, destination, speed, miner.BlinkDuration, miner.BlinkStallTimeout, miner.BlinkSound))
+            miner.NextBlink = now + miner.BlinkCooldown;
     }
 
     private void Feint(EntityUid uid, LavalandMadMinerComponent miner, EntityUid target, TimeSpan now)
     {
         var angle = _random.NextAngle();
         var destination = _transform.GetMapCoordinates(target).Offset(angle.ToVec() * _random.NextFloat(1.4f, 3.2f));
-        _transform.SetMapCoordinates(uid, destination);
-        miner.NextFeint = now + miner.FeintCooldown;
+        var distance = Vector2.Distance(_transform.GetMapCoordinates(uid).Position, destination.Position);
+        var speed = Math.Max(28f, distance / Math.Max(0.05f, (float) miner.BlinkDuration.TotalSeconds));
+        if (_blink.TryStartDash(uid, destination, speed, miner.BlinkDuration, miner.BlinkStallTimeout, miner.BlinkSound))
+            miner.NextFeint = now + miner.FeintCooldown;
     }
 
     private void FirePattern(EntityUid uid, LavalandMadMinerComponent miner, EntityUid target, TimeSpan now)
     {
         var direction = _transform.GetWorldPosition(target) - _transform.GetWorldPosition(uid);
+        if (TryComp<PhysicsComponent>(target, out var targetPhysics))
+        {
+            var travelTime = direction.Length() / Math.Max(1f, miner.ProjectileSpeed);
+            direction += targetPhysics.LinearVelocity * travelTime;
+        }
         if (direction.LengthSquared() < 0.01f)
             return;
         var baseAngle = direction.ToWorldAngle();
+        _transform.SetWorldRotation(uid, baseAngle);
         switch (miner.AttackPattern++ % 3)
         {
             case 0:
@@ -196,43 +299,235 @@ public sealed class LavalandMadMinerSystem : EntitySystem
     private void Fire(EntityUid uid, LavalandMadMinerComponent miner, Angle angle)
     {
         var projectile = Spawn(miner.Projectile, Transform(uid).Coordinates);
-        _gun.ShootProjectile(projectile, angle.ToVec(), Vector2.Zero, uid, uid, miner.ProjectileSpeed);
+        _gun.ShootProjectile(projectile, angle.ToWorldVec(), Vector2.Zero, uid, uid, miner.ProjectileSpeed);
     }
 
     private void BeginHook(EntityUid uid, LavalandMadMinerComponent miner, EntityUid target, TimeSpan now)
     {
-        miner.HookTarget = target;
+        ClearHooks(miner);
+        if (TryComp<HTNComponent>(uid, out var htn))
+            _htn.SetHTNEnabled((uid, htn), false);
         miner.HookEnds = now + miner.HookDuration;
+        miner.HookPullStarts = now + miner.BlinkDuration;
         miner.NextHook = now + miner.HookCooldown;
         if (miner.HookSound != null)
             _audio.PlayPvs(miner.HookSound, uid);
-        var direction = _transform.GetWorldPosition(target) - _transform.GetWorldPosition(uid);
-        if (direction.LengthSquared() > 0.01f)
+
+        var minerPosition = _transform.GetMapCoordinates(uid);
+        var targetPosition = _transform.GetMapCoordinates(target);
+        var retreat = minerPosition.Position - targetPosition.Position;
+        if (retreat.LengthSquared() < 0.01f)
+            retreat = _random.NextAngle().ToVec();
+        var destination = new MapCoordinates(
+            targetPosition.Position + Vector2.Normalize(retreat) * miner.HookRetreatDistance,
+            targetPosition.MapId);
+        var distance = Vector2.Distance(minerPosition.Position, destination.Position);
+        var speed = Math.Max(28f, distance / Math.Max(0.05f, (float) miner.BlinkDuration.TotalSeconds));
+        _blink.TryStartDash(uid, destination, speed, miner.BlinkDuration, miner.BlinkStallTimeout, miner.BlinkSound);
+
+        var impactCenter = _transform.GetWorldPosition(target);
+        foreach (var session in _players.Sessions)
         {
-            var visual = Spawn(miner.HookProjectile, Transform(uid).Coordinates);
-            _gun.ShootProjectile(visual, Vector2.Normalize(direction), Vector2.Zero, uid, uid, 28f);
+            if (session.AttachedEntity is not { Valid: true } victim ||
+                IsDead(victim) || HasComp<GhostComponent>(victim) ||
+                Transform(victim).MapID != Transform(uid).MapID ||
+                Vector2.DistanceSquared(impactCenter, _transform.GetWorldPosition(victim)) > miner.HookSplashRadius * miner.HookSplashRadius)
+                continue;
+            AddHookTarget(uid, miner, victim);
         }
     }
 
     private void ProcessHook(EntityUid uid, LavalandMadMinerComponent miner, EntityUid fallbackTarget, TimeSpan now)
     {
-        if (miner.HookTarget is not { Valid: true } target || now >= miner.HookEnds || !Exists(target))
+        if (now >= miner.HookEnds || miner.HookTargets.Count == 0)
         {
-            miner.HookTarget = null;
+            ClearHooks(miner);
             return;
         }
-        var direction = _transform.GetWorldPosition(uid) - _transform.GetWorldPosition(target);
-        var distance = direction.Length();
-        if (distance <= miner.HookImpactRange)
+
+        if (now < miner.SplitDragUntil)
         {
-            _damage.TryChangeDamage(target, miner.HookImpactDamage, ignoreResistances: true, origin: uid);
-            if (TryComp<PhysicsComponent>(target, out var body) && distance > 0.01f)
-                _physics.SetLinearVelocity(target, -Vector2.Normalize(direction) * miner.HookKnockback, body: body);
-            miner.HookTarget = null;
+            var origin = _transform.GetWorldPosition(uid);
+            var velocity = TryComp<PhysicsComponent>(uid, out var dragBody)
+                ? dragBody.LinearVelocity : Vector2.Zero;
+            foreach (var (target, visual) in miner.HookTargets.ToArray())
+            {
+                if (!Exists(target) || IsDead(target) || Transform(target).MapID != Transform(uid).MapID)
+                {
+                    RemoveHookTarget(miner, target);
+                    continue;
+                }
+                if (Exists(visual))
+                    _transform.SetMapCoordinates(visual, _transform.GetMapCoordinates(target));
+                ConstrainHookDistance(uid, target, miner.HookMaxLength);
+                if (miner.SplitDragOffsets.TryGetValue(target, out var offset) &&
+                    TryComp<PhysicsComponent>(target, out var body))
+                {
+                    var correction = origin + offset - _transform.GetWorldPosition(target);
+                    _physics.SetLinearVelocity(target, velocity + correction * 10f, body: body);
+                }
+            }
             return;
         }
-        if (TryComp<PhysicsComponent>(target, out var physics) && distance > 0.01f)
-            _physics.SetLinearVelocity(target, Vector2.Normalize(direction) * miner.HookForce, body: physics);
+
+        if (TryComp<PhysicsComponent>(uid, out var minerPhysics))
+        {
+            var velocity = Vector2.Zero;
+            if (miner.HookAttacker is { Valid: true } attacker && Exists(attacker) &&
+                Transform(attacker).MapID == Transform(uid).MapID)
+            {
+                var pursuit = _transform.GetWorldPosition(attacker) - _transform.GetWorldPosition(uid);
+                if (pursuit.LengthSquared() > 0.04f)
+                    velocity = Vector2.Normalize(pursuit) * miner.HookRetaliationSpeed;
+            }
+            _physics.SetLinearVelocity(uid, velocity, body: minerPhysics);
+        }
+
+        foreach (var (target, visual) in miner.HookTargets.ToArray())
+        {
+            if (!Exists(target) || IsDead(target))
+            {
+                RemoveHookTarget(miner, target);
+                continue;
+            }
+            if (Exists(visual))
+                _transform.SetMapCoordinates(visual, _transform.GetMapCoordinates(target));
+            if (now < miner.HookPullStarts)
+                continue;
+
+            ConstrainHookDistance(uid, target, miner.HookMaxLength);
+            var direction = _transform.GetWorldPosition(uid) - _transform.GetWorldPosition(target);
+            var distance = direction.Length();
+            if (distance <= miner.HookImpactRange)
+            {
+                _damage.TryChangeDamage(target, miner.HookImpactDamage, ignoreResistances: true, origin: uid);
+                if (TryComp<PhysicsComponent>(target, out var body) && distance > 0.01f)
+                    _physics.SetLinearVelocity(target, -Vector2.Normalize(direction) * miner.HookKnockback, body: body);
+                RemoveHookTarget(miner, target);
+                continue;
+            }
+            if (TryComp<PhysicsComponent>(target, out var physics) && distance > 0.01f)
+            {
+                var stretch = Math.Max(0f, distance - miner.HookImpactRange);
+                var pullSpeed = miner.HookForce + stretch * miner.HookStretchForce;
+                _physics.SetLinearVelocity(target, Vector2.Normalize(direction) * pullSpeed, body: physics);
+            }
+        }
+    }
+
+    private void ConstrainHookDistance(EntityUid miner, EntityUid target, float maxLength)
+    {
+        if (maxLength <= 0f)
+            return;
+
+        var minerCoordinates = _transform.GetMapCoordinates(miner);
+        var targetCoordinates = _transform.GetMapCoordinates(target);
+        if (minerCoordinates.MapId != targetCoordinates.MapId)
+            return;
+
+        var offset = targetCoordinates.Position - minerCoordinates.Position;
+        if (offset.LengthSquared() <= maxLength * maxLength || offset.LengthSquared() < 0.001f)
+            return;
+
+        var constrained = new MapCoordinates(
+            minerCoordinates.Position + Vector2.Normalize(offset) * maxLength,
+            minerCoordinates.MapId);
+        _transform.SetMapCoordinates(target, constrained);
+    }
+
+    private void AddHookTarget(EntityUid uid, LavalandMadMinerComponent miner, EntityUid target)
+    {
+        if (miner.HookTargets.ContainsKey(target))
+            return;
+        var visual = Spawn(miner.HookProjectile, Transform(target).Coordinates);
+        var rope = EnsureComp<JointVisualsComponent>(visual);
+        rope.Sprite = new SpriteSpecifier.Rsi(
+            new ResPath("_DeadSpace/Necromorfs/TheCircle/Weapon/melee/hand-hook.rsi"), "rope");
+        rope.Target = uid;
+        Dirty(visual, rope);
+        EnsureComp<LavalandMadMinerHookVisualComponent>(visual).Target = target;
+        miner.HookTargets[target] = visual;
+        var hooked = EnsureComp<LavalandMadMinerHookedComponent>(target);
+        hooked.Miner = uid;
+        hooked.Removing = false;
+        Dirty(target, hooked);
+    }
+
+    private void RemoveHookTarget(LavalandMadMinerComponent miner, EntityUid target)
+    {
+        miner.SplitDragOffsets.Remove(target);
+        if (miner.HookTargets.Remove(target, out var visual) && Exists(visual))
+            QueueDel(visual);
+        RemCompDeferred<LavalandMadMinerHookedComponent>(target);
+    }
+
+    private void ClearHooks(LavalandMadMinerComponent miner)
+    {
+        foreach (var target in miner.HookTargets.Keys.ToArray())
+            RemoveHookTarget(miner, target);
+        miner.HookAttacker = null;
+        miner.SplitDragOffsets.Clear();
+        miner.SplitDragUntil = TimeSpan.Zero;
+        var query = EntityQueryEnumerator<LavalandMadMinerComponent, HTNComponent>();
+        while (query.MoveNext(out var uid, out var component, out var htn))
+        {
+            if (component != miner)
+                continue;
+            _htn.SetHTNEnabled((uid, htn), true);
+            break;
+        }
+    }
+
+    private void OnHookedGetVerbs(Entity<LavalandMadMinerHookedComponent> ent, ref GetVerbsEvent<AlternativeVerb> args)
+    {
+        if (args.User != ent.Owner || ent.Comp.Removing)
+            return;
+        args.Verbs.Add(new AlternativeVerb
+        {
+            Text = "Снять крюк",
+            Act = () => StartRemovingHook(ent),
+        });
+    }
+
+    private void OnHookVisualInteract(Entity<LavalandMadMinerHookVisualComponent> ent, ref InteractHandEvent args)
+    {
+        if (args.Handled || args.User != ent.Comp.Target ||
+            !TryComp<LavalandMadMinerHookedComponent>(ent.Comp.Target, out var hooked))
+            return;
+
+        StartRemovingHook((ent.Comp.Target, hooked));
+        args.Handled = true;
+    }
+
+    private void StartRemovingHook(Entity<LavalandMadMinerHookedComponent> ent)
+    {
+        if (!TryComp<LavalandMadMinerComponent>(ent.Comp.Miner, out var miner))
+            return;
+        ent.Comp.Removing = true;
+        Dirty(ent);
+        _doAfter.TryStartDoAfter(new DoAfterArgs(EntityManager, ent.Owner, miner.HookRemoveTime,
+            new LavalandRemoveMadMinerHookDoAfterEvent(), ent.Owner, target: ent.Owner)
+        {
+            BreakOnMove = false,
+            BreakOnDamage = false,
+            NeedHand = false,
+        });
+    }
+
+    private void OnHookRemoved(Entity<LavalandMadMinerHookedComponent> ent,
+        ref LavalandRemoveMadMinerHookDoAfterEvent args)
+    {
+        if (args.Handled)
+            return;
+        args.Handled = true;
+        if (args.Cancelled)
+        {
+            ent.Comp.Removing = false;
+            Dirty(ent);
+            return;
+        }
+        if (TryComp<LavalandMadMinerComponent>(ent.Comp.Miner, out var miner))
+            RemoveHookTarget(miner, ent.Owner);
     }
 
     public bool TryInterceptJaunter(EntityUid user, EntityUid jaunter)
@@ -245,7 +540,6 @@ public sealed class LavalandMadMinerSystem : EntitySystem
                 continue;
             _containers.TryRemoveFromContainer(jaunter, force: true);
             _transform.SetMapCoordinates(jaunter, _transform.GetMapCoordinates(uid).Offset(new Vector2(0.5f, 0)));
-            BeginHook(uid, miner, user, _timing.CurTime);
             return true;
         }
         return false;
@@ -256,7 +550,7 @@ public sealed class LavalandMadMinerSystem : EntitySystem
         TryRescueFromChasm(args.Tripper, args);
     }
 
-    public bool TryRescueFromChasm(EntityUid tripper, ChasmFallingAttemptEvent? args = null)
+    public bool TryRescueFromChasm(EntityUid tripper, ChasmFallingAttemptEvent? args = null, EntityUid? jaunter = null)
     {
         var query = EntityQueryEnumerator<LavalandMadMinerComponent>();
         while (query.MoveNext(out var uid, out var miner))
@@ -264,11 +558,24 @@ public sealed class LavalandMadMinerSystem : EntitySystem
             if (!miner.Active || Transform(uid).MapID != Transform(tripper).MapID)
                 continue;
             args?.Cancel();
+            if (jaunter is { Valid: true } item && Exists(item))
+            {
+                _containers.TryRemoveFromContainer(item, force: true);
+                _transform.SetMapCoordinates(item, _transform.GetMapCoordinates(uid).Offset(new Vector2(0.5f, 0)));
+            }
             _transform.SetMapCoordinates(tripper, _transform.GetMapCoordinates(uid).Offset(new Vector2(2, 0)));
             BeginHook(uid, miner, tripper, _timing.CurTime);
             return true;
         }
         return false;
+    }
+
+    private void OnDamageChanged(Entity<LavalandMadMinerComponent> ent, ref DamageChangedEvent args)
+    {
+        if (!args.DamageIncreased || ent.Comp.HookTargets.Count == 0 ||
+            args.Origin is not { Valid: true } attacker || attacker == ent.Owner)
+            return;
+        ent.Comp.HookAttacker = attacker;
     }
 
     private void OnMobStateChanged(Entity<LavalandMadMinerComponent> ent, ref MobStateChangedEvent args)

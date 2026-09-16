@@ -4,12 +4,11 @@
   name: папка экспедиционного задания
   description: Запечатанные распоряжения для ведущего утилизатора.
   components:
-  - type: EntityTableContainerFill
-    containers:
-      storagebase: !type:GroupSelector
-        children:
-        - id: LavalandObjectivePaperOre
-        - id: LavalandObjectivePaperMorkite
+  - type: LavalandMorkiteMission
+    extractorPrototype: LavalandMorkiteExtractor
+    extractorCount: 4
+    spawnDistance: 40
+    morkiteChance: 0.5
 
 - type: entity
   id: LavalandObjectivePaperOre
@@ -26,10 +25,6 @@
   components:
   - type: Paper
     content: lavaland-objective-paper-morkite
-  - type: LavalandMorkiteMission
-    extractorPrototype: LavalandMorkiteExtractor
-    extractorCount: 4
-    spawnDistance: 20
 
 - type: entity
   id: LavalandMorkiteExtractor
@@ -45,3 +40,15 @@
   - type: LavalandMorkiteExtractor
     requiredExtractionTime: 480
     outputPerSecond: 0.20833334
+  - type: NodeContainer
+    nodes:
+      output:
+        !type:CableDeviceNode
+        nodeGroupID: Apc
+  - type: PowerSupplier
+    voltage: Apc
+    supplyRate: 5000
+  - type: PowerProvider
+    voltage: Apc
+  - type: ExtensionCableProvider
+    transferRange: 1000

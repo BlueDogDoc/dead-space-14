@@ -8,7 +8,11 @@ public sealed partial class LavalandMorkiteMissionComponent : Component
 {
     [DataField] public EntProtoId ExtractorPrototype = "LavalandMorkiteExtractor";
     [DataField] public int ExtractorCount = 4;
-    [DataField] public float SpawnDistance = 20f;
+    [DataField] public float SpawnDistance = 40f;
+    [DataField] public float MorkiteChance = 0.5f;
+    [DataField] public EntProtoId OreObjective = "LavalandObjectivePaperOre";
+    [DataField] public EntProtoId MorkiteObjective = "LavalandObjectivePaperMorkite";
+    public bool IsMorkite;
     public bool Spawned;
 }
 

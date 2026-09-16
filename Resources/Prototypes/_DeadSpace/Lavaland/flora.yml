@@ -5,7 +5,7 @@
   description: Дерево, пережившее множество пепельных бурь.
   components:
   - type: Sprite
-    sprite: _DeadSpace/Lavaland/Goob/Objects/Decoration/Flora/Trees/ashtree.rsi
+    sprite: _Goob/Lavaland/Objects/Decoration/Flora/Trees/ashtree.rsi
     layers:
     - state: ashtree01
       map: [random]

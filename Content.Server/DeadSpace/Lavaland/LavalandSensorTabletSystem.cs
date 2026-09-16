@@ -87,6 +87,21 @@ public sealed class LavalandSensorTabletSystem : EntitySystem
         }
 
         var sensors = EntityQueryEnumerator<SuitSensorComponent>();
+        var extractors = EntityQueryEnumerator<LavalandMorkiteExtractorComponent, TransformComponent>();
+        while (extractors.MoveNext(out var extractor, out _, out var extractorXform))
+        {
+            if (extractorXform.MapUid is not { } extractorMap || !HasComp<LavalandMapComponent>(extractorMap))
+                continue;
+            var hash = extractor.GetHashCode() & int.MaxValue;
+            var angle = Angle.FromDegrees(hash % 360);
+            var offset = angle.ToVec() * (8f + hash % 8);
+            points.Add(new LavalandRadarPoint(
+                _transform.GetWorldPosition(extractorXform) + offset,
+                ent.Comp.MorkiteHintColor,
+                ent.Comp.MorkiteHintRadius,
+                LavalandRadarPointKind.MorkiteSearchArea));
+        }
+
         while (sensors.MoveNext(out var sensorUid, out var sensor))
         {
             if (sensor.Mode != SuitSensorMode.SensorCords || sensor.User is not { } user ||

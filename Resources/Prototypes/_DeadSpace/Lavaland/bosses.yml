@@ -1077,8 +1077,8 @@
         Blunt: 25
         Structural: 45
   - type: MovementSpeedModifier
-    baseWalkSpeed: 3.2
-    baseSprintSpeed: 4.8
+    baseWalkSpeed: 2.8
+    baseSprintSpeed: 4.1
   - type: StunImmune
   - type: NoSlip
   - type: RequireProjectileTarget
@@ -1107,20 +1107,15 @@
     lifetime: 1.2
 
 - type: entity
-  parent: BaseBullet
   id: LavalandMadMinerHookVisual
   name: цепная рука безумного шахтёра
   categories: [ HideSpawnMenu ]
   components:
+  - type: Clickable
   - type: Sprite
     noRot: false
     sprite: _DeadSpace/Necromorfs/TheCircle/Weapon/melee/hand-hook.rsi
     state: hook
-  - type: Projectile
-    damage:
-      types: {}
-  - type: TimedDespawn
-    lifetime: 0.45
 
 # Colossus
 

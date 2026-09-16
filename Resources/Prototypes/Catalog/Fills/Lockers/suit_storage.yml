@@ -319,6 +319,8 @@
       - id: ClothingShoesBootsMag
       - id: ClothingOuterHardsuitSeniorSalvage
       - id: ClothingMaskGasExplorer
+      - id: LavalandBluespaceWellFlatpack
+      - id: LavalandObjectiveFolder
   - type: AccessReader
     access: [["SeniorSalvage"]]
 

@@ -17,6 +17,8 @@ public sealed partial class LavalandSensorTabletComponent : Component
     [DataField] public Color RockColor = new(150, 105, 75);
     [DataField] public Color BaseFloorColor = new(40, 75, 90);
     [DataField] public Color BaseWallColor = new(115, 210, 230);
+    [DataField] public Color MorkiteHintColor = new(40, 220, 190, 180);
+    [DataField] public float MorkiteHintRadius = 20f;
     [DataField] public float MobPointSize = 0.65f;
     [DataField] public float TerrainPointSize = 0.52f;
     [DataField] public TimeSpan UpdateInterval = TimeSpan.FromSeconds(1);
