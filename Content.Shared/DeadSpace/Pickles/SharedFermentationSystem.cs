@@ -26,20 +26,40 @@ public abstract class SharedFermentationSystem : EntitySystem
         SubscribeLocalEvent<FermentationBarrelComponent, ComponentInit>(OnInit);
         SubscribeLocalEvent<FermentationBarrelComponent, ExaminedEvent>(OnExamined);
         SubscribeLocalEvent<FermentationBarrelComponent, GetVerbsEvent<AlternativeVerb>>(OnGetVerbs);
-        // Client must claim jar clicks here — server-only InteractUsing never runs predicted,
-        // so SolutionTransfer would otherwise popup "empty" on AfterInteract.
-        SubscribeLocalEvent<FermentationBarrelComponent, InteractUsingEvent>(OnClientClaimJarInteract);
+        // Single subscription: client claims jar clicks so SolutionTransfer stays silent;
+        // server Override handles insert/pack/fill.
+        SubscribeLocalEvent<FermentationBarrelComponent, InteractUsingEvent>(OnInteractUsing);
     }
 
-    private void OnClientClaimJarInteract(Entity<FermentationBarrelComponent> ent, ref InteractUsingEvent args)
+    private void OnInteractUsing(Entity<FermentationBarrelComponent> ent, ref InteractUsingEvent args)
     {
-        if (!_net.IsClient || args.Handled || !IsEnabled())
+        if (!IsEnabled())
             return;
 
-        if (!HasComp<PickleJarComponent>(args.Used))
+        // Client: silence predicted SolutionTransfer/"empty" popups when using a jar on the barrel.
+        if (_net.IsClient)
+        {
+            if (HasComp<PickleJarComponent>(args.Used))
+                args.Handled = true;
+            return;
+        }
+
+        // Server: jars must win over RefillableSolution/SolutionTransfer on the same entity.
+        if (HasComp<PickleJarComponent>(args.Used))
+        {
+            HandleInteractUsing(ent, ref args);
+            args.Handled = true;
+            return;
+        }
+
+        if (args.Handled)
             return;
 
-        args.Handled = true;
+        HandleInteractUsing(ent, ref args);
+    }
+
+    protected virtual void HandleInteractUsing(Entity<FermentationBarrelComponent> ent, ref InteractUsingEvent args)
+    {
     }
 
     public bool IsEnabled() => _cfg.GetCVar(PicklesCVars.Enabled);

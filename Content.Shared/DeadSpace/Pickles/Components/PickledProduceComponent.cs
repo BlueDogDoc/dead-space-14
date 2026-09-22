@@ -5,7 +5,6 @@ using Robust.Shared.GameStates;
 
 namespace Content.Shared.DeadSpace.Pickles.Components;
 
-/// <summary>Produce that finished fermentation.</summary>
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState(true)]
 public sealed partial class PickledProduceComponent : Component
 {

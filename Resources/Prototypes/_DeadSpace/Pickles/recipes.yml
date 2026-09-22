@@ -7,6 +7,7 @@
   minReagent: 20
   durationSeconds: 60
   producePerJar: 3
+  contentsStyle: cucumber
   brineColor: "#e8d070"
   pieceName: food-name-pickled-cucumber
 
@@ -18,6 +19,7 @@
   minReagent: 25
   durationSeconds: 75
   producePerJar: 3
+  contentsStyle: cabbage
   brineColor: "#d4c85a"
   pieceName: food-name-pickled-cabbage
 
@@ -29,6 +31,7 @@
   minReagent: 20
   durationSeconds: 70
   producePerJar: 3
+  contentsStyle: onion
   brineColor: "#d9c84a"
   pieceName: food-name-pickled-onion
 
@@ -40,6 +43,7 @@
   minReagent: 20
   durationSeconds: 70
   producePerJar: 3
+  contentsStyle: onionred
   brineColor: "#d9c84a"
   pieceName: food-name-pickled-onion
 
@@ -51,6 +55,7 @@
   minReagent: 20
   durationSeconds: 70
   producePerJar: 3
+  contentsStyle: carrot
   brineColor: "#e0b040"
   pieceName: food-name-pickled-carrot
 
@@ -62,6 +67,7 @@
   minReagent: 15
   durationSeconds: 80
   producePerJar: 3
+  contentsStyle: garlic
   brineColor: "#ebe07a"
   pieceName: food-name-pickled-garlic
 
@@ -74,6 +80,7 @@
   minReagent: 15
   durationSeconds: 90
   producePerJar: 3
+  contentsStyle: cucumber
   brineColor: "#5a6b40"
   pieceName: food-name-salted-cucumber
 
@@ -86,6 +93,7 @@
   durationSeconds: 90
   producePerJar: 3
   lowBrine: true
+  contentsStyle: cabbage
   brineColor: "#4a5a35"
   pieceName: food-name-salted-cabbage
 
@@ -97,6 +105,7 @@
   minReagent: 12
   durationSeconds: 85
   producePerJar: 3
+  contentsStyle: onion
   brineColor: "#556045"
   pieceName: food-name-salted-onion
 
@@ -108,6 +117,7 @@
   minReagent: 12
   durationSeconds: 85
   producePerJar: 3
+  contentsStyle: onionred
   brineColor: "#556045"
   pieceName: food-name-salted-onion
 
@@ -119,6 +129,7 @@
   minReagent: 12
   durationSeconds: 90
   producePerJar: 3
+  contentsStyle: mushroom
   brineColor: "#6a5a35"
   pieceName: food-name-salted-mushroom
 
@@ -130,6 +141,7 @@
   minReagent: 15
   durationSeconds: 90
   producePerJar: 3
+  contentsStyle: cactus
   brineColor: "#4a6a40"
   pieceName: food-name-salted-cactus
 
@@ -141,6 +153,7 @@
   minReagent: 20
   durationSeconds: 80
   producePerJar: 3
+  contentsStyle: cactus
   brineColor: "#c8c050"
   pieceName: food-name-pickled-cactus
 
@@ -187,6 +200,7 @@
   minReagent: 25
   durationSeconds: 80
   producePerJar: 2
+  contentsStyle: watermelon
   brineColor: "#e0c860"
   pieceName: food-name-pickled-watermelon
 
@@ -198,6 +212,7 @@
   minReagent: 20
   durationSeconds: 70
   producePerJar: 3
+  contentsStyle: tomato
   brineColor: "#d9b84a"
   pieceName: food-name-pickled-tomato
 
@@ -209,6 +224,7 @@
   minReagent: 12
   durationSeconds: 85
   producePerJar: 3
+  contentsStyle: tomato
   brineColor: "#6a5040"
   pieceName: food-name-salted-tomato
 
@@ -220,6 +236,7 @@
   minReagent: 25
   durationSeconds: 80
   producePerJar: 2
+  contentsStyle: pumpkin
   brineColor: "#e0b050"
   pieceName: food-name-pickled-pumpkin
 
@@ -231,6 +248,7 @@
   minReagent: 15
   durationSeconds: 70
   producePerJar: 3
+  contentsStyle: chili
   brineColor: "#e09040"
   pieceName: food-name-pickled-chili
 
@@ -243,5 +261,6 @@
   durationSeconds: 90
   producePerJar: 3
   lowBrine: true
+  contentsStyle: soy
   brineColor: "#5a5040"
   pieceName: food-name-salted-soy

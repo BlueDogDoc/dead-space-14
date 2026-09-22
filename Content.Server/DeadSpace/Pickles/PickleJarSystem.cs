@@ -12,7 +12,6 @@ using Content.Shared.Eye.Blinding.Components;
 using Content.Shared.Eye.Blinding.Systems;
 using Content.Shared.FixedPoint;
 using Content.Shared.Fluids;
-using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Nutrition;
 using Content.Shared.Nutrition.EntitySystems;
 using Content.Shared.Popups;
@@ -32,9 +31,9 @@ public sealed class PickleJarSystem : SharedPickleJarSystem
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly ReactiveSystem _reaction = default!;
     [Dependency] private readonly SharedPuddleSystem _puddle = default!;
-    [Dependency] private readonly SharedHandsSystem _hands = default!;
     [Dependency] private readonly BlindableSystem _blindable = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private readonly SharedTransformSystem _transform = default!;
 
     private static readonly SoundSpecifier EatSound = new SoundCollectionSpecifier("eating");
 
@@ -49,6 +48,16 @@ public sealed class PickleJarSystem : SharedPickleJarSystem
     {
         if (args.SolutionId != PickleJarComponent.SolutionName)
             return;
+
+        // Drinking wine dry must clear IsWine so later sips of brine cannot blind.
+        if (ent.Comp.RemainingPieces <= 0 &&
+            ent.Comp.IsWine &&
+            (!_solutions.TryGetSolution(ent.Owner, PickleJarComponent.SolutionName, out _, out var drink) ||
+             drink.Volume <= FixedPoint2.Zero))
+        {
+            ClearJarContentsMeta(ent);
+            return;
+        }
 
         UpdateJarVisuals(ent);
     }
@@ -68,7 +77,8 @@ public sealed class PickleJarSystem : SharedPickleJarSystem
 
     protected override void OnJarSlip(Entity<PickleJarComponent> jar, EntityUid user, EntityUid piece)
     {
-        _hands.PickupOrDrop(user, piece, dropNear: true, animate: false);
+        // Piece is freshly spawned and not in a hand yet — place it on the floor, do not pick it up.
+        _transform.PlaceNextTo(piece, user);
 
         if (!_solutions.TryGetSolution(jar.Owner, PickleJarComponent.SolutionName, out var jarSoln, out var drink) ||
             drink.Volume <= FixedPoint2.Zero)
@@ -93,7 +103,8 @@ public sealed class PickleJarSystem : SharedPickleJarSystem
 
         var bite = _solutions.SplitSolution(foodSoln.Value, food.Volume);
 
-        if (_body.TryGetBodyOrganEntityComps<StomachComponent>(user, out var stomachs))
+        if (HasComp<BodyComponent>(user) &&
+            _body.TryGetBodyOrganEntityComps<StomachComponent>(user, out var stomachs))
         {
             Entity<StomachComponent, OrganComponent>? best = null;
             var bestVol = FixedPoint2.Zero;

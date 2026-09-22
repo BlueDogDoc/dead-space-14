@@ -39,7 +39,6 @@
           Idle: { state: idle }
           Fermenting: { state: fermenting }
           Ready: { state: idle }
-          Failed: { state: idle }
   - type: ContainerContainer
     containers:
       pickle_produce: !type:Container

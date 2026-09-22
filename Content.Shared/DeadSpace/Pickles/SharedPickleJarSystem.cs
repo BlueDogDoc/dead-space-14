@@ -18,6 +18,7 @@ using Content.Shared.Verbs;
 using Robust.Shared.Audio;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Network;
+using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Utility;
 
@@ -35,6 +36,10 @@ public abstract class SharedPickleJarSystem : EntitySystem
     [Dependency] private readonly SharedPopupSystem _popup = default!;
     [Dependency] private readonly SharedSolutionContainerSystem _solutions = default!;
     [Dependency] private readonly MetaDataSystem _meta = default!;
+
+    private static readonly ProtoId<ReagentPrototype> Water = "Water";
+    private static readonly ProtoId<ReagentPrototype> Nutriment = "Nutriment";
+    private static readonly ProtoId<ReagentPrototype> Vitamin = "Vitamin";
 
     private static readonly SoundSpecifier OpenSound = new SoundCollectionSpecifier("pop");
     private static readonly SoundSpecifier CloseSound = new SoundPathSpecifier("/Audio/Items/bottle_close1.ogg");
@@ -99,23 +104,29 @@ public abstract class SharedPickleJarSystem : EntitySystem
         _meta.SetEntityDescription(ent, Loc.GetString("ent-FoodPickleJar.desc"));
     }
 
-    public static string ContentsStyleFor(string? produceProto) => produceProto switch
+    public static string ContentsStyleFor(PickleRecipePrototype? recipe, string? produceProto = null)
     {
-        "FoodCucumber" => "cucumber",
-        "FoodCabbage" => "cabbage",
-        "FoodOnion" => "onion",
-        "FoodOnionRed" => "onionred",
-        "FoodCarrot" => "carrot",
-        "FoodGarlic" => "garlic",
-        "FoodMushroom" => "mushroom",
-        "FoodCactus" => "cactus",
-        "FoodTomato" => "tomato",
-        "FoodWatermelon" => "watermelon",
-        "FoodPumpkin" => "pumpkin",
-        "FoodChiliPepper" => "chili",
-        "FoodSoybeans" => "soy",
-        _ => "cucumber",
-    };
+        if (recipe is { ContentsStyle.Length: > 0 })
+            return recipe.ContentsStyle;
+
+        return produceProto switch
+        {
+            "FoodCucumber" => "cucumber",
+            "FoodCabbage" => "cabbage",
+            "FoodOnion" => "onion",
+            "FoodOnionRed" => "onionred",
+            "FoodCarrot" => "carrot",
+            "FoodGarlic" => "garlic",
+            "FoodMushroom" => "mushroom",
+            "FoodCactus" => "cactus",
+            "FoodTomato" => "tomato",
+            "FoodWatermelon" => "watermelon",
+            "FoodPumpkin" => "pumpkin",
+            "FoodChiliPepper" => "chili",
+            "FoodSoybeans" => "soy",
+            _ => "cucumber",
+        };
+    }
 
     private void OnPickledExamined(Entity<PickledProduceComponent> ent, ref ExaminedEvent args)
     {
@@ -213,7 +224,7 @@ public abstract class SharedPickleJarSystem : EntitySystem
 
     private bool IsJarEffectivelyEmpty(Entity<PickleJarComponent> ent)
     {
-        return ent.Comp.RemainingPieces <= 0 && IsDrinkEmpty(ent) && !ent.Comp.IsWine;
+        return ent.Comp.RemainingPieces <= 0 && IsDrinkEmpty(ent);
     }
 
     private void OnIngestible(Entity<PickleJarComponent> ent, ref IngestibleEvent args)
@@ -272,38 +283,34 @@ public abstract class SharedPickleJarSystem : EntitySystem
         if (ent.Comp.PiecePrototype is not { } proto)
             return false;
 
-        ent.Comp.RemainingPieces--;
-        if (ent.Comp.RemainingPieces <= 0)
-        {
-            ent.Comp.PiecePrototype = null;
-            ent.Comp.PieceTint = null;
-            ent.Comp.IsWine = false;
-            ent.Comp.ContentsStyle = "cucumber";
-        }
+        var method = ent.Comp.Method;
+        var pieceName = ent.Comp.PieceName;
+        var tint = ent.Comp.PieceTint ?? SharedFermentationSystem.TintFor(method);
 
+        ent.Comp.RemainingPieces--;
+        var emptied = ent.Comp.RemainingPieces <= 0;
         Dirty(ent);
         UpdateJarVisuals(ent);
 
         piece = Spawn(proto, Transform(user).Coordinates);
         var name = Identity.Name(piece, EntityManager);
-        _meta.SetEntityName(piece, Loc.GetString(ent.Comp.PieceName, ("name", name)));
-        var descId = ent.Comp.PieceName.Id.Replace("food-name-", "food-desc-", StringComparison.Ordinal);
+        _meta.SetEntityName(piece, Loc.GetString(pieceName, ("name", name)));
+        var descId = pieceName.Id.Replace("food-name-", "food-desc-", StringComparison.Ordinal);
         _meta.SetEntityDescription(piece, Loc.TryGetString(descId, out var desc)
             ? desc
-            : Loc.GetString("pickle-produce-desc", ("name", Loc.GetString(ent.Comp.PieceName, ("name", name)))));
+            : Loc.GetString("pickle-produce-desc", ("name", Loc.GetString(pieceName, ("name", name)))));
 
         var pickled = EnsureComp<PickledProduceComponent>(piece);
-        pickled.Method = ent.Comp.Method;
-        pickled.Tint = ent.Comp.PieceTint ?? SharedFermentationSystem.TintFor(ent.Comp.Method);
-        pickled.PieceName = ent.Comp.PieceName;
-        pickled.SpriteScale = 0.65f;
+        pickled.Method = method;
+        pickled.Tint = tint;
+        pickled.PieceName = pieceName;
         Dirty(piece, pickled);
 
-        ApplyPickledFlavor(piece, ent.Comp.Method);
+        ApplyPickledFlavor(piece, method);
         AfterSpawnPiece(ent, piece);
 
-        if (ent.Comp.RemainingPieces <= 0)
-            _meta.SetEntityName(ent, Loc.GetString("ent-FoodPickleJar"));
+        if (emptied)
+            ClearJarContentsMeta(ent);
 
         return true;
     }
@@ -314,19 +321,19 @@ public abstract class SharedPickleJarSystem : EntitySystem
         {
             flavor.Flavors.Clear();
             flavor.Flavors.Add(method == PickleMethod.Salt ? "salty" : "sour");
-            flavor.IgnoreReagents.Add("Water");
-            flavor.IgnoreReagents.Add("Nutriment");
-            flavor.IgnoreReagents.Add("Vitamin");
+            flavor.IgnoreReagents.Add(Water.Id);
+            flavor.IgnoreReagents.Add(Nutriment.Id);
+            flavor.IgnoreReagents.Add(Vitamin.Id);
         }
 
         if (!_solutions.TryGetSolution(produce, "food", out var foodSoln, out var food))
             return;
 
-        var water = food.GetTotalPrototypeQuantity("Water");
+        var water = food.GetTotalPrototypeQuantity(Water);
         if (water <= 0)
             return;
 
-        food.RemoveReagent(new ReagentId("Water", null), water);
+        food.RemoveReagent(new ReagentId(Water, null), water);
         _solutions.UpdateChemicals(foodSoln.Value);
     }
 

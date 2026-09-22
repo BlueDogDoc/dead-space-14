@@ -26,14 +26,13 @@ public sealed partial class PickleJarComponent : Component
     [DataField, AutoNetworkedField]
     public PickleMethod Method = PickleMethod.Vinegar;
 
-    /// <summary>Wine jars use liquid fill only — no produce overlay.</summary>
     [DataField, AutoNetworkedField]
     public bool IsWine;
 
-    /// <summary>RSI style key for jar contents (cucumber, tomato, …).</summary>
     [DataField, AutoNetworkedField]
     public string ContentsStyle = "cucumber";
 
+    /// <summary>Chance to drop the piece and spill a splash of brine when taking from the jar.</summary>
     [DataField]
     public float SlipChance = 0.25f;
 

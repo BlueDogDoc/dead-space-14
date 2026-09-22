@@ -59,7 +59,6 @@
     solution: drink
   - type: PickleJar
     maxPieces: 4
-    slipChance: 0.25
   - type: FlavorProfile
     flavors:
     - sour

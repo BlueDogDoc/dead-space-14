@@ -41,6 +41,10 @@ public sealed partial class PickleRecipePrototype : IPrototype
     [DataField]
     public bool LowBrine;
 
+    /// <summary>RSI produce overlay key (cucumber, tomato, …). Unused for alcohol recipes.</summary>
+    [DataField]
+    public string ContentsStyle = "cucumber";
+
     [DataField]
     public ProtoId<ReagentPrototype>? OutputDrinkReagent;
 

@@ -55,7 +55,6 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
     {
         base.Initialize();
         SubscribeLocalEvent<FermentationBarrelComponent, MapInitEvent>(OnMapInit);
-        SubscribeLocalEvent<FermentationBarrelComponent, InteractUsingEvent>(OnInteractUsing);
         SubscribeLocalEvent<FermentationBarrelComponent, InteractHandEvent>(OnInteractHand);
     }
 
@@ -79,11 +78,8 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
         args.Handled = TryTakeReadyProduce(ent, args.User);
     }
 
-    private void OnInteractUsing(Entity<FermentationBarrelComponent> ent, ref InteractUsingEvent args)
+    protected override void HandleInteractUsing(Entity<FermentationBarrelComponent> ent, ref InteractUsingEvent args)
     {
-        if (args.Handled || !IsEnabled())
-            return;
-
         if (ent.Comp.State == FermentationState.Fermenting)
         {
             _popup.PopupEntity(Loc.GetString("pickle-barrel-busy"), ent, args.User);
@@ -336,7 +332,8 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
 
             var mix = new Solution();
             mix.AddReagent(drink, FixedPoint2.New(80 * Math.Max(jars, 1)));
-            mix.AddSolution(extras, _proto);
+            // Keep extras out of the bottling tank so ClearReady can key off drink volume alone.
+            tank.RemoveAllSolution();
             tank.AddSolution(mix, _proto);
             ent.Comp.ReadyDrinkReagent = drink;
         }
@@ -403,9 +400,6 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
             : Loc.GetString("pickle-produce-desc", ("name", Loc.GetString(recipe.PieceName, ("name", name)))));
 
         _pickleJars.ApplyPickledFlavor(produce, recipe.Method);
-
-        pickled.SpriteScale = 0.65f;
-        Dirty(produce, pickled);
 
         if (_solutions.TryGetSolution(produce, "food", out var foodSoln, out var food))
         {
@@ -516,7 +510,7 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
                 : Loc.GetString("pickle-piece-wine");
             _meta.SetEntityName(jar, Loc.GetString("pickle-alcohol-jar-name", ("name", drinkLabel)));
 
-            if (tank.Volume <= FixedPoint2.Zero)
+            if (tank.GetTotalPrototypeQuantity(drink) <= FixedPoint2.Zero)
                 ClearReady(ent);
 
             _popup.PopupEntity(Loc.GetString("pickle-barrel-jar-filled"), ent, user);
@@ -553,10 +547,11 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
             jarComp.Method = pickled.Method;
             jarComp.PieceTint = pickled.Tint;
             jarComp.PieceName = pickled.PieceName;
-            jarComp.ContentsStyle = SharedPickleJarSystem.ContentsStyleFor(protoId);
-            jarComp.IsWine = false;
             recipe ??= FindRecipe(jarComp.PiecePrototype.Value, pickled.Method);
+            jarComp.ContentsStyle = SharedPickleJarSystem.ContentsStyleFor(recipe, protoId);
+            jarComp.IsWine = false;
 
+            Container.Remove(contained, container, reparent: false);
             QueueDel(contained);
             moved++;
         }

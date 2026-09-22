@@ -70,7 +70,6 @@ public enum FermentationState : byte
     Idle,
     Fermenting,
     Ready,
-    Failed,
 }
 
 [Serializable, NetSerializable]

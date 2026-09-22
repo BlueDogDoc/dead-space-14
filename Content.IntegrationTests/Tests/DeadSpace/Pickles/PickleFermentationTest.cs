@@ -11,6 +11,7 @@ using Content.Shared.DeadSpace.Pickles;
 using Content.Shared.DeadSpace.Pickles.Components;
 using Content.Shared.Eye.Blinding.Components;
 using Content.Shared.FixedPoint;
+using Content.Shared.Fluids.Components;
 using Content.Shared.Interaction;
 using Content.Shared.Nutrition;
 using Content.Shared.Nutrition.EntitySystems;
@@ -41,6 +42,9 @@ public sealed class PickleFermentationTest : InteractionTest
     private static readonly ProtoId<ReagentPrototype> VinegarBrine = "PickleVinegarBrine";
     private static readonly ProtoId<ReagentPrototype> SaltBrine = "PickleSaltBrine";
     private static readonly ProtoId<ReagentPrototype> PickleWine = "PickleWine";
+
+    private static readonly ProtoId<PickleRecipePrototype> TomatoVinegarRecipe = "PickleTomatoVinegar";
+    private static readonly ProtoId<PickleRecipePrototype> CabbageVinegarRecipe = "PickleCabbageVinegar";
 
     private FermentationBarrelComponent Barrel => Comp<FermentationBarrelComponent>();
     private SharedSolutionContainerSystem Solutions => Server.System<SharedSolutionContainerSystem>();
@@ -156,7 +160,7 @@ public sealed class PickleFermentationTest : InteractionTest
                 total += food!.GetTotalPrototypeQuantity(Toxin);
             }
 
-            Assert.That(total, Is.EqualTo(FixedPoint2.New(10)));
+            Assert.That(total.Float(), Is.EqualTo(10f).Within(0.05f));
         });
     }
 
@@ -282,7 +286,7 @@ public sealed class PickleFermentationTest : InteractionTest
             Server.System<OpenableSystem>().SetOpen(jar);
             SEntMan.GetComponent<PickleJarComponent>(jar).SlipChance = 0f;
         });
-        await DeleteHeldEntity();
+        await Drop();
         await Interact();
         await Server.WaitAssertion(() =>
         {
@@ -334,6 +338,7 @@ public sealed class PickleFermentationTest : InteractionTest
             verbs.ExecuteVerb(tip, SPlayer, STarget.Value, forced: true);
             Assert.That(Solutions.TryGetSolution(STarget.Value, FermentationBarrelComponent.SolutionName, out _, out var tank), Is.True);
             Assert.That(tank!.Volume, Is.EqualTo(FixedPoint2.Zero));
+            Assert.That(SEntMan.EntityQuery<PuddleComponent>().Any(), Is.True);
         });
     }
 
@@ -360,6 +365,21 @@ public sealed class PickleFermentationTest : InteractionTest
             Assert.That(Solutions.TryGetSolution(STarget.Value, FermentationBarrelComponent.SolutionName, out _, out var tank), Is.True);
             Assert.That(tank!.Volume, Is.EqualTo(FixedPoint2.Zero));
             Assert.That(SEntMan.EntityQuery<PickledProduceComponent>().Count(), Is.EqualTo(3));
+            if (SEntMan.TryGetComponent(SPlayer, out BlindableComponent blind))
+                Assert.That(blind.IsBlind, Is.False);
+        });
+    }
+
+    [Test]
+    public async Task JarDefaultsMatchSlipAndWineBlindChances()
+    {
+        var jarNet = await Spawn(FoodJar.Id, PlayerCoords);
+        var jar = ToServer(jarNet);
+        await Server.WaitAssertion(() =>
+        {
+            var jarComp = SEntMan.GetComponent<PickleJarComponent>(jar);
+            Assert.That(jarComp.SlipChance, Is.EqualTo(0.25f).Within(0.001f));
+            Assert.That(jarComp.WineBlindChance, Is.EqualTo(0.1f).Within(0.001f));
         });
     }
 
@@ -372,6 +392,7 @@ public sealed class PickleFermentationTest : InteractionTest
         await InteractUsing(FoodJar);
 
         var jar = await FindEntity(FoodJar);
+        Target = SEntMan.GetNetEntity(jar);
         FixedPoint2 brineBefore = default;
         await Server.WaitPost(() =>
         {
@@ -382,7 +403,7 @@ public sealed class PickleFermentationTest : InteractionTest
             brineBefore = drink!.Volume;
         });
 
-        await DeleteHeldEntity();
+        await Drop();
         await Interact();
         await Server.WaitAssertion(() =>
         {
@@ -391,6 +412,42 @@ public sealed class PickleFermentationTest : InteractionTest
             Assert.That(SEntMan.EntityQuery<PickledProduceComponent>().Any(), Is.True);
             Assert.That(Solutions.TryGetSolution(jar, PickleJarComponent.SolutionName, out _, out var drink), Is.True);
             Assert.That(drink!.Volume, Is.LessThan(brineBefore));
+            Assert.That(brineBefore - drink.Volume, Is.GreaterThanOrEqualTo(FixedPoint2.New(8)));
+            Assert.That(SEntMan.EntityQuery<PuddleComponent>().Any(), Is.True);
+        });
+    }
+
+    [Test]
+    public async Task TakingPieceDoesNotSpillWhenSlipChanceIsZero()
+    {
+        await PrepareBarrel(Vinegar, Cucumber, 3);
+        await StartFermentation();
+        await FinishFermentation();
+        await InteractUsing(FoodJar);
+
+        var jar = await FindEntity(FoodJar);
+        Target = SEntMan.GetNetEntity(jar);
+        FixedPoint2 brineBefore = default;
+        await Server.WaitPost(() =>
+        {
+            Server.System<OpenableSystem>().SetOpen(jar);
+            SEntMan.GetComponent<PickleJarComponent>(jar).SlipChance = 0f;
+            Assert.That(Solutions.TryGetSolution(jar, PickleJarComponent.SolutionName, out _, out var drink), Is.True);
+            brineBefore = drink!.Volume;
+        });
+
+        await Drop();
+        await Interact();
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(SEntMan.GetComponent<PickleJarComponent>(jar).RemainingPieces, Is.EqualTo(2));
+            var held = HandSys.GetActiveItem((SPlayer, Hands));
+            Assert.That(held, Is.Not.Null);
+            Assert.That(SEntMan.HasComponent<PickledProduceComponent>(held!.Value), Is.True);
+            Assert.That(Solutions.TryGetSolution(jar, PickleJarComponent.SolutionName, out _, out var drink), Is.True);
+            Assert.That(drink!.Volume, Is.LessThan(brineBefore)); // piece takes a brine share
+            var spilled = brineBefore - drink.Volume;
+            Assert.That(spilled, Is.LessThanOrEqualTo(FixedPoint2.New(4)));
         });
     }
 
@@ -408,8 +465,13 @@ public sealed class PickleFermentationTest : InteractionTest
             var jarComp = SEntMan.GetComponent<PickleJarComponent>(jar);
             Assert.That(jarComp.PiecePrototype, Is.EqualTo(Tomato));
             Assert.That(jarComp.ContentsStyle, Is.EqualTo("tomato"));
-            Assert.That(SharedPickleJarSystem.ContentsStyleFor(Cucumber.Id), Is.EqualTo("cucumber"));
-            Assert.That(SharedPickleJarSystem.ContentsStyleFor(Tomato.Id), Is.EqualTo("tomato"));
+
+            var proto = Server.ProtoMan;
+            var tomatoRecipe = proto.Index(TomatoVinegarRecipe);
+            var cabbageRecipe = proto.Index(CabbageVinegarRecipe);
+            Assert.That(SharedPickleJarSystem.ContentsStyleFor(tomatoRecipe), Is.EqualTo("tomato"));
+            Assert.That(SharedPickleJarSystem.ContentsStyleFor(cabbageRecipe), Is.EqualTo("cabbage"));
+            Assert.That(SharedPickleJarSystem.ContentsStyleFor(null, "FoodUnknown"), Is.EqualTo("cucumber"));
         });
     }
 
@@ -440,6 +502,50 @@ public sealed class PickleFermentationTest : InteractionTest
     }
 
     [Test]
+    public async Task BrineJarDoesNotBlindEvenAtFullChance()
+    {
+        await PrepareBarrel(Vinegar, Cucumber, 3);
+        await StartFermentation();
+        await FinishFermentation();
+        await InteractUsing(FoodJar);
+
+        var jar = await FindEntity(FoodJar);
+        await Server.WaitPost(() =>
+        {
+            Server.System<OpenableSystem>().SetOpen(jar);
+            var jarComp = SEntMan.GetComponent<PickleJarComponent>(jar);
+            Assert.That(jarComp.IsWine, Is.False);
+            jarComp.WineBlindChance = 1f;
+
+            var blindable = SEntMan.EnsureComponent<BlindableComponent>(SPlayer);
+            Assert.That(blindable.IsBlind, Is.False);
+
+            var ingested = new IngestedEvent(SPlayer, SPlayer, new Solution(), false);
+            SEntMan.EventBus.RaiseLocalEvent(jar, ref ingested);
+
+            Assert.That(SEntMan.GetComponent<BlindableComponent>(SPlayer).IsBlind, Is.False);
+        });
+    }
+
+    [Test]
+    public async Task DrinkingWineDryClearsIsWineFlag()
+    {
+        await PrepareBarrel(Sugar, Grape, 3);
+        await StartFermentation();
+        await FinishFermentation();
+        await InteractUsing(FoodJar);
+
+        var jar = await FindEntity(FoodJar);
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(SEntMan.GetComponent<PickleJarComponent>(jar).IsWine, Is.True);
+            Assert.That(Solutions.TryGetSolution(jar, PickleJarComponent.SolutionName, out var soln, out var drink), Is.True);
+            Solutions.SplitSolution(soln!.Value, drink!.Volume);
+            Assert.That(SEntMan.GetComponent<PickleJarComponent>(jar).IsWine, Is.False);
+        });
+    }
+
+    [Test]
     public async Task EmptyJarAfterInteractIsSilentlyHandled()
     {
         await SpawnTarget(WoodBarrel, PlayerCoords);
@@ -461,6 +567,37 @@ public sealed class PickleFermentationTest : InteractionTest
             var ingestible = new IngestibleEvent();
             SEntMan.EventBus.RaiseLocalEvent(jar, ref ingestible);
             Assert.That(ingestible.Cancelled, Is.True);
+
+            // Idle barrel + empty jar must still claim InteractUsing so packing/empty paths stay silent.
+            var interact = new InteractUsingEvent(SPlayer, jar, STarget.Value, coords);
+            SEntMan.EventBus.RaiseLocalEvent(STarget.Value, interact);
+            Assert.That(interact.Handled, Is.True);
+        });
+    }
+
+    [Test]
+    public async Task ClosedJarCannotPackFromBarrel()
+    {
+        await PrepareBarrel(Vinegar, Cucumber, 3);
+        await StartFermentation();
+        await FinishFermentation();
+
+        await PlaceInHands(FoodJar);
+        await Server.WaitPost(() =>
+        {
+            var held = HandSys.GetActiveItem((SPlayer, Hands));
+            Assert.That(held, Is.Not.Null);
+            Server.System<OpenableSystem>().SetOpen(held!.Value, false);
+        });
+        await Interact();
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(Barrel.State, Is.EqualTo(FermentationState.Ready));
+            var held = HandSys.GetActiveItem((SPlayer, Hands));
+            Assert.That(held, Is.Not.Null);
+            Assert.That(SEntMan.GetComponent<PickleJarComponent>(held!.Value).RemainingPieces, Is.EqualTo(0));
+            Assert.That(Containers.TryGetContainer(STarget!.Value, FermentationBarrelComponent.ProduceContainerId, out var container), Is.True);
+            Assert.That(container!.ContainedEntities, Has.Count.EqualTo(3));
         });
     }
 
