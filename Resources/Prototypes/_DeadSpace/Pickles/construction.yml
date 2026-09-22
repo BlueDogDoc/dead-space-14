@@ -1,0 +1,109 @@
+- type: constructionGraph
+  id: PickleBarrelWood
+  start: start
+  graph:
+  - node: start
+    edges:
+    - to: barrel
+      completed:
+      - !type:SnapToGrid {}
+      steps:
+      - material: WoodPlank
+        amount: 3
+        doAfter: 2
+  - node: barrel
+    entity: PickleBarrelWood
+    edges:
+    - to: start
+      completed:
+      - !type:EmptyAllContainers
+      - !type:SpawnPrototype
+        prototype: MaterialWoodPlank1
+        amount: 3
+      - !type:DeleteEntity {}
+      steps:
+      - tool: Prying
+        doAfter: 2
+
+- type: constructionGraph
+  id: PickleBarrelPlastic
+  start: start
+  graph:
+  - node: start
+    edges:
+    - to: frame
+      completed:
+      - !type:SnapToGrid {}
+      steps:
+      - tag: Bucket
+        name: construction-graph-tag-bucket
+        icon:
+          sprite: Objects/Tools/bucket.rsi
+          state: icon
+        doAfter: 1
+  - node: frame
+    entity: PickleBarrelPlasticFrame
+    edges:
+    - to: barrel
+      steps:
+      - tag: Bucket
+        name: construction-graph-tag-bucket
+        icon:
+          sprite: Objects/Tools/bucket.rsi
+          state: icon
+        doAfter: 1
+      - tool: Welding
+        doAfter: 2
+    - to: start
+      completed:
+      - !type:SpawnPrototype
+        prototype: Bucket
+      - !type:DeleteEntity {}
+      steps:
+      - tool: Prying
+        doAfter: 1
+  - node: barrel
+    entity: PickleBarrelPlastic
+    edges:
+    - to: start
+      completed:
+      - !type:EmptyAllContainers
+      - !type:SpawnPrototype
+        prototype: SheetPlastic1
+        amount: 2
+      - !type:DeleteEntity {}
+      steps:
+      - tool: Prying
+        doAfter: 2
+
+- type: construction
+  id: PickleBarrelWood
+  name: construction-recipe-pickle-barrel-wood
+  graph: PickleBarrelWood
+  startNode: start
+  targetNode: barrel
+  category: construction-category-furniture
+  objectType: Structure
+  placementMode: SnapgridCenter
+  canBuildInImpassable: false
+  icon:
+    sprite: _DeadSpace/Pickles/barrel_wood.rsi
+    state: idle
+  conditions:
+  - !type:TileNotBlocked
+
+- type: construction
+  id: PickleBarrelPlastic
+  name: construction-recipe-pickle-barrel-plastic
+  graph: PickleBarrelPlastic
+  startNode: start
+  targetNode: barrel
+  category: construction-category-furniture
+  objectType: Structure
+  placementMode: SnapgridCenter
+  canBuildInImpassable: false
+  icon:
+    sprite: _DeadSpace/Pickles/barrel_plastic.rsi
+    state: idle
+  conditions:
+  - !type:TileNotBlocked
