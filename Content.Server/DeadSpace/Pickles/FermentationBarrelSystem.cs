@@ -151,9 +151,11 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
         if (ent.Comp.State != FermentationState.Idle)
             return false;
 
-        if (!TryResolveBatch(ent, out _, out var duration, out var error))
+        if (!TryResolveBatch(ent, out _, out var duration, out var error, out var errorArgs))
         {
-            _popup.PopupEntity(Loc.GetString(error), ent, user);
+            _popup.PopupEntity(errorArgs is { Length: > 0 }
+                ? Loc.GetString(error, errorArgs)
+                : Loc.GetString(error), ent, user);
             return false;
         }
 
@@ -269,8 +271,8 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
             {
                 comp.InvalidTempTime += TimeSpan.FromSeconds(frameTime);
                 var hot = tempError == "pickle-barrel-too-hot";
-                if (hot && comp.InvalidTempTime > TimeSpan.FromSeconds(5) ||
-                    !hot && comp.InvalidTempTime > TimeSpan.FromSeconds(25))
+                if ((hot && comp.InvalidTempTime > TimeSpan.FromSeconds(5)) ||
+                    (!hot && comp.InvalidTempTime > TimeSpan.FromSeconds(25)))
                 {
                     Fail(ent, hot);
                 }
@@ -304,7 +306,7 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
 
     private void Complete(Entity<FermentationBarrelComponent> ent)
     {
-        if (!TryResolveBatch(ent, out var batches, out _, out _) ||
+        if (!TryResolveBatch(ent, out var batches, out _, out _, out _) ||
             !Container.TryGetContainer(ent, FermentationBarrelComponent.ProduceContainerId, out var container) ||
             !_solutions.TryGetSolution(ent.Owner, FermentationBarrelComponent.SolutionName, out var soln, out var tank))
         {
@@ -344,7 +346,10 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
             {
                 var perJar = Math.Max(recipe.ProducePerJar, 1);
                 var usable = count - count % perJar;
-                tank.RemoveReagent(new ReagentId(recipe.RequiredReagent, null), recipe.MinReagent * (usable / perJar));
+                var jars = usable / perJar;
+                tank.RemoveReagent(new ReagentId(recipe.RequiredReagent, null), recipe.MinReagent * jars);
+                if (recipe.MinSugar > 0)
+                    tank.RemoveReagent(new ReagentId(Sugar, null), recipe.MinSugar * jars);
 
                 var applied = 0;
                 foreach (var contained in container.ContainedEntities.ToArray())
@@ -562,23 +567,36 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
         jarComp.RemainingPieces += moved;
         Dirty(jar, jarComp);
 
-        var brineAmt = FixedPoint2.New((recipe?.LowBrine ?? false) ? moved * 4f : moved * 10f);
+        // Pack brine out of the barrel with the produce. When the batch is gone, wipe the tank.
+        var brineId = jarComp.Method == PickleMethod.Salt ? SaltBrine : VinegarBrine;
+        var pickledLeft = container.ContainedEntities.Count(HasComp<PickledProduceComponent>);
+        var brineLeft = tank.GetTotalPrototypeQuantity(brineId);
+        var brineAmt = pickledLeft <= 0
+            ? brineLeft
+            : brineLeft * moved / (moved + pickledLeft);
         brineAmt = FixedPoint2.Min(brineAmt, jarSolution.AvailableVolume);
         if (brineAmt > FixedPoint2.Zero)
         {
-            var brineId = jarComp.Method == PickleMethod.Salt ? SaltBrine : VinegarBrine;
-            var mix = new Solution();
-            mix.AddReagent(brineId, brineAmt);
-            _solutions.TryAddSolution(jarSoln.Value, mix);
+            var taken = tank.RemoveReagent(new ReagentId(brineId, null), brineAmt);
+            if (taken > FixedPoint2.Zero)
+            {
+                var mix = new Solution();
+                mix.AddReagent(brineId, taken);
+                _solutions.TryAddSolution(jarSoln.Value, mix);
+            }
         }
 
+        if (pickledLeft <= 0)
+        {
+            tank.RemoveAllSolution();
+            ClearReady(ent);
+        }
+
+        _solutions.UpdateChemicals(tankSoln.Value);
         _pickleJars.UpdateJarVisuals((jar, jarComp));
 
         var pieceLabel = Loc.GetString(jarComp.PieceName, ("name", Loc.GetString($"ent-{jarComp.PiecePrototype}")));
         _meta.SetEntityName(jar, Loc.GetString("pickle-jar-name", ("name", pieceLabel)));
-
-        if (!container.ContainedEntities.Any(HasComp<PickledProduceComponent>))
-            ClearReady(ent);
 
         _popup.PopupEntity(Loc.GetString("pickle-barrel-jar-filled"), ent, user);
         return true;
@@ -696,11 +714,13 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
         Entity<FermentationBarrelComponent> ent,
         out List<(PickleRecipePrototype Recipe, int Count)> batches,
         out float duration,
-        out string error)
+        out string error,
+        out (string, object)[]? errorArgs)
     {
         batches = new();
         duration = 45f;
         error = "pickle-barrel-empty";
+        errorArgs = null;
 
         if (!Container.TryGetContainer(ent, FermentationBarrelComponent.ProduceContainerId, out var container) ||
             container.ContainedEntities.Count == 0)
@@ -708,7 +728,7 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
 
         if (!_solutions.TryGetSolution(ent.Owner, FermentationBarrelComponent.SolutionName, out _, out var tank))
         {
-            error = "pickle-barrel-no-brine";
+            error = "pickle-barrel-no-liquid";
             return false;
         }
 
@@ -726,33 +746,95 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
 
         float maxDuration = 0;
         var reagentNeeded = FixedPoint2.Zero;
+        var sugarNeeded = FixedPoint2.Zero;
+        string? shortfallName = null;
+        var shortfallHave = 0;
+        var shortfallNeeded = 0;
+        string? badProduceName = null;
+
         foreach (var (protoId, count) in counts)
         {
             var recipe = FindRecipe(protoId, resolved);
             if (recipe == null)
             {
+                badProduceName ??= Identity.Name(
+                    container.ContainedEntities.First(uid => MetaData(uid).EntityPrototype?.ID == protoId),
+                    EntityManager);
                 error = "pickle-barrel-bad-recipe";
+                errorArgs = [("name", badProduceName)];
                 return false;
             }
 
             if (count < recipe.ProducePerJar)
+            {
+                if (shortfallNeeded == 0 || recipe.ProducePerJar - count < shortfallNeeded - shortfallHave)
+                {
+                    shortfallName = Identity.Name(
+                        container.ContainedEntities.First(uid => MetaData(uid).EntityPrototype?.ID == protoId),
+                        EntityManager);
+                    shortfallHave = count;
+                    shortfallNeeded = recipe.ProducePerJar;
+                }
+
                 continue;
+            }
 
             var jars = count / recipe.ProducePerJar;
             reagentNeeded += recipe.MinReagent * jars;
+            if (recipe.MinSugar > 0)
+                sugarNeeded += recipe.MinSugar * jars;
             batches.Add((recipe, count));
             maxDuration = Math.Max(maxDuration, recipe.DurationSeconds);
         }
 
         if (batches.Count == 0)
         {
-            error = "pickle-barrel-not-enough";
+            if (shortfallNeeded > 0 && shortfallName != null)
+            {
+                error = "pickle-barrel-not-enough";
+                errorArgs =
+                [
+                    ("name", shortfallName),
+                    ("have", shortfallHave),
+                    ("needed", shortfallNeeded),
+                ];
+            }
+            else
+            {
+                error = "pickle-barrel-not-enough-generic";
+            }
+
             return false;
         }
 
-        if (tank.GetTotalPrototypeQuantity(batches[0].Recipe.RequiredReagent) < reagentNeeded)
+        var haveReagent = tank.GetTotalPrototypeQuantity(batches[0].Recipe.RequiredReagent);
+        if (haveReagent < reagentNeeded)
         {
-            error = "pickle-barrel-no-brine";
+            var need = batches[0].Recipe.RequiredReagent;
+            error = need == Vinegar
+                ? "pickle-barrel-need-vinegar"
+                : need == TableSalt
+                    ? "pickle-barrel-need-salt"
+                    : need == Sugar
+                        ? "pickle-barrel-need-sugar-ferment"
+                        : "pickle-barrel-no-brine";
+            errorArgs =
+            [
+                ("needed", (int) Math.Ceiling((float) reagentNeeded)),
+                ("have", (int) Math.Floor((float) haveReagent)),
+            ];
+            return false;
+        }
+
+        var haveSugar = tank.GetTotalPrototypeQuantity(Sugar);
+        if (sugarNeeded > FixedPoint2.Zero && haveSugar < sugarNeeded)
+        {
+            error = "pickle-barrel-no-sugar";
+            errorArgs =
+            [
+                ("needed", (int) Math.Ceiling((float) sugarNeeded)),
+                ("have", (int) Math.Floor((float) haveSugar)),
+            ];
             return false;
         }
 
@@ -762,7 +844,7 @@ public sealed class FermentationBarrelSystem : SharedFermentationSystem
 
     private PickleMethod? ResolveMethod(Solution tank, out string error)
     {
-        error = "pickle-barrel-no-brine";
+        error = "pickle-barrel-no-liquid";
         var vinegar = tank.GetTotalPrototypeQuantity(Vinegar);
         var salt = tank.GetTotalPrototypeQuantity(TableSalt);
         var sugar = tank.GetTotalPrototypeQuantity(Sugar);

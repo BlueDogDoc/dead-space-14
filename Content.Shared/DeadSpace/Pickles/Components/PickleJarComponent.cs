@@ -38,7 +38,7 @@ public sealed partial class PickleJarComponent : Component
 
     /// <summary>Chance per wine sip to apply permanent welder-style eye damage.</summary>
     [DataField]
-    public float WineBlindChance = 0.1f;
+    public float WineBlindChance = 0.05f;
 
     [DataField]
     public LocId PieceName = "pickle-piece-pickled";

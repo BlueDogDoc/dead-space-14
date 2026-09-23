@@ -1,10 +1,11 @@
-# Vinegar — yellower tint
+# Vinegar - yellower tint
 - type: pickleRecipe
   id: PickleCucumberVinegar
   produce: FoodCucumber
   method: Vinegar
   requiredReagent: Vinegar
   minReagent: 20
+  minSugar: 5
   durationSeconds: 60
   producePerJar: 3
   contentsStyle: cucumber
@@ -17,6 +18,7 @@
   method: Vinegar
   requiredReagent: Vinegar
   minReagent: 25
+  minSugar: 5
   durationSeconds: 75
   producePerJar: 3
   contentsStyle: cabbage
@@ -29,6 +31,7 @@
   method: Vinegar
   requiredReagent: Vinegar
   minReagent: 20
+  minSugar: 5
   durationSeconds: 70
   producePerJar: 3
   contentsStyle: onion
@@ -41,6 +44,7 @@
   method: Vinegar
   requiredReagent: Vinegar
   minReagent: 20
+  minSugar: 5
   durationSeconds: 70
   producePerJar: 3
   contentsStyle: onionred
@@ -53,6 +57,7 @@
   method: Vinegar
   requiredReagent: Vinegar
   minReagent: 20
+  minSugar: 5
   durationSeconds: 70
   producePerJar: 3
   contentsStyle: carrot
@@ -65,13 +70,14 @@
   method: Vinegar
   requiredReagent: Vinegar
   minReagent: 15
+  minSugar: 5
   durationSeconds: 80
   producePerJar: 3
   contentsStyle: garlic
   brineColor: "#ebe07a"
   pieceName: food-name-pickled-garlic
 
-# Salt — darker tint
+# Salt - darker tint
 - type: pickleRecipe
   id: PickleCucumberSalt
   produce: FoodCucumber
@@ -151,6 +157,7 @@
   method: Vinegar
   requiredReagent: Vinegar
   minReagent: 20
+  minSugar: 5
   durationSeconds: 80
   producePerJar: 3
   contentsStyle: cactus
@@ -198,6 +205,7 @@
   method: Vinegar
   requiredReagent: Vinegar
   minReagent: 25
+  minSugar: 5
   durationSeconds: 80
   producePerJar: 2
   contentsStyle: watermelon
@@ -210,6 +218,7 @@
   method: Vinegar
   requiredReagent: Vinegar
   minReagent: 20
+  minSugar: 5
   durationSeconds: 70
   producePerJar: 3
   contentsStyle: tomato
@@ -234,6 +243,7 @@
   method: Vinegar
   requiredReagent: Vinegar
   minReagent: 25
+  minSugar: 5
   durationSeconds: 80
   producePerJar: 2
   contentsStyle: pumpkin
@@ -246,6 +256,7 @@
   method: Vinegar
   requiredReagent: Vinegar
   minReagent: 15
+  minSugar: 5
   durationSeconds: 70
   producePerJar: 3
   contentsStyle: chili

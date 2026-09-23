@@ -32,6 +32,10 @@ public sealed partial class PickleRecipePrototype : IPrototype
     [DataField]
     public float MinReagent = 10f;
 
+    /// <summary>Extra sugar required for vinegar pickles (ignored when 0).</summary>
+    [DataField]
+    public float MinSugar;
+
     [DataField]
     public float DurationSeconds = 45f;
 

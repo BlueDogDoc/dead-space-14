@@ -110,6 +110,8 @@ public sealed class PickleFermentationTest : InteractionTest
             Assert.That(jarComp.PiecePrototype, Is.EqualTo(Cucumber));
             Assert.That(Solutions.TryGetSolution(jar, PickleJarComponent.SolutionName, out _, out var drink), Is.True);
             Assert.That(drink!.GetTotalPrototypeQuantity(VinegarBrine), Is.GreaterThan(FixedPoint2.Zero));
+            Assert.That(Solutions.TryGetSolution(STarget!.Value, FermentationBarrelComponent.SolutionName, out _, out var tank), Is.True);
+            Assert.That(tank!.Volume, Is.EqualTo(FixedPoint2.Zero));
         });
     }
 
@@ -218,6 +220,19 @@ public sealed class PickleFermentationTest : InteractionTest
     }
 
     [Test]
+    public async Task VinegarWithoutSugarDoesNotStart()
+    {
+        await AddAtmosphere();
+        await SpawnTarget(WoodBarrel, PlayerCoords);
+        await EnsureRoomTemperature();
+        await AddReagent(Vinegar, 30);
+        for (var i = 0; i < 3; i++)
+            await InteractUsing(Cucumber);
+        await StartFermentation(shouldSucceed: false);
+        Assert.That(Barrel.State, Is.EqualTo(FermentationState.Idle));
+    }
+
+    [Test]
     public async Task TooFewProduceDoesNotStart()
     {
         await PrepareBarrel(Vinegar, Cucumber, 1);
@@ -308,13 +323,17 @@ public sealed class PickleFermentationTest : InteractionTest
         var jar = await FindEntity(FoodJar);
         await Server.WaitPost(() =>
         {
+            var coords = SEntMan.GetComponent<TransformComponent>(SPlayer).Coordinates;
+            var eater = SEntMan.SpawnEntity("MobHuman", coords);
+            Assert.That(HandSys.TryPickupAnyHand(eater, jar), Is.True, "human should hold the jar");
+
             Server.System<OpenableSystem>().SetOpen(jar);
             Assert.That(SEntMan.GetComponent<PickleJarComponent>(jar).RemainingPieces, Is.EqualTo(3));
 
             for (var i = 0; i < 3; i++)
             {
                 var before = SEntMan.GetComponent<PickleJarComponent>(jar).RemainingPieces;
-                var ev = new Content.Shared.Interaction.Events.UseInHandEvent(SPlayer);
+                var ev = new Content.Shared.Interaction.Events.UseInHandEvent(eater);
                 SEntMan.EventBus.RaiseLocalEvent(jar, ev);
                 Assert.That(ev.Handled, Is.True);
                 Assert.That(SEntMan.GetComponent<PickleJarComponent>(jar).RemainingPieces, Is.EqualTo(before - 1));
@@ -379,7 +398,7 @@ public sealed class PickleFermentationTest : InteractionTest
         {
             var jarComp = SEntMan.GetComponent<PickleJarComponent>(jar);
             Assert.That(jarComp.SlipChance, Is.EqualTo(0.25f).Within(0.001f));
-            Assert.That(jarComp.WineBlindChance, Is.EqualTo(0.1f).Within(0.001f));
+            Assert.That(jarComp.WineBlindChance, Is.EqualTo(0.05f).Within(0.001f));
         });
     }
 
@@ -607,6 +626,9 @@ public sealed class PickleFermentationTest : InteractionTest
         await SpawnTarget(WoodBarrel, PlayerCoords);
         await EnsureRoomTemperature();
         await AddReagent(reagent, 30);
+        // Vinegar recipes also require a little sugar.
+        if (reagent == Vinegar)
+            await AddReagent(Sugar, 15);
         for (var i = 0; i < count; i++)
             await InteractUsing(produce);
     }
