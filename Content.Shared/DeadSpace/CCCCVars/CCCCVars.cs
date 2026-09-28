@@ -224,4 +224,31 @@ public sealed class CCCCVars
     */
     public static readonly CVarDef<bool> PopOutChat =
     CVarDef.Create("Chat.PopOut", false, CVar.CLIENTONLY | CVar.ARCHIVE);
+
+    public static readonly CVarDef<bool> PsychiatryEnabled =
+        CVarDef.Create("deadspace.psychiatry_enabled", true, CVar.SERVER | CVar.REPLICATED);
+
+    public static readonly CVarDef<bool> PsychiatryClientFx =
+        CVarDef.Create("deadspace.psychiatry_client_fx", true, CVar.CLIENTONLY | CVar.ARCHIVE);
+
+    public static readonly CVarDef<float> PsychiatryOnsetCooldownSec =
+        CVarDef.Create("deadspace.psychiatry_onset_cooldown_sec", 120f, CVar.SERVER | CVar.REPLICATED);
+
+    public static readonly CVarDef<float> PsychiatryAutoEscalateMinSec =
+        CVarDef.Create("deadspace.psychiatry_auto_escalate_min_sec", 900f, CVar.SERVER | CVar.REPLICATED);
+
+    public static readonly CVarDef<float> PsychiatryAutoEscalateMaxSec =
+        CVarDef.Create("deadspace.psychiatry_auto_escalate_max_sec", 1200f, CVar.SERVER | CVar.REPLICATED);
+
+    public static readonly CVarDef<float> PsychiatryScareMinSec =
+        CVarDef.Create("deadspace.psychiatry_scare_min_sec", 30f, CVar.CLIENTONLY | CVar.ARCHIVE);
+
+    public static readonly CVarDef<float> PsychiatryScareMaxSec =
+        CVarDef.Create("deadspace.psychiatry_scare_max_sec", 120f, CVar.CLIENTONLY | CVar.ARCHIVE);
+
+    public static readonly CVarDef<float> PsychiatryWhisperMinSec =
+        CVarDef.Create("deadspace.psychiatry_whisper_min_sec", 40f, CVar.SERVER | CVar.REPLICATED);
+
+    public static readonly CVarDef<float> PsychiatryWhisperMaxSec =
+        CVarDef.Create("deadspace.psychiatry_whisper_max_sec", 100f, CVar.SERVER | CVar.REPLICATED);
 }
