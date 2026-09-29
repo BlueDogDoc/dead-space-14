@@ -8,26 +8,7 @@ public enum PsychiatryRemapPool : byte
 {
     Animal,
     Monster,
-}
-
-public enum PsychiatryMobKind : byte
-{
-    Cow,
-    Monkey,
-    Mouse,
-    Corgi,
-    Spider,
-    Snake,
-    Carp,
-    FleshGolem,
-    Goliath,
-    Basilisk,
-    Legion,
-    Watcher,
-    SpaceDragon,
-    MiniDragonFire,
-    MiniDragonIce,
-    MiniDragonToxic,
+    Item,
 }
 
 public static class PsychiatryPattern
@@ -54,39 +35,39 @@ public static class PsychiatryPattern
         return n > 0.55f && !IsLavaFloor(idx, seed);
     }
 
-    public static bool ShouldRemapMob(int entityHash, int seed, SchizophreniaStage stage)
+    public static bool ShouldRemapMob(int entityHash, int seed, SchizophreniaStage stage, float latent = 0.45f, float simple = 0.65f, float acute = 0.9f)
     {
         var chance = stage switch
         {
-            SchizophreniaStage.Latent => 0.45f,
-            SchizophreniaStage.Simple => 0.65f,
-            SchizophreniaStage.Acute => 0.9f,
+            SchizophreniaStage.Latent => latent,
+            SchizophreniaStage.Simple => simple,
+            SchizophreniaStage.Acute => acute,
             _ => 0f,
         };
         var v = (HashCode.Combine(entityHash, seed) & 255) / 255f;
         return v <= chance;
     }
 
-    public static bool ShouldRemapItem(int entityHash, int seed, SchizophreniaStage stage)
+    public static bool ShouldRemapItem(int entityHash, int seed, SchizophreniaStage stage, float latent = 0.35f, float simple = 0.45f, float acute = 0.55f)
     {
         if (stage < SchizophreniaStage.Latent)
             return false;
         var chance = stage switch
         {
-            SchizophreniaStage.Latent => 0.35f,
-            SchizophreniaStage.Simple => 0.45f,
-            SchizophreniaStage.Acute => 0.55f,
+            SchizophreniaStage.Latent => latent,
+            SchizophreniaStage.Simple => simple,
+            SchizophreniaStage.Acute => acute,
             _ => 0f,
         };
         var v = (HashCode.Combine(entityHash, seed, 23) & 255) / 255f;
         return v <= chance;
     }
 
-    public static PsychiatryRemapPool PickPool(SchizophreniaStage stage, int entityHash, int seed)
+    public static PsychiatryRemapPool PickPool(SchizophreniaStage stage, int entityHash, int seed, float monsterChance = 200f / 255f)
     {
         if (stage >= SchizophreniaStage.Acute)
         {
-            return (HashCode.Combine(entityHash, seed, 9) & 255) < 200
+            return (HashCode.Combine(entityHash, seed, 9) & 255) / 255f < monsterChance
                 ? PsychiatryRemapPool.Monster
                 : PsychiatryRemapPool.Animal;
         }
@@ -94,64 +75,8 @@ public static class PsychiatryPattern
         return PsychiatryRemapPool.Animal;
     }
 
-    public static PsychiatryMobKind PickMobKind(int entityHash, int seed, PsychiatryRemapPool pool, bool preferCow)
-    {
-        if (preferCow && pool == PsychiatryRemapPool.Animal)
-            return PsychiatryMobKind.Cow;
-
-        var roll = HashCode.Combine(entityHash, seed, 11) & 255;
-
-        if (pool == PsychiatryRemapPool.Animal)
-        {
-            return (roll % 7) switch
-            {
-                0 => PsychiatryMobKind.Cow,
-                1 => PsychiatryMobKind.Monkey,
-                2 => PsychiatryMobKind.Mouse,
-                3 => PsychiatryMobKind.Corgi,
-                4 => PsychiatryMobKind.Spider,
-                5 => PsychiatryMobKind.Snake,
-                _ => PsychiatryMobKind.Carp,
-            };
-        }
-
-        if (roll < 40)
-            return PsychiatryMobKind.FleshGolem;
-        if (roll < 70)
-            return PsychiatryMobKind.Goliath;
-        if (roll < 95)
-            return PsychiatryMobKind.SpaceDragon;
-        if (roll < 115)
-            return PsychiatryMobKind.MiniDragonFire;
-        if (roll < 135)
-            return PsychiatryMobKind.MiniDragonToxic;
-        if (roll < 150)
-            return PsychiatryMobKind.MiniDragonIce;
-        if (roll < 175)
-            return PsychiatryMobKind.Basilisk;
-        if (roll < 200)
-            return PsychiatryMobKind.Legion;
-        if (roll < 225)
-            return PsychiatryMobKind.Watcher;
-        return PsychiatryMobKind.FleshGolem;
-    }
-
-    public static PsychiatryMobKind PickItemKind(int entityHash, int seed)
-    {
-        var roll = HashCode.Combine(entityHash, seed, 29) % 4;
-        return roll switch
-        {
-            0 => PsychiatryMobKind.Mouse,
-            1 => PsychiatryMobKind.Snake,
-            2 => PsychiatryMobKind.Corgi,
-            _ => PsychiatryMobKind.Monkey,
-        };
-    }
-
     public static bool PreferCow(int entityHash, int seed) =>
         (HashCode.Combine(entityHash, seed, 3) & 1) == 0;
-
-    public static string MeatWallState() => "full";
 
     private static float Fbm(int x, int y, int seed, float scale)
     {

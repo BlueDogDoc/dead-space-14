@@ -27,15 +27,15 @@ public sealed partial class SkillCondition : IConstructionCondition
 
     public bool Condition(EntityUid user, EntityCoordinates location, Direction direction)
     {
-        var ent = IoCManager.Resolve<IEntityManager>();
-        var ok = ent.TryGetComponent(user, out SkillComponent? skills)
-                 && skills.Skills.TryGetValue(Skill, out var progress)
-                 && progress >= 1f;
+        var entityManager = IoCManager.Resolve<IEntityManager>();
+        var hasSkill = entityManager.TryGetComponent(user, out SkillComponent? skills)
+                       && skills.Skills.TryGetValue(Skill, out var progress)
+                       && progress >= 1f;
 
-        if (!ok)
-            ent.System<SharedPopupSystem>().PopupEntity(Loc.GetString(Popup), user, user);
+        if (!hasSkill)
+            entityManager.System<SharedPopupSystem>().PopupEntity(Loc.GetString(Popup), user, user);
 
-        return ok;
+        return hasSkill;
     }
 
     public ConstructionGuideEntry GenerateGuideEntry()

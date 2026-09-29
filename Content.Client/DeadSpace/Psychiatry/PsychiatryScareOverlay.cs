@@ -5,38 +5,26 @@ using Content.Shared.DeadSpace.Psychiatry;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.ResourceManagement;
+using Robust.Shared.Audio;
 using Robust.Shared.Enums;
 using Robust.Shared.Graphics.RSI;
+using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
 namespace Content.Client.DeadSpace.Psychiatry;
 
-public enum PsychiatryScareKind : byte
-{
-    FleetingGhost,
-    Walker,
-    Laser,
-    Fireball,
-}
-
 public sealed class PsychiatryScareOverlay : Overlay
 {
     private readonly IEntityManager _ent;
     private readonly SharedTransformSystem _xform;
     private readonly IGameTiming _timing;
-    private readonly IResourceCache _resources;
     private readonly IRobustRandom _random;
+    private readonly IPrototypeManager _proto;
+    private readonly IResourceCache _resources;
     private readonly List<ScareFx> _fx = new();
-
-    private Texture? _ghostTex;
-    private Texture? _carpTex;
-    private Texture? _dragonTex;
-    private Texture? _goliathTex;
-    private Texture? _laserTex;
-    private Texture? _fireballTex;
-    private bool _texTried;
+    private readonly Dictionary<(string Path, string State), Texture?> _frames = new();
 
     public override OverlaySpace Space => OverlaySpace.WorldSpace;
 
@@ -47,16 +35,22 @@ public sealed class PsychiatryScareOverlay : Overlay
     public float ScareMinSec = 30f;
     public float ScareMaxSec = 120f;
 
-    public Action<PsychiatryScareKind>? PlaySound;
+    public Action<SoundSpecifier?>? PlaySound;
 
     private float _nextScareAt;
 
-    public PsychiatryScareOverlay(IEntityManager ent, SharedTransformSystem xform, IGameTiming timing, IRobustRandom random)
+    public PsychiatryScareOverlay(
+        IEntityManager ent,
+        SharedTransformSystem xform,
+        IGameTiming timing,
+        IRobustRandom random,
+        IPrototypeManager proto)
     {
         _ent = ent;
         _xform = xform;
         _timing = timing;
         _random = random;
+        _proto = proto;
         _resources = IoCManager.Resolve<IResourceCache>();
         ZIndex = 210;
         _nextScareAt = (float) timing.CurTime.TotalSeconds + random.NextFloat(ScareMinSec, ScareMaxSec);
@@ -67,7 +61,6 @@ public sealed class PsychiatryScareOverlay : Overlay
         Subject = subject;
         Seed = schizo.Seed;
         Stage = schizo.Stage;
-        EnsureTex();
     }
 
     public void Clear()
@@ -104,53 +97,43 @@ public sealed class PsychiatryScareOverlay : Overlay
 
     private void SpawnScare(EntityUid subject)
     {
+        PsychiatryScarePrototype? picked = null;
+        var total = 0;
+        foreach (var proto in _proto.EnumeratePrototypes<PsychiatryScarePrototype>())
+        {
+            if (proto.Weight <= 0)
+                continue;
+            total += proto.Weight;
+            if (picked == null || _random.Next(total) < proto.Weight)
+                picked = proto;
+        }
+
+        if (picked == null || picked.Sprite is not SpriteSpecifier.Rsi sprite)
+            return;
+
         var origin = _xform.GetWorldPosition(subject);
         var roll = HashCode.Combine(Seed, (int) (_timing.CurTime.TotalSeconds), _fx.Count) & 255;
-
-        PsychiatryScareKind kind;
-        if (roll < 40)
-            kind = PsychiatryScareKind.Fireball;
-        else if (roll < 90)
-            kind = PsychiatryScareKind.Laser;
-        else if (roll < 200)
-            kind = PsychiatryScareKind.Walker;
-        else
-            kind = PsychiatryScareKind.FleetingGhost;
-
-        var axis = (roll >> 2) & 3;
-        var dir = Cardinal(axis);
+        var dir = Cardinal((roll >> 2) & 3);
         var lateral = Perpendicular(dir) * (_random.NextFloat(1.5f, 2.5f) * (_random.Prob(0.5f) ? 1f : -1f));
         var from = origin - dir * 8f + lateral;
 
-        var speed = kind switch
-        {
-            PsychiatryScareKind.Laser => 11f,
-            PsychiatryScareKind.Fireball => 7f,
-            PsychiatryScareKind.Walker => 3.5f,
-            _ => 1.6f,
-        };
-
-        var maxAge = kind switch
-        {
-            PsychiatryScareKind.Walker => 3.5f,
-            PsychiatryScareKind.Fireball => 1.7f,
-            PsychiatryScareKind.Laser => 1.2f,
-            _ => 1.4f,
-        };
-
         _fx.Add(new ScareFx
         {
-            Kind = kind,
+            Path = sprite.RsiPath.ToString(),
+            State = sprite.RsiState,
+            FallbackPath = picked.FallbackSprite is SpriteSpecifier.Rsi fallback ? fallback.RsiPath.ToString() : null,
+            FallbackState = picked.FallbackSprite is SpriteSpecifier.Rsi fallbackSprite ? fallbackSprite.RsiState : picked.FallbackState,
             Origin = from,
-            Velocity = dir * speed,
-            MaxAge = maxAge,
+            Velocity = dir * picked.Speed,
+            MaxAge = picked.Duration,
             Phase = (roll & 31) / 10f,
-            Size = kind == PsychiatryScareKind.Fireball ? 1.25f : 1f,
-            WalkerVariant = (byte) ((roll >> 4) & 3),
+            Size = picked.Size,
+            Wobble = picked.Wobble,
+            Rotate = picked.Rotate,
             Angle = MathF.Abs(dir.Y) > MathF.Abs(dir.X) ? MathF.PI / 2f : 0f,
         });
 
-        PlaySound?.Invoke(kind);
+        PlaySound?.Invoke(picked.Sound);
     }
 
     private static Vector2 Cardinal(int axis) => axis switch
@@ -163,33 +146,22 @@ public sealed class PsychiatryScareOverlay : Overlay
 
     private static Vector2 Perpendicular(Vector2 dir) => new(-dir.Y, dir.X);
 
-    private void EnsureTex()
+    private Texture? Frame(string path, string state)
     {
-        if (_texTried)
-            return;
-        _texTried = true;
+        var key = (path, state);
+        if (_frames.TryGetValue(key, out var cached))
+            return cached;
 
-        _ghostTex = TryFrame("/Textures/Mobs/Ghosts/ghost_human.rsi", "icon")
-                    ?? TryFrame("/Textures/Mobs/Ghosts/ghost_human.rsi", "animated");
-        _carpTex = TryFrame("/Textures/Mobs/Aliens/Carps/space.rsi", "alive");
-        _dragonTex = TryFrame("/Textures/_DeadSpace/Mobs/Aliens/MiniDragon.rsi", "alive")
-                     ?? TryFrame("/Textures/Mobs/Aliens/Carps/dragon.rsi", "alive");
-        _goliathTex = TryFrame("/Textures/_DeadSpace/Lavaland/Mobs/lavaland_monsters.rsi", "goliath")
-                      ?? TryFrame("/Textures/Mobs/Aliens/Asteroid/goliath.rsi", "goliath");
-        _laserTex = TryFrame("/Textures/Objects/Weapons/Guns/Projectiles/projectiles.rsi", "u_laser")
-                    ?? TryFrame("/Textures/Objects/Weapons/Guns/Projectiles/projectiles_tg.rsi", "omnilaser");
-        _fireballTex = TryFrame("/Textures/_DeadSpace/Lavaland/Effects/AshDrakeFireball.rsi", "fireball")
-                       ?? TryFrame("/Textures/Objects/Weapons/Guns/Projectiles/magic.rsi", "fireball");
-    }
+        Texture? tex = null;
+        if (_resources.TryGetResource<RSIResource>(path, out var rsi) && rsi.RSI.TryGetState(state, out var st))
+        {
+            var frames = st.GetFrames(RsiDirection.South);
+            if (frames.Length > 0)
+                tex = frames[0];
+        }
 
-    private Texture? TryFrame(string path, string state)
-    {
-        if (!_resources.TryGetResource<RSIResource>(path, out var rsi))
-            return null;
-        if (!rsi.RSI.TryGetState(state, out var st))
-            return null;
-        var frames = st.GetFrames(RsiDirection.South);
-        return frames.Length > 0 ? frames[0] : null;
+        _frames[key] = tex;
+        return tex;
     }
 
     protected override void Draw(in OverlayDrawArgs args)
@@ -211,39 +183,21 @@ public sealed class PsychiatryScareOverlay : Overlay
                     : 1f;
             fade = Math.Clamp(fade, 0f, 1f);
 
-            Texture? tex = fx.Kind switch
-            {
-                PsychiatryScareKind.FleetingGhost => _ghostTex,
-                PsychiatryScareKind.Walker => fx.WalkerVariant switch
-                {
-                    0 => _carpTex,
-                    1 => _dragonTex,
-                    2 => _goliathTex,
-                    _ => _dragonTex,
-                },
-                PsychiatryScareKind.Laser => _laserTex,
-                PsychiatryScareKind.Fireball => _fireballTex,
-                _ => null,
-            };
+            var tex = Frame(fx.Path, fx.State);
+            if (tex == null && fx.FallbackPath != null && fx.FallbackState != null)
+                tex = Frame(fx.FallbackPath, fx.FallbackState);
+            else if (tex == null && fx.FallbackState != null)
+                tex = Frame(fx.Path, fx.FallbackState);
 
-            var size = new Vector2(fx.Size, fx.Size);
-            if (fx.Kind == PsychiatryScareKind.Fireball)
-                size = new Vector2(1.35f, 1.35f);
-            if (fx.Kind == PsychiatryScareKind.Laser)
-                size = new Vector2(0.95f, 0.28f);
-
-            if (fx.Kind == PsychiatryScareKind.Walker && fx.WalkerVariant == 2)
-                size *= 1.35f;
-
-            var wobble = fx.Kind == PsychiatryScareKind.FleetingGhost
+            var wobble = fx.Wobble
                 ? new Vector2(0f, MathF.Sin(t * 3f + fx.Phase) * 0.15f)
                 : Vector2.Zero;
-
             var tint = Color.White.WithAlpha(0.5f + 0.45f * fade);
+            var size = fx.Size.X > 0f && fx.Size.Y > 0f ? fx.Size : Vector2.One;
 
             if (tex != null)
             {
-                var angle = fx.Kind == PsychiatryScareKind.Laser ? fx.Angle : 0f;
+                var angle = fx.Rotate ? fx.Angle : 0f;
                 handle.DrawTextureRect(tex, new Box2Rotated(Box2.CenteredAround(pos + wobble, size), angle, pos + wobble), tint);
             }
             else
@@ -255,14 +209,18 @@ public sealed class PsychiatryScareOverlay : Overlay
 
     private struct ScareFx
     {
-        public PsychiatryScareKind Kind;
+        public string Path;
+        public string State;
+        public string? FallbackPath;
+        public string? FallbackState;
         public Vector2 Origin;
         public Vector2 Velocity;
         public float Age;
         public float MaxAge;
         public float Phase;
-        public float Size;
-        public byte WalkerVariant;
+        public Vector2 Size;
+        public bool Wobble;
+        public bool Rotate;
         public float Angle;
     }
 }

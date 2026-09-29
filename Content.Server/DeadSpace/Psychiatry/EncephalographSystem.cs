@@ -5,6 +5,7 @@ using Content.Server.Popups;
 using Content.Shared.Chat;
 using Content.Shared.Damage.Components;
 using Content.Shared.Damage.Systems;
+using Content.Shared.DeadSpace.CCCCVars;
 using Content.Shared.DeadSpace.Psychiatry;
 using Content.Shared.Ghost;
 using Content.Shared.Interaction;
@@ -16,6 +17,7 @@ using Content.Shared.Weapons.Melee.Events;
 using Robust.Server.GameObjects;
 using Robust.Shared.Audio;
 using Robust.Shared.Audio.Systems;
+using Robust.Shared.Configuration;
 using Robust.Shared.Physics.Components;
 using Robust.Shared.Player;
 using Robust.Shared.Timing;
@@ -34,6 +36,7 @@ public sealed class EncephalographSystem : EntitySystem
     [Dependency] private readonly SharedTransformSystem _xform = default!;
     [Dependency] private readonly UserInterfaceSystem _ui = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
+    [Dependency] private readonly IConfigurationManager _cfg = default!;
 
     private const float HearRange = 6f;
     private const float ScanRange = 4f;
@@ -325,9 +328,16 @@ public sealed class EncephalographSystem : EntitySystem
     {
         if (args.SenderSession.AttachedEntity is not { } uid)
             return;
+        if (!TryComp<SchizophreniaComponent>(uid, out var schizo) || schizo.Stage < SchizophreniaStage.Acute)
+            return;
 
-        Pulse(uid, PsychiatryBrainRegion.Hearing, ev.Hearing);
-        Pulse(uid, PsychiatryBrainRegion.Fear, ev.Fear);
+        var gap = TimeSpan.FromSeconds(_cfg.GetCVar(CCCCVars.PsychiatryUnrealSoundCooldownSec));
+        if (_timing.CurTime < schizo.NextUnrealSound)
+            return;
+
+        schizo.NextUnrealSound = _timing.CurTime + gap;
+        Pulse(uid, PsychiatryBrainRegion.Hearing, _cfg.GetCVar(CCCCVars.PsychiatryUnrealHearing));
+        Pulse(uid, PsychiatryBrainRegion.Fear, _cfg.GetCVar(CCCCVars.PsychiatryUnrealFear));
     }
 
     private bool FearHeld(EntityUid uid)

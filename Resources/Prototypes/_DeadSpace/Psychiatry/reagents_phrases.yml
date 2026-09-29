@@ -40,9 +40,38 @@
   color: "#E8F7FF"
   metabolisms:
     Medicine:
-      metabolismRate: 1.0
+      metabolismRate: 0.05
       effects:
       - !type:PsychiatryClarityDose
+      - !type:HealthChange
+        conditions:
+        - !type:ReagentCondition
+          reagent: NeuroClarity
+          min: 16
+        damage:
+          types:
+            Poison: 1
+            Asphyxiation: 1
+      - !type:Jitter
+        conditions:
+        - !type:ReagentCondition
+          reagent: NeuroClarity
+          min: 16
+      - !type:PopupMessage
+        conditions:
+        - !type:ReagentCondition
+          reagent: NeuroClarity
+          min: 16
+        type: Local
+        visualType: Medium
+        messages: [ "generic-reagent-effect-nauseous" ]
+        probability: 0.25
+      - !type:Vomit
+        conditions:
+        - !type:ReagentCondition
+          reagent: NeuroClarity
+          min: 16
+        probability: 0.5
 
 - type: reagent
   id: PsychiatryRemedy
@@ -135,8 +164,8 @@
   - psychiatry-radio-name-3
   - psychiatry-radio-name-4
   radioJobs:
-  - psychiatry-radio-job-default
-  - psychiatry-radio-job-1
-  - psychiatry-radio-job-2
-  - psychiatry-radio-job-3
-  - psychiatry-radio-job-4
+  - Passenger
+  - StationEngineer
+  - MedicalDoctor
+  - SecurityCadet
+  - Chef

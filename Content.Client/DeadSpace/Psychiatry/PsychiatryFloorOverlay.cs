@@ -28,6 +28,12 @@ public sealed class PsychiatryFloorOverlay : Overlay
     private Texture? _lavaTex;
     private Texture? _waterTex;
     private bool _texTried;
+    private bool _cacheValid;
+    private EntityUid _cachedSubject;
+    private EntityUid _cachedGrid;
+    private Vector2i _cachedTile;
+    private int _cachedSeed;
+    private SchizophreniaStage _cachedStage;
 
     public PsychiatryFloorOverlay(IEntityManager ent, SharedMapSystem map)
     {
@@ -37,26 +43,44 @@ public sealed class PsychiatryFloorOverlay : Overlay
         ZIndex = -5;
     }
 
-    public void UpdateClusters(EntityUid subject, SchizophreniaComponent schizo)
+    public void UpdateClusters(EntityUid subject, SchizophreniaComponent schizo, float radius = 12f)
     {
         Seed = schizo.Seed;
         Stage = schizo.Stage;
-        _draw.Clear();
         if (Stage < SchizophreniaStage.Latent)
+        {
+            _draw.Clear();
+            _cacheValid = false;
             return;
-
-        EnsureTextures();
+        }
 
         var xform = _ent.GetComponent<TransformComponent>(subject);
         if (xform.GridUid is not { } gridUid || !_ent.TryGetComponent(gridUid, out MapGridComponent? grid))
+        {
+            _draw.Clear();
+            _cacheValid = false;
             return;
+        }
 
         var tile = _map.TileIndicesFor(gridUid, grid, xform.Coordinates);
-        const int radius = 12;
+        if (_cacheValid && _cachedSubject == subject && _cachedGrid == gridUid && _cachedTile == tile && _cachedSeed == Seed && _cachedStage == Stage)
+            return;
 
-        for (var x = -radius; x <= radius; x++)
+        _cachedSubject = subject;
+        _cachedGrid = gridUid;
+        _cachedTile = tile;
+        _cachedSeed = Seed;
+        _cachedStage = Stage;
+        _cacheValid = true;
+        _draw.Clear();
+
+        EnsureTextures();
+
+        var reach = (int) MathF.Round(radius);
+
+        for (var x = -reach; x <= reach; x++)
         {
-            for (var y = -radius; y <= radius; y++)
+            for (var y = -reach; y <= reach; y++)
             {
                 var idx = new Vector2i(tile.X + x, tile.Y + y);
                 var t = _map.GetTileRef(gridUid, grid, idx);

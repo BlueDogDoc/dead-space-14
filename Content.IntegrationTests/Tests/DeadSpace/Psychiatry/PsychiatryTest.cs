@@ -13,6 +13,7 @@ using Content.Shared.MedicalScanner;
 using Robust.Shared.GameObjects;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
+using Robust.Shared.Utility;
 
 namespace Content.IntegrationTests.Tests.DeadSpace.Psychiatry;
 
@@ -45,26 +46,26 @@ public sealed class PsychiatryTest : InteractionTest
     }
 
     [Test]
-    public async Task NeuroClarityLowersStage()
+    public async Task NeuroClarityCourseMatchesStage()
     {
         await Server.WaitPost(() =>
         {
             var psych = SEntMan.System<PsychiatrySystem>();
-            psych.ApplyNew(SPlayer, SchizophreniaStage.Simple, pillForced: false, reason: "test");
-            psych.ApplyClarityDose(SPlayer, 20f);
-            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Simple));
-
             psych.ApplyNew(SPlayer, SchizophreniaStage.Latent, pillForced: false, reason: "test");
-            psych.ApplyClarityDose(SPlayer, 5f);
-            var schizo = SEntMan.GetComponent<SchizophreniaComponent>(SPlayer);
-            Assert.That(schizo.Stage, Is.EqualTo(SchizophreniaStage.Latent));
-            Assert.That(schizo.StageHealth, Is.EqualTo(0.5f).Within(0.01f));
+            psych.ApplyClarityDose(SPlayer, 15f);
+            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.False);
 
-            psych.ApplyClarityDose(SPlayer, 10f);
+            psych.ApplyNew(SPlayer, SchizophreniaStage.Simple, pillForced: false, reason: "test");
+            psych.ApplyClarityDose(SPlayer, 15f);
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Acute));
+            psych.ApplyClarityDose(SPlayer, 15f);
             Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.False);
 
             psych.ApplyNew(SPlayer, SchizophreniaStage.Acute, pillForced: false, reason: "test");
-            psych.ClearIllness(SPlayer, "test");
+            psych.ApplyClarityDose(SPlayer, 15f);
+            psych.ApplyClarityDose(SPlayer, 15f);
+            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.True);
+            psych.ApplyClarityDose(SPlayer, 15f);
             Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.False);
         });
     }
@@ -190,11 +191,18 @@ public sealed class PsychiatryTest : InteractionTest
     }
 
     [Test]
-    public void PatternPoolsByStage()
+    public async Task PatternPoolsByStage()
     {
         Assert.That(PsychiatryPattern.PickPool(SchizophreniaStage.Latent, 1, 1), Is.EqualTo(PsychiatryRemapPool.Animal));
-        Assert.That(PsychiatryPattern.MeatWallState(), Is.EqualTo("full"));
         Assert.That(PsychiatryPattern.ShouldRemapMob(42, 7, SchizophreniaStage.None), Is.False);
+
+        await Server.WaitAssertion(() =>
+        {
+            var protos = Server.ResolveDependency<IPrototypeManager>();
+            Assert.That(protos.TryIndex<PsychiatryRemapPrototype>("PsychiatryRemapMeatWall", out var wall), Is.True);
+            Assert.That(wall!.Sprite, Is.InstanceOf<SpriteSpecifier.Rsi>());
+            Assert.That(((SpriteSpecifier.Rsi) wall.Sprite).RsiState, Is.EqualTo("full"));
+        });
     }
 
     [Test]

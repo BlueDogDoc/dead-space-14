@@ -13,6 +13,7 @@ using Content.Shared.Body.Systems;
 using Content.Shared.Damage;
 using Content.Shared.Damage.Prototypes;
 using Content.Shared.Damage.Systems;
+using Content.Shared.DeadSpace.CCCCVars;
 using Content.Shared.DeadSpace.Psychiatry;
 using Content.Shared.DoAfter;
 using Content.Shared.Eye.Blinding.Components;
@@ -37,6 +38,7 @@ using Content.Shared.PowerCell;
 using Content.Shared.Tag;
 using Robust.Shared.Audio;
 using Robust.Shared.Audio.Systems;
+using Robust.Shared.Configuration;
 using Robust.Shared.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
@@ -68,10 +70,10 @@ public sealed class PsychiatryTreatmentSystem : EntitySystem
     [Dependency] private readonly AtmosphereSystem _atmos = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly IPrototypeManager _proto = default!;
+    [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly PuddleSystem _puddles = default!;
     [Dependency] private readonly TagSystem _tag = default!;
 
-    private const int MaxPuddleChain = 48;
     private static readonly Vector2i[] Cardinal = [new(1, 0), new(-1, 0), new(0, 1), new(0, -1)];
 
     private static readonly ProtoId<TagPrototype> MetalTag = "Metal";
@@ -155,7 +157,7 @@ public sealed class PsychiatryTreatmentSystem : EntitySystem
             return;
         args.Handled = true;
 
-        if (_random.Prob(ent.Comp.ComplicationChance))
+        if (_random.Prob(_cfg.GetCVar(CCCCVars.PsychiatryLobotomyFaultChance)))
             ApplyLobotomyComplication(target);
 
         var next = args.StepIndex + 1;
@@ -400,7 +402,7 @@ public sealed class PsychiatryTreatmentSystem : EntitySystem
         }
 
         _psychiatry.AdjustStage(target, -2, "shock-therapy");
-        if (_random.Prob(ent.Comp.SideEffectChance))
+        if (_random.Prob(_cfg.GetCVar(CCCCVars.PsychiatryShockFaultChance)))
             ApplySensoryFault(target);
         _popup.PopupEntity(Loc.GetString("psychiatry-shock-done", ("stages", 2)), user, user, PopupType.Medium);
     }
@@ -489,7 +491,7 @@ public sealed class PsychiatryTreatmentSystem : EntitySystem
         queued.Enqueue(originTile);
         seen.Add(originTile);
 
-        while (queued.Count > 0 && result.Count < MaxPuddleChain)
+        while (queued.Count > 0 && result.Count < _cfg.GetCVar(CCCCVars.PsychiatryPuddleChainCap))
         {
             var tile = queued.Dequeue();
             var tileRef = _map.GetTileRef(grid, mapGrid, tile);
@@ -744,7 +746,7 @@ public sealed class PsychiatryTreatmentSystem : EntitySystem
         if (RefuseUnlessPositronic(args.User, target, true, out _))
             return;
 
-        if (_random.Prob(ent.Comp.FaultChance))
+        if (_random.Prob(_cfg.GetCVar(CCCCVars.PsychiatryHardResetFaultChance)))
         {
             var shock = new DamageSpecifier();
             shock.DamageDict["Shock"] = FixedPoint2.New(12);
@@ -779,7 +781,7 @@ public sealed class PsychiatryTreatmentSystem : EntitySystem
         _damageable.TryChangeDamage(target, shock, origin: args.User);
         _jitter.DoJitter(target, TimeSpan.FromSeconds(0.8), refresh: true, amplitude: 12f, frequency: 8f);
         _audio.PlayPvs(new SoundPathSpecifier("/Audio/Items/Defib/defib_zap.ogg"), target);
-        if (_random.Prob(ent.Comp.FaultChance))
+        if (_random.Prob(_cfg.GetCVar(CCCCVars.PsychiatryIonFaultChance)))
             ApplySensoryFault(target);
         _psychiatry.AdjustStage(target, -2, "ion-scrub");
         _popup.PopupEntity(Loc.GetString("psychiatry-shock-done", ("stages", 2)), args.User, args.User, PopupType.Medium);

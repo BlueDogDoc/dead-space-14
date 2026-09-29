@@ -19,7 +19,7 @@ psychiatry-name-legion = легион
 psychiatry-name-watcher = вотчер
 
 psychiatry-shock-not-on = Сначала включите шоковый аппарат.
-psychiatry-shock-no-gag = Нет медицинского кляпа — челюсть сломана.
+psychiatry-shock-no-gag = Нет медицинского кляпа, челюсть сломана.
 psychiatry-shock-done = Шок снизил стадию на {$stages}.
 psychiatry-lobotomy-complication = Что-то пошло не так.
 psychiatry-no-self = Нельзя применить на себя.
@@ -28,7 +28,7 @@ psychiatry-lobotomy-not-creature = Лоботомию можно провест�
 
 psychiatry-shock-zapped = Разряд.
 psychiatry-shock-metal = Ток прошёл по металлу. Все, кто его касается, получили удар.
-psychiatry-shock-insulator = Это не проводит ток. Дерево — изолятор.
+psychiatry-shock-insulator = Это не проводит ток. Дерево изолятор.
 psychiatry-shock-evaporated = Влага испарилась.
 psychiatry-shock-ignited = Лужа вспыхнула.
 
@@ -57,7 +57,7 @@ psychiatry-patch-latent = Патч берёт только скрытую ста
 psychiatry-admin-cured = Болезнь снята.
 
 ent-PillNeuroClarity = таблетка нейроясности
-    .desc = Снимает только скрытую стадию: одна унция — 10%, десять унций — стадия целиком. Простую, острую и КПБ не лечит.
+    .desc = Курс от шизофрении. Одна таблетка около пяти минут. Латентной хватает одной, простой двух, острой трёх. На КПБ не действует.
 ent-PillSchizotoxin = таблетка шизотоксина
     .desc = Вызывает острую шизофрению. Обходит иммунитет антагониста.
 ent-PillPsychogenLatent = таблетка психогена-Л
@@ -82,8 +82,8 @@ reagent-desc-schizotoxin = Вызывает острую шизофрению и
 reagent-name-psychiatry-remedy = средство от шизофрении
 reagent-desc-psychiatry-remedy = Снимает все стадии шизофрении. На позитронный мозг не действует.
 reagent-name-neuroclarity = нейроясность
-reagent-desc-neuroclarity = Снимает только скрытую стадию. Одна унция — 10%, десять унций снимают её целиком. Простую, острую и позитронный мозг не лечит. Варится из бензола и углерода.
-reagent-effect-guidebook-psychiatry-clarity = Снимает 10% скрытой стадии за унцию. Другие стадии не трогает.
+reagent-desc-neuroclarity = Курс от шизофрении. Одна таблетка около пяти минут. Латентной хватает одной, простой двух, острой трёх. На позитронный мозг не действует. Варится из бензола, углерода, диловена, синаптизина и маннитола.
+reagent-effect-guidebook-psychiatry-clarity = Курс. Длина равна номеру стадии. Вторая таблетка, пока первая ещё в крови, не считается.
 reagent-effect-guidebook-psychiatry-psychogen = Каждые 5 унций поднимают шизофрению на одну стадию, не выше острой.
 reagent-effect-guidebook-psychiatry-inhale = Вдох поднимает шизофрению на одну стадию примерно раз в полминуты. Позитронный мозг не берёт. Противогаз, герметичный шлем и дыхательная маска с баллоном не пропускают газ.
 reagent-name-psychogen-gas = психоген
@@ -145,7 +145,7 @@ psychiatry-phrase-addressed-20 = {$name}, я вижу мёртвых. И теб�
 psychiatry-phrase-radio-1 = Атмос на второй палубе уже закрепили?
 psychiatry-phrase-radio-2 = Карго опять говорит, что шаттл задерживается.
 psychiatry-phrase-radio-3 = Медбею нужна ещё одна партия кровяных пакетов.
-psychiatry-phrase-radio-4 = Освободите коридор — несут носилки.
+psychiatry-phrase-radio-4 = Освободите коридор, несут носилки.
 psychiatry-phrase-radio-5 = Инженеры починили сдерживание сингулярности.
 psychiatry-phrase-radio-6 = В кухне снова оставили морозилку открытой.
 psychiatry-phrase-radio-7 = СБ устраивает проверку шкафчиков на прибытии.

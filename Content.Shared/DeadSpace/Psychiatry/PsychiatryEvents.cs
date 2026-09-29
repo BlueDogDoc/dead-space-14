@@ -16,6 +16,8 @@ public sealed class PsychiatryWhisperEvent : EntityEventArgs
 
     public string Job = "";
 
+    public string JobColor = "#32cd32";
+
     public PsychiatryWhisperEvent(string speakerName, string message, NetEntity? source)
     {
         SpeakerName = speakerName;

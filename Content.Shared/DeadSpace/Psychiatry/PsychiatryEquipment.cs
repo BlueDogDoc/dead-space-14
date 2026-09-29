@@ -76,7 +76,7 @@ public sealed partial class LobotomyToolComponent : Component
 public sealed partial class ShockTherapyComponent : Component
 {
     [DataField]
-    public float SideEffectChance = 0.35f;
+    public float SideEffectChance = 0.18f;
 
     [DataField]
     public float ShockDamage = 40f;

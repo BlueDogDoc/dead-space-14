@@ -6,6 +6,7 @@ using Content.Shared.Chemistry.Components;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Chemistry.Reagent;
 using Content.Shared.Damage.Components;
+using Content.Shared.DeadSpace.CCCCVars;
 using Content.Shared.DeadSpace.Psychiatry;
 using Content.Shared.Emp;
 using Content.Shared.Drunk;
@@ -14,6 +15,7 @@ using Content.Shared.Medical;
 using Content.Shared.Mobs.Components;
 using Content.Shared.Popups;
 using Content.Shared.Slippery;
+using Robust.Shared.Configuration;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 
@@ -21,23 +23,15 @@ namespace Content.Server.DeadSpace.Psychiatry;
 
 public sealed class PsychiatryOnsetSystem : EntitySystem
 {
+    [Dependency] private readonly IConfigurationManager _cfg = default!;
+    [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly PopupSystem _popup = default!;
     [Dependency] private readonly PsychiatrySystem _psychiatry = default!;
     [Dependency] private readonly SharedSolutionContainerSystem _solutions = default!;
 
-    private static readonly ProtoId<ReagentPrototype>[] HarmfulReagents =
-    [
-        "WeldingFuel",
-        "Toxins",
-        "Chlorine",
-        "FluorosulfuricAcid",
-        "SulphuricAcid",
-        "Vomit",
-        "Plasma",
-    ];
+    private static readonly ProtoId<PsychiatryHarmfulReagentsPrototype> HarmfulList = "PsychiatryHarmful";
 
-    private const float SlipChance = 0.05f;
     private float _accum;
 
     public override void Initialize()
@@ -60,6 +54,7 @@ public sealed class PsychiatryOnsetSystem : EntitySystem
         ScanAsphyxiation();
         ScanRadiation();
         ScanHarmfulReagents();
+        ScanMedicines();
         ScanIon();
     }
 
@@ -71,17 +66,22 @@ public sealed class PsychiatryOnsetSystem : EntitySystem
     private void OnDefib(Entity<MobStateComponent> ent, ref TargetDefibrillatedEvent args)
     {
         var asphyx = GetDamage(ent, "Asphyxiation");
+        var highAsphyx = _cfg.GetCVar(CCCCVars.PsychiatryDefibAsphyxiation);
         float chance;
         SchizophreniaStage stage;
-        if (asphyx >= 60)
+        if (asphyx >= highAsphyx)
         {
-            chance = 0.20f;
-            stage = _random.Prob(0.5f) ? SchizophreniaStage.Simple : SchizophreniaStage.Acute;
+            chance = _cfg.GetCVar(CCCCVars.PsychiatryDefibHighChance);
+            stage = _random.Prob(_cfg.GetCVar(CCCCVars.PsychiatryDefibStageSplit))
+                ? SchizophreniaStage.Simple
+                : SchizophreniaStage.Acute;
         }
         else
         {
-            chance = 0.01f;
-            stage = _random.Prob(0.5f) ? SchizophreniaStage.Latent : SchizophreniaStage.Simple;
+            chance = _cfg.GetCVar(CCCCVars.PsychiatryDefibLowChance);
+            stage = _random.Prob(_cfg.GetCVar(CCCCVars.PsychiatryDefibStageSplit))
+                ? SchizophreniaStage.Latent
+                : SchizophreniaStage.Simple;
         }
 
         if (!_random.Prob(chance))
@@ -92,14 +92,14 @@ public sealed class PsychiatryOnsetSystem : EntitySystem
 
     private void OnDrunk(Entity<MobStateComponent> ent, ref SharedDrunkSystem.DrunkEvent args)
     {
-        if (!_random.Prob(0.02f))
+        if (!_random.Prob(_cfg.GetCVar(CCCCVars.PsychiatryAlcoholChance)))
             return;
         Notify(ent, _psychiatry.TryOnsetOrEscalate(ent, SchizophreniaStage.Latent, "alcohol"));
     }
 
     private void OnEmp(Entity<MobStateComponent> ent, ref EmpPulseEvent args)
     {
-        if (!_psychiatry.IsPositronic(ent) || !_random.Prob(0.2f))
+        if (!_psychiatry.IsPositronic(ent) || !_random.Prob(_cfg.GetCVar(CCCCVars.PsychiatryEmpChance)))
             return;
 
         NotifyCyber(ent, _psychiatry.TryApplyCyber(ent, SchizophreniaStage.Latent, "emp"));
@@ -112,9 +112,9 @@ public sealed class PsychiatryOnsetSystem : EntitySystem
         {
             if (!_psychiatry.IsPositronic(uid))
                 continue;
-            if (!damageable.Damage.DamageDict.TryGetValue("Shock", out var shock) || shock < 50)
+            if (!damageable.Damage.DamageDict.TryGetValue("Shock", out var shock) || shock < _cfg.GetCVar(CCCCVars.PsychiatryIonShockMin))
                 continue;
-            if (!_random.Prob(0.02f))
+            if (!_random.Prob(_cfg.GetCVar(CCCCVars.PsychiatryIonChance)))
                 continue;
 
             NotifyCyber(uid, _psychiatry.TryApplyCyber(uid, SchizophreniaStage.Latent, "ion"));
@@ -135,12 +135,14 @@ public sealed class PsychiatryOnsetSystem : EntitySystem
         var q = EntityQueryEnumerator<DamageableComponent, MobStateComponent>();
         while (q.MoveNext(out var uid, out var damageable, out _))
         {
-            if (!damageable.Damage.DamageDict.TryGetValue("Radiation", out var rad) || rad < 50)
+            if (!damageable.Damage.DamageDict.TryGetValue("Radiation", out var rad) || rad < _cfg.GetCVar(CCCCVars.PsychiatryRadiationMin))
                 continue;
-            if (!_random.Prob(0.02f))
+            if (!_random.Prob(_cfg.GetCVar(CCCCVars.PsychiatryRadiationChance)))
                 continue;
 
-            var stage = _random.Prob(0.5f) ? SchizophreniaStage.Latent : SchizophreniaStage.Simple;
+            var stage = _random.Prob(_cfg.GetCVar(CCCCVars.PsychiatryRadiationStageSplit))
+                ? SchizophreniaStage.Latent
+                : SchizophreniaStage.Simple;
             Notify(uid, _psychiatry.TryOnsetOrEscalate(uid, stage, "radiation"));
         }
     }
@@ -154,11 +156,11 @@ public sealed class PsychiatryOnsetSystem : EntitySystem
             if (!_solutions.ResolveSolution(uid, blood.BloodSolutionName, ref soln, out var solution))
                 continue;
 
-            foreach (var reagent in HarmfulReagents)
+            foreach (var reagent in HarmfulReagents())
             {
                 if (solution.GetTotalPrototypeQuantity(reagent) <= FixedPoint2.Zero)
                     continue;
-                if (!_random.Prob(0.005f))
+                if (!_random.Prob(_cfg.GetCVar(CCCCVars.PsychiatryHarmfulReagentChance)))
                     continue;
                 Notify(uid, _psychiatry.TryOnsetOrEscalate(uid, SchizophreniaStage.Latent, $"harmful-reagent:{reagent.Id}"));
                 break;
@@ -168,7 +170,7 @@ public sealed class PsychiatryOnsetSystem : EntitySystem
 
     public bool TrySlipRoll(EntityUid slipped, float roll)
     {
-        if (roll >= SlipChance)
+        if (roll >= _cfg.GetCVar(CCCCVars.PsychiatrySlipChance))
             return false;
 
         if (_psychiatry.IsPositronic(slipped))
@@ -181,12 +183,14 @@ public sealed class PsychiatryOnsetSystem : EntitySystem
     {
         if (!TryComp<DamageableComponent>(uid, out var damageable))
             return false;
-        if (!damageable.Damage.DamageDict.TryGetValue("Asphyxiation", out var asphyx) || asphyx < 40)
+        if (!damageable.Damage.DamageDict.TryGetValue("Asphyxiation", out var asphyx) || asphyx < _cfg.GetCVar(CCCCVars.PsychiatryAsphyxiationMin))
             return false;
-        if (roll >= 0.01f)
+        if (roll >= _cfg.GetCVar(CCCCVars.PsychiatryAsphyxiationChance))
             return false;
 
-        var stage = asphyx >= 80 ? SchizophreniaStage.Simple : SchizophreniaStage.Latent;
+        var stage = asphyx >= _cfg.GetCVar(CCCCVars.PsychiatryAsphyxiationSevere)
+            ? SchizophreniaStage.Simple
+            : SchizophreniaStage.Latent;
         return Notify(uid, _psychiatry.TryOnsetOrEscalate(uid, stage, "asphyxiation"));
     }
 
@@ -202,6 +206,61 @@ public sealed class PsychiatryOnsetSystem : EntitySystem
         if (applied)
             _popup.PopupEntity(Loc.GetString("psychiatry-cyber-onset"), uid, uid, PopupType.MediumCaution);
         return applied;
+    }
+
+    private void ScanMedicines()
+    {
+        var scale = _cfg.GetCVar(CCCCVars.PsychiatryMedicineOnsetScale);
+        if (scale <= 0f)
+            return;
+
+        var meds = new List<PsychiatryOnsetMedicinePrototype>();
+        foreach (var med in _proto.EnumeratePrototypes<PsychiatryOnsetMedicinePrototype>())
+        {
+            if (med.Chance > 0f)
+                meds.Add(med);
+        }
+
+        if (meds.Count == 0)
+            return;
+
+        var q = EntityQueryEnumerator<BloodstreamComponent, MobStateComponent>();
+        while (q.MoveNext(out var uid, out var blood, out _))
+        {
+            foreach (var med in meds)
+                TryMedicine(uid, blood, med.Reagent, med.Chance * scale);
+        }
+    }
+
+    private void TryMedicine(EntityUid uid, BloodstreamComponent blood, ProtoId<ReagentPrototype> reagent, float chance)
+    {
+        Entity<SolutionComponent>? soln = null;
+        if (!_solutions.ResolveSolution(uid, blood.BloodSolutionName, ref soln, out var solution))
+            return;
+
+        var present = solution.GetTotalPrototypeQuantity(reagent) > FixedPoint2.Zero;
+        if (!present)
+        {
+            if (TryComp<SchizophreniaOnsetTrackerComponent>(uid, out var existing))
+                existing.RolledMedicines.Remove(reagent.Id);
+            return;
+        }
+
+        var tracker = EnsureComp<SchizophreniaOnsetTrackerComponent>(uid);
+
+        if (!tracker.RolledMedicines.Add(reagent.Id))
+            return;
+        if (!_random.Prob(chance))
+            return;
+
+        Notify(uid, _psychiatry.TryOnsetOrEscalate(uid, SchizophreniaStage.Latent, $"medicine:{reagent.Id}"));
+    }
+
+    private IEnumerable<ProtoId<ReagentPrototype>> HarmfulReagents()
+    {
+        if (_proto.TryIndex(HarmfulList, out var list))
+            return list.Reagents;
+        return Array.Empty<ProtoId<ReagentPrototype>>();
     }
 
     private float GetDamage(EntityUid uid, string type)

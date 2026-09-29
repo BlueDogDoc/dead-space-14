@@ -1,6 +1,5 @@
 // Мёртвый Космос, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
 
-using Content.Shared.DeadSpace.Psychiatry;
 using Robust.Shared.Maths;
 using Robust.Shared.Utility;
 
@@ -31,7 +30,7 @@ public sealed partial class PsychiatryRemapComponent : Component
     public Vector2i? TileIndex;
 
     [ViewVariables]
-    public PsychiatryMobKind? MobKind;
+    public string? RemapId;
 
     [ViewVariables]
     public ResPath DrawRsi;
@@ -43,5 +42,5 @@ public sealed partial class PsychiatryRemapComponent : Component
     public Color DrawColor = Color.White;
 
     [ViewVariables]
-    public List<bool> OriginalLayerVisible = new();
+    public Dictionary<string, bool> OriginalLayerVisible = new();
 }

@@ -23,7 +23,7 @@
   parent: BasePsychiatryPill
   id: PillNeuroClarity
   name: neuroclarity pill
-  description: Ten units clear latent schizophrenia. Does nothing for later stages or a positronic.
+  description: One 15-unit tablet takes about five minutes. The course is one tablet per stage already present. A second tablet before that is an overdose.
   components:
   - type: Pill
     pillType: 1
@@ -32,10 +32,10 @@
   - type: SolutionContainerManager
     solutions:
       food:
-        maxVol: 20
+        maxVol: 15
         reagents:
         - ReagentId: NeuroClarity
-          Quantity: 10
+          Quantity: 15
 
 - type: entity
   parent: BasePsychiatryPill
@@ -122,7 +122,7 @@
   parent: BaseItem
   id: HandheldEncephalograph
   name: handheld encephalograph
-  description: A brain monitor. Through a neuro-mesh it lights the region that just fired — speech, hearing, sight, movement, fear, arousal. Needs the Advanced Treatment skill. Works without schizophrenia.
+  description: A brain monitor. Through a neuro-mesh it lights the region that just fired, like speech, hearing, sight, movement, fear, arousal. Needs the Advanced Treatment skill. Works without schizophrenia.
   components:
   - type: Sprite
     sprite: _DeadSpace/Psychiatry/encephalograph.rsi
@@ -205,9 +205,7 @@
     useCharge: 180
   - type: ShockTherapy
     shockDamage: 40
-    minStageDrop: 1
-    maxStageDrop: 3
-    sideEffectChance: 0.35
+    sideEffectChance: 0.18
     doAfterMinSeconds: 40
     doAfterMaxSeconds: 61
   - type: EmitSoundOnPickup

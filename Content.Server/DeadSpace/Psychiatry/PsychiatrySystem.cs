@@ -17,8 +17,11 @@ using Content.Shared.DeadSpace.Skills.Prototypes;
 using Content.Shared.FixedPoint;
 using Content.Shared.IdentityManagement;
 using Content.Shared.Inventory;
+using Content.Shared.Medical;
 using Content.Shared.Mobs.Components;
 using Content.Shared.Popups;
+using Content.Shared.Roles;
+using Content.Shared.Roles.Jobs;
 using Content.Shared.Traits.Assorted;
 using Robust.Shared.Audio;
 using Robust.Shared.Configuration;
@@ -37,12 +40,12 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly SharedSolutionContainerSystem _solutions = default!;
     [Dependency] private readonly SkillSystem _skills = default!;
+    [Dependency] private readonly SharedJobSystem _jobs = default!;
     [Dependency] private readonly PopupSystem _popup = default!;
+    [Dependency] private readonly VomitSystem _vomit = default!;
     [Dependency] private readonly ParacusiaSystem _paracusia = default!;
     [Dependency] private readonly InternalsSystem _internals = default!;
     [Dependency] private readonly InventorySystem _inventory = default!;
-
-    private static readonly TimeSpan GasOnsetCooldown = TimeSpan.FromSeconds(30);
 
     private static readonly SoundSpecifier HallucinationSounds = new SoundCollectionSpecifier("Paracusia");
 
@@ -116,6 +119,13 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         var q = EntityQueryEnumerator<SchizophreniaComponent>();
         while (q.MoveNext(out var uid, out var schizo))
         {
+            if (schizo.CourseSpoiled)
+            {
+                if (!TryComp<BloodstreamComponent>(uid, out var blood)
+                    || GetReagentUnits(uid, blood, ClarityReagentId) <= FixedPoint2.Zero)
+                    schizo.CourseSpoiled = false;
+            }
+
             if (Timing.CurTime >= schizo.NextAutoEscalate && schizo.Stage < SchizophreniaStage.Acute)
             {
                 if (!IsAntagImmune(uid, schizo.PillForced))
@@ -169,17 +179,17 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         {
             if (existing.Kind != PsychiatryIllnessKind.Schizophrenia || existing.Stage >= SchizophreniaStage.Acute)
             {
-                tracker.NextAllowedGasOnset = Timing.CurTime + GasOnsetCooldown;
+                tracker.NextAllowedGasOnset = Timing.CurTime + GasCooldown();
                 return false;
             }
 
             AdjustStage(uid, +1, "psychogen-gas");
-            tracker.NextAllowedGasOnset = Timing.CurTime + GasOnsetCooldown;
+            tracker.NextAllowedGasOnset = Timing.CurTime + GasCooldown();
             return true;
         }
 
         ApplyNew(uid, SchizophreniaStage.Latent, pillForced: false, "psychogen-gas");
-        tracker.NextAllowedGasOnset = Timing.CurTime + GasOnsetCooldown;
+        tracker.NextAllowedGasOnset = Timing.CurTime + GasCooldown();
         return true;
     }
 
@@ -278,6 +288,10 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         comp.Stage = ClampStage((int) stage);
         comp.StageHealth = 1f;
         comp.PillForced = pillForced || comp.PillForced;
+        comp.CourseNeeded = 0;
+        comp.CourseTaken = 0;
+        comp.CourseMetabolized = 0f;
+        comp.CourseSpoiled = false;
         if (comp.Seed == 0)
             comp.Seed = _random.Next();
         ScheduleAutoEscalate(comp, uid);
@@ -295,25 +309,43 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
             return;
         if (!TryComp<SchizophreniaComponent>(uid, out var comp))
             return;
-        if (comp.Kind != PsychiatryIllnessKind.Schizophrenia || comp.Stage != SchizophreniaStage.Latent)
+        if (comp.Kind != PsychiatryIllnessKind.Schizophrenia)
             return;
 
-        var damage = units * 0.1f;
-        while (damage > 0.0001f)
-        {
-            if (!TryComp<SchizophreniaComponent>(uid, out comp) || comp.Stage != SchizophreniaStage.Latent)
-                return;
+        var pill = _cfg.GetCVar(CCCCVars.PsychiatryCoursePillUnits);
+        if (pill <= 0f)
+            return;
 
-            if (damage + 0.0001f < comp.StageHealth)
+        if (TryComp<BloodstreamComponent>(uid, out var blood)
+            && (float) GetReagentUnits(uid, blood, ClarityReagentId) > pill)
+        {
+            if (!comp.CourseSpoiled)
+                _vomit.Vomit(uid);
+            comp.CourseSpoiled = true;
+            comp.CourseMetabolized = 0f;
+            return;
+        }
+
+        if (comp.CourseSpoiled)
+            return;
+
+        if (comp.CourseNeeded <= 0)
+            comp.CourseNeeded = Math.Max(1, (int) comp.Stage);
+
+        comp.CourseMetabolized += units;
+        while (comp.CourseMetabolized + 0.001f >= pill)
+        {
+            comp.CourseMetabolized = Math.Max(0f, comp.CourseMetabolized - pill);
+            comp.CourseTaken++;
+            if (comp.CourseTaken >= comp.CourseNeeded)
             {
-                comp.StageHealth -= damage;
-                Dirty(uid, comp);
+                ClearIllness(uid, "NeuroClarity");
                 return;
             }
 
-            damage -= comp.StageHealth;
-            comp.StageHealth = 0f;
-            AdjustStage(uid, -1, "NeuroClarity");
+            AdjustStage(uid, +1, "incomplete-course");
+            if (!TryComp<SchizophreniaComponent>(uid, out comp))
+                return;
         }
     }
 
@@ -367,6 +399,14 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         if (next == comp.Stage && delta > 0)
             return;
 
+        if (delta < 0)
+        {
+            comp.CourseNeeded = 0;
+            comp.CourseTaken = 0;
+            comp.CourseMetabolized = 0f;
+            comp.CourseSpoiled = false;
+        }
+
         comp.Stage = next;
         comp.StageHealth = 1f;
         ScheduleAutoEscalate(comp, uid);
@@ -390,8 +430,8 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         var max = _cfg.GetCVar(CCCCVars.PsychiatryWhisperMaxSec);
         if (comp.Stage >= SchizophreniaStage.Acute)
         {
-            min *= 0.35f;
-            max *= 0.45f;
+            min *= _cfg.GetCVar(CCCCVars.PsychiatryWhisperAcuteMinScale);
+            max *= _cfg.GetCVar(CCCCVars.PsychiatryWhisperAcuteMaxScale);
         }
 
         comp.NextWhisper = Timing.CurTime + TimeSpan.FromSeconds(_random.NextFloat(min, max));
@@ -413,7 +453,7 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         List<string> pool;
         if (schizo.Stage >= SchizophreniaStage.Acute && phrases.Crime.Count > 0)
             pool = phrases.Crime;
-        else if (_random.Prob(0.5f) && phrases.Crime.Count > 0)
+        else if (_random.Prob(_cfg.GetCVar(CCCCVars.PsychiatryWhisperCrimeChance)) && phrases.Crime.Count > 0)
             pool = phrases.Crime;
         else if (phrases.Mockery.Count > 0)
             pool = phrases.Mockery;
@@ -423,21 +463,33 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         var victim = Identity.Name(uid, EntityManager);
         var asRadio = schizo.Stage >= SchizophreniaStage.Simple
                       && phrases.Radio.Count > 0
-                      && _random.Prob(schizo.Stage >= SchizophreniaStage.Acute ? 0.7f : 0.5f);
+                      && _random.Prob(schizo.Stage >= SchizophreniaStage.Acute
+                          ? _cfg.GetCVar(CCCCVars.PsychiatryWhisperRadioAcute)
+                          : _cfg.GetCVar(CCCCVars.PsychiatryWhisperRadioSimple));
 
         string speaker;
         string message;
         var job = "";
+        var jobColor = "#32cd32";
         if (asRadio)
         {
             pool = phrases.Radio;
             speaker = phrases.RadioNames.Count > 0
                 ? Loc.GetString(_random.Pick(phrases.RadioNames))
                 : Loc.GetString("psychiatry-radio-name-default");
-            var jobName = phrases.RadioJobs.Count > 0
-                ? Loc.GetString(_random.Pick(phrases.RadioJobs))
-                : Loc.GetString("psychiatry-radio-job-default");
-            job = $"\\[{jobName}\\] ";
+            if (phrases.RadioJobs.Count > 0
+                && _proto.TryIndex(_random.Pick(phrases.RadioJobs), out JobPrototype? jobProto))
+            {
+                job = jobProto.LocalizedName;
+                if (_jobs.TryGetPrimaryDepartment(jobProto.ID, out var department)
+                    || _jobs.TryGetDepartment(jobProto.ID, out department))
+                    jobColor = department.Color.ToHex();
+            }
+            else
+            {
+                job = Loc.GetString("psychiatry-radio-job-default");
+            }
+
             message = Loc.GetString(_random.Pick(pool), ("name", victim));
         }
         else
@@ -458,16 +510,22 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         {
             AsRadio = asRadio,
             Job = job,
+            JobColor = jobColor,
         };
         RaiseNetworkEvent(whisper, Filter.SinglePlayer(actor.PlayerSession));
-        var heard = new PsychiatryBrainActivityEvent(PsychiatryBrainRegion.Hearing, 0.9f);
+        var heard = new PsychiatryBrainActivityEvent(PsychiatryBrainRegion.Hearing, _cfg.GetCVar(CCCCVars.PsychiatryUnrealHearing));
         RaiseLocalEvent(uid, ref heard);
-        var fear = new PsychiatryBrainActivityEvent(PsychiatryBrainRegion.Fear, 0.75f);
+        var fear = new PsychiatryBrainActivityEvent(PsychiatryBrainRegion.Fear, _cfg.GetCVar(CCCCVars.PsychiatryUnrealFear));
         RaiseLocalEvent(uid, ref fear);
     }
 
     public bool HasAdvancedTreatment(EntityUid user) =>
         _skills.CnowThisSkill(user, AdvancedTreatment);
+
+    private TimeSpan GasCooldown()
+    {
+        return TimeSpan.FromSeconds(_cfg.GetCVar(CCCCVars.PsychiatryGasOnsetSec));
+    }
 
     private FixedPoint2 GetReagentUnits(EntityUid uid, BloodstreamComponent blood, ProtoId<ReagentPrototype> reagent)
     {
@@ -504,12 +562,18 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
 
         var paracusia = EnsureComp<ParacusiaComponent>(uid);
         _paracusia.SetSounds(uid, HallucinationSounds, paracusia);
-        _paracusia.SetDistance(uid, 7f, paracusia);
+        _paracusia.SetDistance(uid, _cfg.GetCVar(CCCCVars.PsychiatryParacusiaDistance), paracusia);
         var (min, max) = stage switch
         {
-            SchizophreniaStage.Acute => (8f, 18f),
-            SchizophreniaStage.Simple => (18f, 40f),
-            _ => (35f, 70f),
+            SchizophreniaStage.Acute => (
+                _cfg.GetCVar(CCCCVars.PsychiatryParacusiaAcuteMinSec),
+                _cfg.GetCVar(CCCCVars.PsychiatryParacusiaAcuteMaxSec)),
+            SchizophreniaStage.Simple => (
+                _cfg.GetCVar(CCCCVars.PsychiatryParacusiaSimpleMinSec),
+                _cfg.GetCVar(CCCCVars.PsychiatryParacusiaSimpleMaxSec)),
+            _ => (
+                _cfg.GetCVar(CCCCVars.PsychiatryParacusiaLatentMinSec),
+                _cfg.GetCVar(CCCCVars.PsychiatryParacusiaLatentMaxSec)),
         };
         _paracusia.SetTime(uid, min, max, paracusia);
     }

@@ -36,6 +36,21 @@ public sealed partial class SchizophreniaComponent : Component
     [DataField(customTypeSerializer: typeof(TimeOffsetSerializer))]
     [AutoNetworkedField, AutoPausedField]
     public TimeSpan NextWhisper;
+
+    [DataField]
+    public int CourseNeeded;
+
+    [DataField]
+    public int CourseTaken;
+
+    [DataField]
+    public float CourseMetabolized;
+
+    [DataField]
+    public bool CourseSpoiled;
+
+    [DataField]
+    public TimeSpan NextUnrealSound;
 }
 
 [RegisterComponent]
@@ -44,4 +59,6 @@ public sealed partial class SchizophreniaOnsetTrackerComponent : Component
     public TimeSpan NextAllowedOnset;
 
     public TimeSpan NextAllowedGasOnset;
+
+    public HashSet<string> RolledMedicines = new();
 }
