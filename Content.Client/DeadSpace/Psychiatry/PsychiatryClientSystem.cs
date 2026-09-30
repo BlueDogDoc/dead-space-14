@@ -508,9 +508,18 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
             fake = _sprites.AddLayer(ent, new SpriteSpecifier.Rsi(remap.DrawRsi, remap.DrawState));
             _sprites.LayerMapSet(ent, RemapLayer.Fake, fake);
         }
-        else
+        else if (!FakeLayerMatches(sprite, fake, remap))
         {
             _sprites.LayerSetRsi(ent, RemapLayer.Fake, remap.DrawRsi, remap.DrawState);
+        }
+
+        // Спрайт со щелчком по сторонам света принимает только один кадр направления.
+        // Картинка подмены обычно смотрит в четыре стороны, и отладочная проверка рамки роняет клиент,
+        // как только телепорт двигает пешку и рамки пересчитываются.
+        if (sprite.SnapCardinals)
+        {
+            sprite.GranularLayersRendering = true;
+            _sprites.LayerSetRenderingStrategy(ent, RemapLayer.Fake, LayerRenderingStrategy.NoRotation);
         }
 
         _sprites.LayerSetColor(ent, RemapLayer.Fake, remap.DrawColor);
@@ -525,6 +534,23 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
                 _sprites.LayerSetVisible(ent, i, false);
             i++;
         }
+    }
+
+    private static bool FakeLayerMatches(SpriteComponent sprite, int index, PsychiatryRemapComponent remap)
+    {
+        var seen = 0;
+        foreach (ISpriteLayer layer in sprite.AllLayers)
+        {
+            if (seen == index)
+            {
+                return layer.RsiState == remap.DrawState
+                       && layer.Rsi?.Path.ToString() == remap.DrawRsi.ToString();
+            }
+
+            seen++;
+        }
+
+        return false;
     }
 
     private void Restore(EntityUid uid)

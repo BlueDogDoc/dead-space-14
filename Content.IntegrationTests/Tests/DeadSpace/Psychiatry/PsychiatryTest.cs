@@ -5,6 +5,7 @@ using Content.Shared.Body.Components;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Damage;
 using Content.Shared.Damage.Systems;
+using Content.Shared.DeadSpace.CCCCVars;
 using Content.Shared.DeadSpace.Psychiatry;
 using Content.Shared.DeadSpace.Skills.Components;
 using Content.Shared.DeadSpace.Skills.Prototypes;
@@ -126,6 +127,45 @@ public sealed class PsychiatryTest : InteractionTest
             psych.ApplyNew(SPlayer, SchizophreniaStage.Acute, pillForced: false, reason: "test");
             psych.AdjustStage(SPlayer, -2, "lobotomy-test");
             Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Latent));
+        });
+    }
+
+    [Test]
+    public async Task LobotomyClearsAcute()
+    {
+        await SpawnTarget("MobHuman");
+        await Server.WaitPost(() =>
+        {
+            Server.CfgMan.SetCVar(CCCCVars.PsychiatryLobotomyFaultChance, 0f);
+            var psych = SEntMan.System<PsychiatrySystem>();
+            psych.ApplyNew(STarget!.Value, SchizophreniaStage.Acute, pillForced: false, reason: "test");
+            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(STarget!.Value), Is.True);
+        });
+        await InteractUsing("LobotomyTool");
+        await RunSeconds(14f);
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(STarget!.Value), Is.False);
+            Server.CfgMan.SetCVar(CCCCVars.PsychiatryLobotomyFaultChance, 0.30f);
+        });
+    }
+
+    [Test]
+    public async Task LobotomyClearsLatent()
+    {
+        await SpawnTarget("MobHuman");
+        await Server.WaitPost(() =>
+        {
+            Server.CfgMan.SetCVar(CCCCVars.PsychiatryLobotomyFaultChance, 0f);
+            var psych = SEntMan.System<PsychiatrySystem>();
+            psych.ApplyNew(STarget!.Value, SchizophreniaStage.Latent, pillForced: false, reason: "test");
+        });
+        await InteractUsing("LobotomyTool");
+        await RunSeconds(14f);
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(STarget!.Value), Is.False);
+            Server.CfgMan.SetCVar(CCCCVars.PsychiatryLobotomyFaultChance, 0.30f);
         });
     }
 

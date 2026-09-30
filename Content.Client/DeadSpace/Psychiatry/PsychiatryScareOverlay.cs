@@ -153,7 +153,10 @@ public sealed class PsychiatryScareOverlay : Overlay
             return cached;
 
         Texture? tex = null;
-        if (_resources.TryGetResource<RSIResource>(path, out var rsi) && rsi.RSI.TryGetState(state, out var st))
+        var rooted = path.StartsWith("/Textures/", StringComparison.Ordinal)
+            ? path
+            : "/Textures/" + path.TrimStart('/');
+        if (_resources.TryGetResource<RSIResource>(rooted, out var rsi) && rsi.RSI.TryGetState(state, out var st))
         {
             var frames = st.GetFrames(RsiDirection.South);
             if (frames.Length > 0)
@@ -189,21 +192,16 @@ public sealed class PsychiatryScareOverlay : Overlay
             else if (tex == null && fx.FallbackState != null)
                 tex = Frame(fx.Path, fx.FallbackState);
 
+            if (tex == null)
+                continue;
+
             var wobble = fx.Wobble
                 ? new Vector2(0f, MathF.Sin(t * 3f + fx.Phase) * 0.15f)
                 : Vector2.Zero;
             var tint = Color.White.WithAlpha(0.5f + 0.45f * fade);
             var size = fx.Size.X > 0f && fx.Size.Y > 0f ? fx.Size : Vector2.One;
-
-            if (tex != null)
-            {
-                var angle = fx.Rotate ? fx.Angle : 0f;
-                handle.DrawTextureRect(tex, new Box2Rotated(Box2.CenteredAround(pos + wobble, size), angle, pos + wobble), tint);
-            }
-            else
-            {
-                handle.DrawRect(Box2.CenteredAround(pos + wobble, size), new Color(0.9f, 0.95f, 1f, tint.A));
-            }
+            var angle = fx.Rotate ? fx.Angle : 0f;
+            handle.DrawTextureRect(tex, new Box2Rotated(Box2.CenteredAround(pos + wobble, size), angle, pos + wobble), tint);
         }
     }
 

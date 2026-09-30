@@ -96,8 +96,10 @@ public sealed class PsychiatryWallOverlay : Overlay
             return;
 
         var handle = args.WorldHandle;
-        var pulse = 0.65f + 0.35f * MathF.Sin(_time * 2.8f);
-        var color = new Color(1f, pulse, pulse * 0.85f);
+        // Красный канал тоже дышит. Пульс только по G/B на стене не видно.
+        var wave = 0.5f + 0.5f * MathF.Sin(_time * 2.8f);
+        var pulse = 0.42f + 0.58f * wave;
+        var color = new Color(pulse, pulse * 0.55f, pulse * 0.48f);
         var size = new Vector2(1f, 1f);
 
         foreach (var pos in _draw)
