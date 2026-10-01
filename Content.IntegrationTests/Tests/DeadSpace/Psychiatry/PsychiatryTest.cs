@@ -21,6 +21,8 @@ namespace Content.IntegrationTests.Tests.DeadSpace.Psychiatry;
 [TestOf(typeof(SchizophreniaComponent))]
 public sealed class PsychiatryTest : InteractionTest
 {
+    private static readonly ProtoId<PsychiatryRemapPrototype> MeatWallRemap = "PsychiatryRemapMeatWall";
+
     protected override string PlayerPrototype => "MobHuman";
 
     [Test]
@@ -239,7 +241,7 @@ public sealed class PsychiatryTest : InteractionTest
         await Server.WaitAssertion(() =>
         {
             var protos = Server.ResolveDependency<IPrototypeManager>();
-            Assert.That(protos.TryIndex<PsychiatryRemapPrototype>("PsychiatryRemapMeatWall", out var wall), Is.True);
+            Assert.That(protos.TryIndex(MeatWallRemap, out var wall), Is.True);
             Assert.That(wall!.Sprite, Is.InstanceOf<SpriteSpecifier.Rsi>());
             Assert.That(((SpriteSpecifier.Rsi) wall.Sprite).RsiState, Is.EqualTo("full"));
         });

@@ -322,8 +322,7 @@
   parent: GasCanister
   id: GasCanisterPsychogen
   name: psychogen canister
-  suffix: Event
-  description: An event canister of psychogen gas. Open the release valve and it floods the room. Breathing it gives a biological schizophrenia.
+  description: Open the release valve and it floods the room. Breathing it gives a biological schizophrenia.
   components:
   - type: Sprite
     layers:

@@ -108,12 +108,24 @@
   - psychiatry-phrase-crime-3
   - psychiatry-phrase-crime-4
   - psychiatry-phrase-crime-5
+  - psychiatry-phrase-crime-6
+  - psychiatry-phrase-crime-7
+  - psychiatry-phrase-crime-8
+  - psychiatry-phrase-crime-9
+  - psychiatry-phrase-crime-10
   mockery:
   - psychiatry-phrase-mockery-1
   - psychiatry-phrase-mockery-2
   - psychiatry-phrase-mockery-3
   - psychiatry-phrase-mockery-4
   - psychiatry-phrase-mockery-5
+  - psychiatry-phrase-mockery-6
+  - psychiatry-phrase-mockery-7
+  - psychiatry-phrase-mockery-8
+  - psychiatry-phrase-mockery-9
+  - psychiatry-phrase-mockery-10
+  - psychiatry-phrase-mockery-11
+  - psychiatry-phrase-mockery-12
   neutral:
   - psychiatry-phrase-neutral-1
   - psychiatry-phrase-neutral-2
@@ -153,6 +165,23 @@
   - psychiatry-phrase-radio-11
   - psychiatry-phrase-radio-12
   - psychiatry-phrase-radio-13
+  - psychiatry-phrase-radio-14
+  - psychiatry-phrase-radio-15
+  - psychiatry-phrase-radio-16
+  - psychiatry-phrase-radio-17
+  - psychiatry-phrase-radio-18
+  - psychiatry-phrase-radio-19
+  - psychiatry-phrase-radio-20
+  - psychiatry-phrase-radio-21
+  - psychiatry-phrase-radio-22
+  - psychiatry-phrase-radio-23
+  - psychiatry-phrase-radio-24
+  - psychiatry-phrase-radio-25
+  - psychiatry-phrase-radio-26
+  - psychiatry-phrase-radio-27
+  - psychiatry-phrase-radio-28
+  - psychiatry-phrase-radio-29
+  - psychiatry-phrase-radio-30
   fakeNames:
   - psychiatry-fake-name-1
   - psychiatry-fake-name-2

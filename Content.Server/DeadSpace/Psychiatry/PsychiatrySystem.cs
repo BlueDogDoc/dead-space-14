@@ -1,10 +1,12 @@
 // Мёртвый Космос, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
 
+using Content.Server.Access.Components;
 using Content.Server.Administration.Logs;
 using Content.Server.Body.Systems;
 using Content.Server.DeadSpace.Skill;
 using Content.Server.Popups;
 using Content.Server.Traits.Assorted;
+using Content.Shared.Access.Components;
 using Content.Shared.Atmos.Components;
 using Content.Shared.Body.Components;
 using Content.Shared.Chemistry.Components;
@@ -15,11 +17,14 @@ using Content.Shared.DeadSpace.CCCCVars;
 using Content.Shared.DeadSpace.Psychiatry;
 using Content.Shared.DeadSpace.Skills.Prototypes;
 using Content.Shared.FixedPoint;
+using Content.Shared.Humanoid;
 using Content.Shared.IdentityManagement;
 using Content.Shared.Inventory;
 using Content.Shared.Medical;
 using Content.Shared.Mobs.Components;
+using Content.Shared.PDA;
 using Content.Shared.Popups;
+using Content.Shared.Radio.Components;
 using Content.Shared.Roles;
 using Content.Shared.Roles.Jobs;
 using Content.Shared.Traits.Assorted;
@@ -471,39 +476,34 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         string message;
         var job = "";
         var jobColor = "#32cd32";
-        if (asRadio)
+        if (asRadio && TryPickCrew(uid, out speaker, out job, out jobColor))
         {
-            pool = phrases.Radio;
-            speaker = phrases.RadioNames.Count > 0
-                ? Loc.GetString(_random.Pick(phrases.RadioNames))
-                : Loc.GetString("psychiatry-radio-name-default");
-            if (phrases.RadioJobs.Count > 0
-                && _proto.TryIndex(_random.Pick(phrases.RadioJobs), out JobPrototype? jobProto))
-            {
-                job = jobProto.LocalizedName;
-                if (_jobs.TryGetPrimaryDepartment(jobProto.ID, out var department)
-                    || _jobs.TryGetDepartment(jobProto.ID, out department))
-                    jobColor = department.Color.ToHex();
-            }
-            else
-            {
-                job = Loc.GetString("psychiatry-radio-job-default");
-            }
-
-            message = Loc.GetString(_random.Pick(pool), ("name", victim));
+            message = Loc.GetString(_random.Pick(phrases.Radio), ("name", victim));
         }
         else
         {
+            asRadio = false;
             pool = new List<string>(pool);
             if (phrases.Addressed.Count > 0)
                 pool.AddRange(phrases.Addressed);
             if (pool.Count == 0)
                 return;
 
-            message = Loc.GetString(_random.Pick(pool), ("name", victim));
-            speaker = phrases.FakeNames.Count > 0
-                ? Loc.GetString(_random.Pick(phrases.FakeNames))
-                : Loc.GetString("psychiatry-fake-name-default");
+            var locId = _random.Pick(pool);
+            message = Loc.GetString(locId, ("name", victim));
+            if ((phrases.Crime.Contains(locId) || phrases.Mockery.Contains(locId))
+                && TryPickCrew(uid, out speaker, out job, out jobColor))
+            {
+                asRadio = true;
+            }
+            else
+            {
+                speaker = phrases.FakeNames.Count > 0
+                    ? Loc.GetString(_random.Pick(phrases.FakeNames))
+                    : Loc.GetString("psychiatry-fake-name-default");
+                job = "";
+                jobColor = "#32cd32";
+            }
         }
 
         var whisper = new PsychiatryWhisperEvent(speaker, message, null)
@@ -517,6 +517,98 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         RaiseLocalEvent(uid, ref heard);
         var fear = new PsychiatryBrainActivityEvent(PsychiatryBrainRegion.Fear, _cfg.GetCVar(CCCCVars.PsychiatryUnrealFear));
         RaiseLocalEvent(uid, ref fear);
+    }
+
+    private bool TryPickCrew(EntityUid victim, out string speaker, out string job, out string jobColor)
+    {
+        speaker = "";
+        job = "";
+        jobColor = "#32cd32";
+
+        var crew = new List<EntityUid>();
+        var query = EntityQueryEnumerator<ActorComponent, HumanoidAppearanceComponent>();
+        while (query.MoveNext(out var crewUid, out _, out _))
+        {
+            if (crewUid == victim)
+                continue;
+
+            crew.Add(crewUid);
+        }
+
+        if (crew.Count == 0)
+            return false;
+
+        var pick = _random.Pick(crew);
+        speaker = Identity.Name(pick, EntityManager);
+        if (!_inventory.TryGetSlotEntity(pick, "id", out var idUid))
+            return true;
+
+        if (TryComp<PdaComponent>(idUid, out var pda) && pda.ContainedId is { } card)
+            idUid = card;
+
+        if (!TryComp<IdCardComponent>(idUid, out var id))
+            return true;
+
+        if (!string.IsNullOrWhiteSpace(id.LocalizedJobTitle))
+            job = id.LocalizedJobTitle;
+
+        if (TryDepartmentColor(id, idUid.Value, out var hex))
+            jobColor = hex;
+        else if (_inventory.TryGetSlotEntity(pick, "ears", out var ears)
+                 && TryComp<HeadsetComponent>(ears, out var headset))
+            jobColor = headset.Color.ToHexNoAlpha();
+
+        return true;
+    }
+
+    /// <summary>
+    /// Department colors are the radio colors: cargo brown, medical blue, security blue.
+    /// Preset cards fill <see cref="IdCardComponent.JobDepartments"/> and leave JobPrototype empty.
+    /// </summary>
+    private bool TryDepartmentColor(IdCardComponent id, EntityUid idUid, out string hex)
+    {
+        if (PickDepartment(id.JobDepartments, out var department))
+        {
+            hex = department.Color.ToHexNoAlpha();
+            return true;
+        }
+
+        ProtoId<JobPrototype>? jobId = id.JobPrototype;
+        if (jobId == null && TryComp<PresetIdCardComponent>(idUid, out var preset))
+            jobId = preset.JobName;
+
+        if (jobId is { } job
+            && (_jobs.TryGetPrimaryDepartment(job, out department)
+                || _jobs.TryGetDepartment(job, out department)))
+        {
+            hex = department.Color.ToHexNoAlpha();
+            return true;
+        }
+
+        hex = "";
+        return false;
+    }
+
+    private bool PickDepartment(List<ProtoId<DepartmentPrototype>> departments, out DepartmentPrototype department)
+    {
+        DepartmentPrototype? primary = null;
+        DepartmentPrototype? fallback = null;
+        foreach (var departmentId in departments)
+        {
+            if (!_proto.TryIndex(departmentId, out DepartmentPrototype? proto))
+                continue;
+
+            if (proto.Primary)
+            {
+                primary = proto;
+                break;
+            }
+
+            fallback ??= proto;
+        }
+
+        department = (primary ?? fallback)!;
+        return primary != null || fallback != null;
     }
 
     public bool HasAdvancedTreatment(EntityUid user) =>

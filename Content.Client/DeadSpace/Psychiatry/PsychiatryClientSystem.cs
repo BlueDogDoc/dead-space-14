@@ -707,18 +707,21 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
     private string RadioWhisper(PsychiatryWhisperEvent ev)
     {
         const string channelColor = "#32cd32";
-        var channel = FormattedMessage.EscapeText($"[{Loc.GetString("chat-radio-common")}]");
-        var name = FormattedMessage.EscapeText(ev.SpeakerName);
-        var message = FormattedMessage.EscapeText(ev.Message);
-        var verb = Loc.GetString("psychiatry-radio-verb");
-        var language = Loc.GetString("psychiatry-radio-language");
-        var job = "";
-        if (!string.IsNullOrEmpty(ev.Job))
-        {
-            var color = string.IsNullOrEmpty(ev.JobColor) ? channelColor : ev.JobColor;
-            job = $"[color={color}]{FormattedMessage.EscapeText($"[{ev.Job}]")}[/color] ";
-        }
+        var headset = string.IsNullOrEmpty(ev.JobColor) ? channelColor : ev.JobColor;
+        var job = string.IsNullOrEmpty(ev.Job)
+            ? ""
+            : $"\\[{FormattedMessage.EscapeText(ev.Job)}\\] ";
 
-        return $"[bold][color={channelColor}]{channel} [/color]{job}[color={channelColor}]{name}[/bold][/color][color={channelColor}] {verb} ({language}): \"{message}\"[/color]";
+        return Loc.GetString("chat-radio-message-wrap-lang",
+            ("channel-color", channelColor),
+            ("fontType", "Default"),
+            ("fontSize", 12),
+            ("verb", Loc.GetString("psychiatry-radio-verb")),
+            ("language", Loc.GetString("psychiatry-radio-language")),
+            ("channel", $"\\[{Loc.GetString("chat-radio-common")}\\]"),
+            ("name", FormattedMessage.EscapeText(ev.SpeakerName)),
+            ("message", FormattedMessage.EscapeText(ev.Message)),
+            ("headset-color", headset),
+            ("job", job));
     }
 }
