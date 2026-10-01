@@ -60,6 +60,8 @@
     ChemistryBottleInfectizine: 1 # DS14
     ToolAlcoTester: 3 # DS14
     ChemistryBottleSaline: 4
+    ShockTherapyPaddles: 1 # DS14
+    LobotomyTool: 1 # DS14
   contrabandInventory:
     PillCanisterRandom: 3
     PillSpaceDrugs: 3

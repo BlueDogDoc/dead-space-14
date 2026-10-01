@@ -9,12 +9,14 @@
   - type: Clothing
     sprite: Clothing/Mask/gas.rsi
   - type: BreathMask
+  - type: PsychogenFilter
   - type: IngestionBlocker
   - type: IdentityBlocker
   - type: Tag
     tags:
     - HamsterWearable
     - WhitelistChameleon
+    - gasmask
   - type: HideLayerClothing
     layers:
       Snout: Mask
