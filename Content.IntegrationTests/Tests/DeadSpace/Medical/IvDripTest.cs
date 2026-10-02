@@ -4,12 +4,16 @@ using Content.Shared.Body.Systems;
 using Content.Shared.Chemistry.Components;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Chemistry.Prototypes;
+using Content.Shared.Damage.Components;
 using Content.Shared.DeadSpace.Medical.IvDrip;
 using Content.Shared.FixedPoint;
+using Content.Shared.Fluids.Components;
 using Content.Shared.Foldable;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Interaction;
+using Content.Shared.Interaction.Events;
 using Content.Shared.Item;
+using Content.Shared.Standing;
 using Content.Shared.VendingMachines;
 using Robust.Shared.GameObjects;
 using Robust.Shared.IoC;
@@ -27,6 +31,7 @@ public sealed class IvDripTest : InteractionTest
     private static readonly EntProtoId DripFolded = "IvDripFolded";
     private static readonly EntProtoId Drip = "IvDrip";
     private static readonly EntProtoId TargetProto = "MobHuman";
+    private static readonly EntProtoId Bloodpack = "Bloodpack";
     private static readonly EntProtoId SyringeProto = "Syringe";
     private static readonly ProtoId<InjectorModePrototype> SyringeInjectMode = "SyringeInjectMode";
     private static readonly ProtoId<InjectorModePrototype> SyringeDrawMode = "SyringeDrawMode";
@@ -85,9 +90,9 @@ public sealed class IvDripTest : InteractionTest
             foldable.SetFolded(drip, SEntMan.GetComponent<FoldableComponent>(drip), false);
 
             var solutions = SEntMan.System<SharedSolutionContainerSystem>();
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out var soln, out _), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out var soln, out _), Is.True);
             Assert.That(solutions.TryAddReagent(soln!.Value, Blood, FixedPoint2.New(50)), Is.True);
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out _, out var tank), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out _, out var tank), Is.True);
             startVol = tank!.Volume;
 
             var dripComp = SEntMan.GetComponent<IvDripComponent>(drip);
@@ -106,7 +111,7 @@ public sealed class IvDripTest : InteractionTest
         await Server.WaitAssertion(() =>
         {
             var solutions = SEntMan.System<SharedSolutionContainerSystem>();
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out _, out var tank), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out _, out var tank), Is.True);
             Assert.That(tank!.Volume, Is.LessThan(startVol));
         });
     }
@@ -138,7 +143,7 @@ public sealed class IvDripTest : InteractionTest
             SEntMan.EventBus.RaiseLocalEvent(drip, ev);
             Assert.That(ev.Handled, Is.True);
 
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out _, out var tank), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out _, out var tank), Is.True);
             Assert.That(tank!.Volume, Is.EqualTo(FixedPoint2.New(5)));
             Assert.That(tank.ContainsPrototype(Bicaridine), Is.True);
             Assert.That(solutions.TryGetSolution(syringe, "injector", out _, out var left), Is.True);
@@ -161,7 +166,7 @@ public sealed class IvDripTest : InteractionTest
                 .SetFolded(drip, SEntMan.GetComponent<FoldableComponent>(drip), false);
 
             var solutions = SEntMan.System<SharedSolutionContainerSystem>();
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out var tankSoln, out _), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out var tankSoln, out _), Is.True);
             Assert.That(solutions.TryAddReagent(tankSoln!.Value, Bicaridine, FixedPoint2.New(20)), Is.True);
 
             var injector = SEntMan.GetComponent<InjectorComponent>(syringe);
@@ -173,7 +178,7 @@ public sealed class IvDripTest : InteractionTest
             SEntMan.EventBus.RaiseLocalEvent(drip, ev);
             Assert.That(ev.Handled, Is.False);
 
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out _, out var tank), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out _, out var tank), Is.True);
             Assert.That(tank!.Volume, Is.EqualTo(FixedPoint2.New(20)));
             Assert.That(solutions.TryGetSolution(syringe, "injector", out _, out var left), Is.True);
             Assert.That(left!.Volume, Is.EqualTo(FixedPoint2.Zero));
@@ -194,13 +199,13 @@ public sealed class IvDripTest : InteractionTest
                 .SetFolded(drip, SEntMan.GetComponent<FoldableComponent>(drip), false);
 
             var solutions = SEntMan.System<SharedSolutionContainerSystem>();
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out var soln, out _), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out var soln, out _), Is.True);
             Assert.That(solutions.TryAddReagent(soln!.Value, Bicaridine, FixedPoint2.New(40)), Is.True);
 
             SEntMan.System<SharedIvDripSystem>()
                 .ClearTank((drip, SEntMan.GetComponent<IvDripComponent>(drip)), SPlayer);
 
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out _, out var tank), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out _, out var tank), Is.True);
             Assert.That(tank!.Volume, Is.EqualTo(FixedPoint2.Zero));
         });
     }
@@ -220,7 +225,7 @@ public sealed class IvDripTest : InteractionTest
                 .SetFolded(drip, SEntMan.GetComponent<FoldableComponent>(drip), false);
 
             var solutions = SEntMan.System<SharedSolutionContainerSystem>();
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out var soln, out _), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out var soln, out _), Is.True);
             Assert.That(solutions.TryAddReagent(soln!.Value, Bicaridine, FixedPoint2.New(40)), Is.True);
 
             var dripComp = SEntMan.GetComponent<IvDripComponent>(drip);
@@ -235,7 +240,7 @@ public sealed class IvDripTest : InteractionTest
 
             Assert.That(SEntMan.System<SharedIvDripSystem>().TryToggleNeedle((drip, dripComp), SPlayer), Is.True);
 
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out _, out var tank), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out _, out var tank), Is.True);
             Assert.That(tank!.Volume, Is.LessThan(FixedPoint2.New(40)));
             Assert.That(tank.Volume, Is.GreaterThan(FixedPoint2.Zero));
             Assert.That(tank.ContainsPrototype(Bicaridine), Is.True);
@@ -260,7 +265,7 @@ public sealed class IvDripTest : InteractionTest
                 .SetFolded(drip, SEntMan.GetComponent<FoldableComponent>(drip), false);
 
             var solutions = SEntMan.System<SharedSolutionContainerSystem>();
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out var soln, out _), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out var soln, out _), Is.True);
             Assert.That(solutions.TryAddReagent(soln!.Value, Bicaridine, FixedPoint2.New(40)), Is.True);
 
             var dripComp = SEntMan.GetComponent<IvDripComponent>(drip);
@@ -273,7 +278,7 @@ public sealed class IvDripTest : InteractionTest
 
             Assert.That(SEntMan.System<SharedIvDripSystem>().TryToggleNeedle((drip, dripComp), SPlayer), Is.True);
 
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out _, out var tank), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out _, out var tank), Is.True);
             Assert.That(tank!.Volume, Is.EqualTo(FixedPoint2.New(40)));
         });
     }
@@ -298,9 +303,9 @@ public sealed class IvDripTest : InteractionTest
                 .SetFolded(drip, SEntMan.GetComponent<FoldableComponent>(drip), false);
 
             var solutions = SEntMan.System<SharedSolutionContainerSystem>();
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out var soln, out _), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out var soln, out _), Is.True);
             Assert.That(solutions.TryAddReagent(soln!.Value, Bicaridine, FixedPoint2.New(40)), Is.True);
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out _, out var tank), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out _, out var tank), Is.True);
             tankBefore = tank!.Volume;
             bloodBefore = SEntMan.System<BloodstreamSystem>().GetBloodLevel(patient);
 
@@ -324,10 +329,11 @@ public sealed class IvDripTest : InteractionTest
             Assert.That(dripComp.AttachedPatient, Is.Null);
 
             var solutions = SEntMan.System<SharedSolutionContainerSystem>();
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out _, out var tank), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out _, out var tank), Is.True);
             Assert.That(tank!.Volume, Is.LessThan(tankBefore));
             Assert.That(tank.ContainsPrototype(Bicaridine), Is.True);
             Assert.That(SEntMan.System<BloodstreamSystem>().GetBloodLevel(patient), Is.LessThan(bloodBefore));
+            Assert.That(SEntMan.GetComponent<DamageableComponent>(patient).TotalDamage, Is.GreaterThan(FixedPoint2.Zero));
         });
     }
 
@@ -434,9 +440,9 @@ public sealed class IvDripTest : InteractionTest
                 .SetFolded(drip, SEntMan.GetComponent<FoldableComponent>(drip), false);
 
             var solutions = SEntMan.System<SharedSolutionContainerSystem>();
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out var soln, out _), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out var soln, out _), Is.True);
             Assert.That(solutions.TryAddReagent(soln!.Value, Bicaridine, FixedPoint2.New(20)), Is.True);
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out _, out var tank), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out _, out var tank), Is.True);
             startVol = tank!.Volume;
 
             var dripComp = SEntMan.GetComponent<IvDripComponent>(drip);
@@ -450,7 +456,7 @@ public sealed class IvDripTest : InteractionTest
         await Server.WaitAssertion(() =>
         {
             var solutions = SEntMan.System<SharedSolutionContainerSystem>();
-            Assert.That(solutions.TryGetSolution(drip, IvDripComponent.TankSolutionId, out _, out var tank), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out _, out var tank), Is.True);
             Assert.That(tank!.Volume, Is.LessThan(startVol));
         });
     }
@@ -516,6 +522,260 @@ public sealed class IvDripTest : InteractionTest
             Assert.That(SEntMan.Deleted(needle) || !SEntMan.EntityExists(needle), Is.True);
             Assert.That(SEntMan.GetComponent<IvDripComponent>(drip).AttachedPatient, Is.EqualTo(patient));
             Assert.That(SEntMan.GetComponent<IvDripComponent>(drip).ActiveNeedle, Is.Null);
+        });
+    }
+
+    [Test]
+    public async Task FoldedCanBePickedUpAndDoesNotGiveANeedle()
+    {
+        await SpawnTarget(DripFolded);
+
+        await Server.WaitAssertion(() =>
+        {
+            var ev = new GettingPickedUpAttemptEvent(SPlayer, STarget!.Value, showPopup: false);
+            SEntMan.EventBus.RaiseLocalEvent(STarget.Value, ev);
+            Assert.That(ev.Cancelled, Is.False);
+
+            Assert.That(SEntMan.System<SharedIvDripSystem>().TryGiveNeedle((STarget.Value, Comp<IvDripComponent>()), SPlayer), Is.False);
+            Assert.That(SEntMan.EntityQuery<IvDripNeedleComponent>().Count(), Is.EqualTo(0));
+        });
+    }
+
+    [Test]
+    public async Task PrototypeSuppliesTheRates()
+    {
+        await SpawnTarget(Drip);
+
+        await Server.WaitAssertion(() =>
+        {
+            var comp = Comp<IvDripComponent>();
+            Assert.That(comp.TankSolution, Is.EqualTo("tank"));
+            Assert.That(comp.NeedlePrototype.Id, Is.EqualTo("IvDripNeedle"));
+            Assert.That(comp.SlowTransfer, Is.EqualTo(0.5f));
+            Assert.That(comp.MediumTransfer, Is.EqualTo(1.5f));
+            Assert.That(comp.FastTransfer, Is.EqualTo(3f));
+            Assert.That(comp.IdleDripTransfer, Is.EqualTo(0.5f));
+            Assert.That(comp.AttachDelay, Is.EqualTo(1.5f));
+            Assert.That(comp.YankBlood, Is.EqualTo(5f));
+            Assert.That(comp.MinYankSpill, Is.EqualTo(1f));
+            Assert.That(comp.BloodpackFillAmount, Is.EqualTo(20f));
+            Assert.That(comp.BloodReagent.Id, Is.EqualTo("Blood"));
+            Assert.That(comp.BloodpackTag.Id, Is.EqualTo("Bloodpack"));
+            Assert.That(comp.YankDamage.DamageDict["Piercing"], Is.EqualTo(FixedPoint2.New(6)));
+            Assert.That(comp.YankDamage.DamageDict["Slash"], Is.EqualTo(FixedPoint2.New(4)));
+            Assert.That(comp.SliderStates[IvDripSpeed.Fast], Is.EqualTo("slider_fast"));
+        });
+    }
+
+    [Test]
+    public async Task OffSpeedMovesNoFluid()
+    {
+        await AddAtmosphere();
+
+        EntityUid drip = default;
+        FixedPoint2 startVol = default;
+
+        await Server.WaitPost(() =>
+        {
+            var coords = SEntMan.GetComponent<TransformComponent>(SPlayer).Coordinates;
+            var patient = SEntMan.SpawnEntity(TargetProto, coords);
+            drip = SEntMan.SpawnEntity(Drip, coords.Offset(new Vector2(1.0f, 0f)));
+            SEntMan.System<FoldableSystem>().SetFolded(drip, SEntMan.GetComponent<FoldableComponent>(drip), false);
+
+            var solutions = SEntMan.System<SharedSolutionContainerSystem>();
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out var soln, out _), Is.True);
+            Assert.That(solutions.TryAddReagent(soln!.Value, Bicaridine, FixedPoint2.New(20)), Is.True);
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out _, out var filled), Is.True);
+            startVol = filled!.Volume;
+
+            var dripComp = SEntMan.GetComponent<IvDripComponent>(drip);
+            dripComp.Speed = IvDripSpeed.Off;
+            dripComp.NextTransfer = TimeSpan.Zero;
+            dripComp.AttachedPatient = patient;
+            SEntMan.Dirty(drip, dripComp);
+            var connected = SEntMan.EnsureComponent<IvDripConnectedComponent>(patient);
+            connected.Drip = drip;
+        });
+
+        await RunSeconds(1.2f);
+
+        await Server.WaitAssertion(() =>
+        {
+            var solutions = SEntMan.System<SharedSolutionContainerSystem>();
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out _, out var tank), Is.True);
+            Assert.That(tank!.Volume, Is.EqualTo(startVol));
+        });
+    }
+
+    [Test]
+    public async Task BloodpackFillsTankWithBlood()
+    {
+        await AddAtmosphere();
+
+        await Server.WaitAssertion(() =>
+        {
+            var coords = SEntMan.GetComponent<TransformComponent>(SPlayer).Coordinates;
+            var drip = SEntMan.SpawnEntity(Drip, coords.Offset(new Vector2(1.0f, 0f)));
+            var pack = SEntMan.SpawnEntity(Bloodpack, coords);
+            SEntMan.System<FoldableSystem>().SetFolded(drip, SEntMan.GetComponent<FoldableComponent>(drip), false);
+
+            var ev = new InteractUsingEvent(SPlayer, pack, drip, coords);
+            SEntMan.EventBus.RaiseLocalEvent(drip, ev);
+            Assert.That(ev.Handled, Is.True);
+
+            var solutions = SEntMan.System<SharedSolutionContainerSystem>();
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out _, out var tank), Is.True);
+            Assert.That(tank!.Volume, Is.EqualTo(FixedPoint2.New(20)));
+            Assert.That(tank.ContainsPrototype(Blood), Is.True);
+        });
+    }
+
+    [Test]
+    public async Task NeedleClickAttachesThePatient()
+    {
+        await AddAtmosphere();
+
+        EntityUid drip = default;
+        EntityUid patient = default;
+
+        await Server.WaitPost(() =>
+        {
+            var coords = SEntMan.GetComponent<TransformComponent>(SPlayer).Coordinates;
+            patient = SEntMan.SpawnEntity(TargetProto, coords);
+            drip = SEntMan.SpawnEntity(Drip, coords.Offset(new Vector2(1.0f, 0f)));
+            SEntMan.System<FoldableSystem>().SetFolded(drip, SEntMan.GetComponent<FoldableComponent>(drip), false);
+
+            var system = SEntMan.System<SharedIvDripSystem>();
+            Assert.That(system.TryGiveNeedle((drip, SEntMan.GetComponent<IvDripComponent>(drip)), SPlayer), Is.True);
+            var needle = SEntMan.GetComponent<IvDripComponent>(drip).ActiveNeedle!.Value;
+
+            var ev = new AfterInteractEvent(SPlayer, needle, patient, coords, canReach: true);
+            SEntMan.EventBus.RaiseLocalEvent(needle, ev);
+            Assert.That(ev.Handled, Is.True);
+        });
+
+        await AwaitDoAfters();
+
+        await Server.WaitAssertion(() =>
+        {
+            var dripComp = SEntMan.GetComponent<IvDripComponent>(drip);
+            Assert.That(dripComp.AttachedPatient, Is.EqualTo(patient));
+            Assert.That(dripComp.ActiveNeedle, Is.Null);
+            Assert.That(SEntMan.GetComponent<IvDripConnectedComponent>(patient).Drip, Is.EqualTo(drip));
+            Assert.That(SEntMan.EntityQuery<IvDripNeedleComponent>().Count(), Is.EqualTo(0));
+        });
+    }
+
+    [Test]
+    public async Task NeedleClickTooFarDoesNotAttach()
+    {
+        await AddAtmosphere();
+
+        await Server.WaitAssertion(() =>
+        {
+            var coords = SEntMan.GetComponent<TransformComponent>(SPlayer).Coordinates;
+            var patient = SEntMan.SpawnEntity(TargetProto, coords.Offset(new Vector2(5f, 0f)));
+            var drip = SEntMan.SpawnEntity(Drip, coords.Offset(new Vector2(1.0f, 0f)));
+            SEntMan.System<FoldableSystem>().SetFolded(drip, SEntMan.GetComponent<FoldableComponent>(drip), false);
+
+            var system = SEntMan.System<SharedIvDripSystem>();
+            Assert.That(system.TryGiveNeedle((drip, SEntMan.GetComponent<IvDripComponent>(drip)), SPlayer), Is.True);
+            var needle = SEntMan.GetComponent<IvDripComponent>(drip).ActiveNeedle!.Value;
+
+            var ev = new AfterInteractEvent(SPlayer, needle, patient, coords, canReach: true);
+            SEntMan.EventBus.RaiseLocalEvent(needle, ev);
+
+            Assert.That(SEntMan.GetComponent<IvDripComponent>(drip).AttachedPatient, Is.Null);
+            Assert.That(SEntMan.HasComponent<IvDripConnectedComponent>(patient), Is.False);
+            Assert.That(ActiveDoAfters.Count(), Is.EqualTo(0));
+        });
+    }
+
+    [Test]
+    public async Task DroppedNeedleVanishes()
+    {
+        await AddAtmosphere();
+
+        EntityUid needle = default;
+
+        await Server.WaitPost(() =>
+        {
+            var coords = SEntMan.GetComponent<TransformComponent>(SPlayer).Coordinates;
+            var drip = SEntMan.SpawnEntity(Drip, coords.Offset(new Vector2(1.0f, 0f)));
+            SEntMan.System<FoldableSystem>().SetFolded(drip, SEntMan.GetComponent<FoldableComponent>(drip), false);
+
+            var system = SEntMan.System<SharedIvDripSystem>();
+            Assert.That(system.TryGiveNeedle((drip, SEntMan.GetComponent<IvDripComponent>(drip)), SPlayer), Is.True);
+            needle = SEntMan.GetComponent<IvDripComponent>(drip).ActiveNeedle!.Value;
+            SEntMan.EventBus.RaiseLocalEvent(needle, new DroppedEvent(SPlayer));
+        });
+
+        await RunTicks(2);
+
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(SEntMan.Deleted(needle) || !SEntMan.EntityExists(needle), Is.True);
+        });
+    }
+
+    [Test]
+    public async Task StandingAfterBeingDownYanksTheLine()
+    {
+        await AddAtmosphere();
+
+        EntityUid drip = default;
+        EntityUid patient = default;
+        float bloodBefore = default;
+
+        await Server.WaitPost(() =>
+        {
+            var coords = SEntMan.GetComponent<TransformComponent>(SPlayer).Coordinates;
+            patient = SEntMan.SpawnEntity(TargetProto, coords);
+            drip = SEntMan.SpawnEntity(Drip, coords.Offset(new Vector2(1.0f, 0f)));
+            SEntMan.System<FoldableSystem>().SetFolded(drip, SEntMan.GetComponent<FoldableComponent>(drip), false);
+
+            var solutions = SEntMan.System<SharedSolutionContainerSystem>();
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out var soln, out _), Is.True);
+            Assert.That(solutions.TryAddReagent(soln!.Value, Bicaridine, FixedPoint2.New(40)), Is.True);
+            bloodBefore = SEntMan.System<BloodstreamSystem>().GetBloodLevel(patient);
+
+            var dripComp = SEntMan.GetComponent<IvDripComponent>(drip);
+            dripComp.AttachedPatient = patient;
+            dripComp.PatientWasDowned = true;
+            dripComp.Speed = IvDripSpeed.Off;
+            SEntMan.Dirty(drip, dripComp);
+            var connected = SEntMan.EnsureComponent<IvDripConnectedComponent>(patient);
+            connected.Drip = drip;
+            SEntMan.EventBus.RaiseLocalEvent(patient, new StoodEvent());
+        });
+
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(SEntMan.GetComponent<IvDripComponent>(drip).AttachedPatient, Is.Null);
+            Assert.That(SEntMan.HasComponent<IvDripConnectedComponent>(patient), Is.False);
+            Assert.That(SEntMan.System<BloodstreamSystem>().GetBloodLevel(patient), Is.LessThan(bloodBefore));
+        });
+    }
+
+    [Test]
+    public async Task ClearTankDoesNotLeaveAPuddle()
+    {
+        await AddAtmosphere();
+
+        await Server.WaitAssertion(() =>
+        {
+            var coords = SEntMan.GetComponent<TransformComponent>(SPlayer).Coordinates;
+            var drip = SEntMan.SpawnEntity(Drip, coords.Offset(new Vector2(1.0f, 0f)));
+            SEntMan.System<FoldableSystem>().SetFolded(drip, SEntMan.GetComponent<FoldableComponent>(drip), false);
+
+            var solutions = SEntMan.System<SharedSolutionContainerSystem>();
+            Assert.That(solutions.TryGetSolution(drip, SEntMan.GetComponent<IvDripComponent>(drip).TankSolution, out var soln, out _), Is.True);
+            Assert.That(solutions.TryAddReagent(soln!.Value, Bicaridine, FixedPoint2.New(40)), Is.True);
+            var puddles = SEntMan.EntityQuery<PuddleComponent>().Count();
+
+            SEntMan.System<SharedIvDripSystem>().ClearTank((drip, SEntMan.GetComponent<IvDripComponent>(drip)), SPlayer);
+
+            Assert.That(SEntMan.EntityQuery<PuddleComponent>().Count(), Is.EqualTo(puddles));
         });
     }
 }

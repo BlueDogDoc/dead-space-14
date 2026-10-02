@@ -26,6 +26,32 @@
     heldPrefix: inhand
   - type: MultiHandedItem
   - type: IvDrip
+    tankSolution: tank
+    needlePrototype: IvDripNeedle
+    minAttachRange: 0.45
+    maxAttachRange: 1.6
+    maxNeedleRange: 2.25
+    transferIntervalSeconds: 1
+    slowTransfer: 0.5
+    mediumTransfer: 1.5
+    fastTransfer: 3
+    idleDripTransfer: 0.5
+    yankSpillFraction: 0.25
+    bloodpackFillAmount: 20
+    bloodReagent: Blood
+    bloodpackTag: Bloodpack
+    attachDelay: 1.5
+    yankBlood: 5
+    minYankSpill: 1
+    yankDamage:
+      types:
+        Piercing: 6
+        Slash: 4
+    sliderStates:
+      Off: slider_off
+      Slow: slider_slow
+      Medium: slider_medium
+      Fast: slider_fast
   - type: SolutionContainerManager
     solutions:
       tank:

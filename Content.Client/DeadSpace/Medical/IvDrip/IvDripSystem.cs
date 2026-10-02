@@ -38,14 +38,8 @@ public sealed class IvDripSystem : SharedIvDripSystem
             if (_appearance.TryGetData(ent, IvDripVisuals.Speed, out int speedInt))
                 speed = (IvDripSpeed) speedInt;
 
-            var state = speed switch
-            {
-                IvDripSpeed.Slow => "slider_slow",
-                IvDripSpeed.Medium => "slider_medium",
-                IvDripSpeed.Fast => "slider_fast",
-                _ => "slider_off",
-            };
-            _sprite.LayerSetRsiState((ent.Owner, sprite), sliderLayer, state);
+            if (ent.Comp.SliderStates.TryGetValue(speed, out var state))
+                _sprite.LayerSetRsiState((ent.Owner, sprite), sliderLayer, state);
         }
     }
 }

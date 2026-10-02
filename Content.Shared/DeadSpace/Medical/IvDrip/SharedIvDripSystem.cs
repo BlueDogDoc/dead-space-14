@@ -6,7 +6,6 @@ using Content.Shared.Chemistry;
 using Content.Shared.Chemistry.Components;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Chemistry.Prototypes;
-using Content.Shared.Chemistry.Reagent;
 using Content.Shared.Damage;
 using Content.Shared.Damage.Systems;
 using Content.Shared.DoAfter;
@@ -56,9 +55,6 @@ public abstract class SharedIvDripSystem : EntitySystem
     [Dependency] private readonly TagSystem _tag = default!;
     [Dependency] private readonly UseDelaySystem _useDelay = default!;
 
-    private static readonly ProtoId<ReagentPrototype> Blood = "Blood";
-    private static readonly ProtoId<TagPrototype> BloodpackTag = "Bloodpack";
-
     public override void Initialize()
     {
         base.Initialize();
@@ -92,7 +88,7 @@ public abstract class SharedIvDripSystem : EntitySystem
 
     private void OnSolutionChanged(Entity<IvDripComponent> ent, ref SolutionContainerChangedEvent args)
     {
-        if (args.SolutionId != IvDripComponent.TankSolutionId)
+        if (args.SolutionId != ent.Comp.TankSolution)
             return;
 
         UpdateVisuals(ent);
@@ -214,7 +210,7 @@ public abstract class SharedIvDripSystem : EntitySystem
         if (TryComp<FoldableComponent>(ent, out var fold) && fold.IsFolded)
             return;
 
-        if (_tag.HasTag(args.Used, BloodpackTag))
+        if (_tag.HasTag(args.Used, ent.Comp.BloodpackTag))
         {
             if (!TryGetTankSolution(ent, out var soln, out var solution))
                 return;
@@ -232,7 +228,7 @@ public abstract class SharedIvDripSystem : EntitySystem
                 return;
 
             args.Handled = true;
-            _solutions.TryAddReagent(soln, Blood, amount);
+            _solutions.TryAddReagent(soln, ent.Comp.BloodReagent, amount);
             UpdateVisuals(ent);
             _popup.PopupClient(Loc.GetString("iv-drip-bloodpack-filled", ("amount", amount)), ent, args.User);
             return;
@@ -307,7 +303,7 @@ public abstract class SharedIvDripSystem : EntitySystem
         if (args.Handled || args.Target is not { } target || !args.CanReach)
             return;
 
-        if (!TryComp(ent.Comp.Drip, out IvDripComponent? drip))
+        if (ent.Comp.Drip is not { } dripId || !TryComp(dripId, out IvDripComponent? drip))
         {
             DeleteNeedle(ent.Owner);
             return;
@@ -317,7 +313,7 @@ public abstract class SharedIvDripSystem : EntitySystem
             return;
 
         args.Handled = true;
-        TryStartAttach((ent.Comp.Drip, drip), target, args.User, ent.Owner);
+        TryStartAttach((dripId, drip), target, args.User, ent.Owner);
     }
 
     private void OnNeedleDropped(Entity<IvDripNeedleComponent> ent, ref DroppedEvent args)
@@ -327,10 +323,12 @@ public abstract class SharedIvDripSystem : EntitySystem
 
     private void OnNeedleShutdown(Entity<IvDripNeedleComponent> ent, ref ComponentShutdown args)
     {
-        if (TryComp(ent.Comp.Drip, out IvDripComponent? drip) && drip.ActiveNeedle == ent.Owner)
+        if (ent.Comp.Drip is { } dripId
+            && TryComp(dripId, out IvDripComponent? drip)
+            && drip.ActiveNeedle == ent.Owner)
         {
             drip.ActiveNeedle = null;
-            Dirty(ent.Comp.Drip, drip);
+            Dirty(dripId, drip);
         }
     }
 
@@ -448,7 +446,7 @@ public abstract class SharedIvDripSystem : EntitySystem
             return;
         }
 
-        var doAfter = new DoAfterArgs(EntityManager, user, TimeSpan.FromSeconds(1.5),
+        var doAfter = new DoAfterArgs(EntityManager, user, TimeSpan.FromSeconds(drip.Comp.AttachDelay),
             new IvDripAttachDoAfterEvent(), drip, target: patient, used: needle ?? drip.Owner)
         {
             BreakOnMove = true,
@@ -495,7 +493,7 @@ public abstract class SharedIvDripSystem : EntitySystem
 
     public void CycleSpeed(Entity<IvDripComponent> ent, EntityUid? user = null)
     {
-        ent.Comp.Speed = (IvDripSpeed) (((int) ent.Comp.Speed + 1) % 4);
+        ent.Comp.Speed = (IvDripSpeed) (((int) ent.Comp.Speed + 1) % Enum.GetValues<IvDripSpeed>().Length);
         Dirty(ent);
         UpdateVisuals(ent);
 
@@ -538,28 +536,28 @@ public abstract class SharedIvDripSystem : EntitySystem
 
     private void OnConnectedShutdown(Entity<IvDripConnectedComponent> ent, ref ComponentShutdown args)
     {
-        if (TryComp(ent.Comp.Drip, out IvDripComponent? drip) && drip.AttachedPatient == ent.Owner)
+        if (ent.Comp.Drip is { } dripId && TryComp(dripId, out IvDripComponent? drip) && drip.AttachedPatient == ent.Owner)
         {
             drip.AttachedPatient = null;
-            Dirty(ent.Comp.Drip, drip);
+            Dirty(dripId, drip);
         }
     }
 
     private void OnPatientMobState(Entity<IvDripConnectedComponent> ent, ref MobStateChangedEvent args)
     {
-        if (!TryComp(ent.Comp.Drip, out IvDripComponent? drip))
+        if (ent.Comp.Drip is not { } dripId || !TryComp(dripId, out IvDripComponent? drip))
             return;
 
         if (args.OldMobState is MobState.Critical or MobState.PreCritical &&
             args.NewMobState == MobState.Alive)
         {
-            TryYank((ent.Comp.Drip, drip), ent.Owner);
+            TryYank((dripId, drip), ent.Owner);
         }
     }
 
     private void OnPatientStood(Entity<IvDripConnectedComponent> ent, ref StoodEvent args)
     {
-        if (!TryComp(ent.Comp.Drip, out IvDripComponent? drip))
+        if (ent.Comp.Drip is not { } dripId || !TryComp(dripId, out IvDripComponent? drip))
             return;
 
         if (!drip.PatientWasDowned)
@@ -568,7 +566,7 @@ public abstract class SharedIvDripSystem : EntitySystem
         if (_mobState.IsCritical(ent) || _mobState.IsIncapacitated(ent))
             return;
 
-        TryYank((ent.Comp.Drip, drip), ent.Owner);
+        TryYank((dripId, drip), ent.Owner);
     }
 
     private void TryYank(Entity<IvDripComponent> drip, EntityUid patient)
@@ -576,13 +574,10 @@ public abstract class SharedIvDripSystem : EntitySystem
         if (drip.Comp.AttachedPatient != patient)
             return;
 
-        var damage = new DamageSpecifier();
-        damage.DamageDict["Piercing"] = drip.Comp.YankPiercing;
-        damage.DamageDict["Slash"] = drip.Comp.YankSlash;
-        _damageable.TryChangeDamage(patient, damage, origin: drip);
+        _damageable.TryChangeDamage(patient, new DamageSpecifier(drip.Comp.YankDamage), origin: drip);
 
         SpillFromDrip(drip, patient);
-        SpillPatientBlood(patient);
+        SpillPatientBlood(drip, patient);
 
         _popup.PopupEntity(Loc.GetString("iv-drip-yank"), patient);
         DetachPatient(drip, silent: true);
@@ -595,21 +590,21 @@ public abstract class SharedIvDripSystem : EntitySystem
         if (!TryGetTankSolution(drip, out var soln, out var solution) || solution.Volume <= FixedPoint2.Zero)
             return;
 
-        var spillAmt = FixedPoint2.Max(solution.Volume * drip.Comp.YankSpillFraction, FixedPoint2.New(1));
+        var spillAmt = FixedPoint2.Max(solution.Volume * drip.Comp.YankSpillFraction, FixedPoint2.New(drip.Comp.MinYankSpill));
         spillAmt = FixedPoint2.Min(spillAmt, solution.Volume);
         var split = _solutions.SplitSolution(soln, spillAmt);
         _puddle.TrySpillAt(coords, split, out _);
         UpdateVisuals(drip);
     }
 
-    private void SpillPatientBlood(EntityUid patient)
+    private void SpillPatientBlood(Entity<IvDripComponent> drip, EntityUid patient)
     {
-        var amount = FixedPoint2.New(5);
+        var amount = FixedPoint2.New(drip.Comp.YankBlood);
         if (!_bloodstream.TryModifyBloodLevel(patient, -amount))
             return;
 
         var blood = new Solution();
-        blood.AddReagent(Blood, amount);
+        blood.AddReagent(drip.Comp.BloodReagent, amount);
         _puddle.TrySpillAt(_transform.GetMoverCoordinates(patient), blood, out _);
     }
 
@@ -625,7 +620,7 @@ public abstract class SharedIvDripSystem : EntitySystem
                 if (TerminatingOrDeleted(needleUid))
                     continue;
 
-                if (!Exists(needle.Drip) || !TryComp(needle.Drip, out IvDripComponent? dripComp))
+                if (needle.Drip is not { } dripId || !Exists(dripId) || !TryComp(dripId, out IvDripComponent? dripComp))
                 {
                     DeleteNeedle(needleUid);
                     continue;
@@ -636,7 +631,7 @@ public abstract class SharedIvDripSystem : EntitySystem
                     if (dripComp.ActiveNeedle == needleUid)
                     {
                         dripComp.ActiveNeedle = null;
-                        Dirty(needle.Drip, dripComp);
+                        Dirty(dripId, dripComp);
                     }
 
                     DeleteNeedle(needleUid);
@@ -646,7 +641,7 @@ public abstract class SharedIvDripSystem : EntitySystem
                 var holder = Transform(needleUid).ParentUid;
                 if (Exists(holder) &&
                     HasComp<HandsComponent>(holder) &&
-                    IsNeedleHolderNear(needle.Drip, holder, dripComp))
+                    IsNeedleHolderNear(dripId, holder, dripComp))
                     continue;
 
                 if (dripComp.ActiveNeedle != needleUid)
@@ -656,11 +651,11 @@ public abstract class SharedIvDripSystem : EntitySystem
                 }
 
                 dripComp.ActiveNeedle = null;
-                Dirty(needle.Drip, dripComp);
+                Dirty(dripId, dripComp);
 
                 var notifyUser = Exists(holder) && HasComp<HandsComponent>(holder) ? holder : (EntityUid?) null;
                 if (notifyUser != null)
-                    _popup.PopupEntity(Loc.GetString("iv-drip-needle-retracted"), needle.Drip, notifyUser.Value);
+                    _popup.PopupEntity(Loc.GetString("iv-drip-needle-retracted"), dripId, notifyUser.Value);
 
                 DeleteNeedle(needleUid);
             }
@@ -752,7 +747,7 @@ public abstract class SharedIvDripSystem : EntitySystem
         soln = default!;
         solution = new Solution();
 
-        if (!_solutions.TryGetSolution(drip.Owner, IvDripComponent.TankSolutionId, out var found, out var sol))
+        if (!_solutions.TryGetSolution(drip.Owner, drip.Comp.TankSolution, out var found, out var sol))
             return false;
 
         soln = found!.Value;
