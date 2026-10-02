@@ -336,6 +336,12 @@
   id: Medipen
 
 - type: Tag
+  id: MaskGasVoice
+
+- type: Tag
+  id: gasmask
+
+- type: Tag
   id: MukhtarWearable
 
 - type: Tag
@@ -490,6 +496,9 @@
 
 - type: Tag
   id: VulpkaninEmotes
+
+- type: Tag
+  id: voicesensor 
 
 - type: Tag
   id: WeldingMaskFlame

@@ -140,4 +140,31 @@
     activeIfWorn: true
   - type: GasMaskDispatch
     channel: CentCom
+
+- type: entity
+  parent: ClothingMaskGas
+  id: ClothingMaskGasVoice
+  suffix: Голосовая маска
+  name: голосовой противогаз
+  description: Обычный противогаз. Погодите... почему из него торчат провода?
+  components:
+    - type: VoiceMask
+    - type: UIRequiresLock
+      userInterfaceKeys:
+        - enum.VoiceMaskUIKey.Key
+      accessDeniedSound: null
+      popup: null
+    - type: HideLayerClothing
+      slots:
+      - Snout
+    - type: UserInterface
+      interfaces:
+        enum.VoiceMaskUIKey.Key:
+          type: VoiceMaskBoundUserInterface
+    - type: Tag
+      tags:
+      - MaskGasVoice
+    - type: Construction
+      graph: MaskGasVoice
+      node: gasMaskVoice
   # DS14-end
