@@ -110,7 +110,7 @@
       - !type:SpillBehavior
         solution: tank
   - type: StaticPrice
-    price: 200
+    price: 90
 
 - type: entity
   parent: IvDrip
