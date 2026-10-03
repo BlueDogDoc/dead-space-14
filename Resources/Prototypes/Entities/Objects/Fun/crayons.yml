@@ -23,8 +23,6 @@
     interfaces:
       enum.CrayonUiKey.Key:
         type: CrayonBoundUserInterface
-      enum.CrayonUiKey.Opacity:
-        type: CrayonOpacityBoundUserInterface
   - type: Crayon
     selectedState: like
   - type: LimitedCharges

@@ -10,12 +10,10 @@ using Content.Shared.Decals;
 using Content.Shared.Interaction;
 using Content.Shared.Interaction.Events;
 using Content.Shared.Nutrition.EntitySystems;
-using Content.Shared.Verbs; //DS-14
 using Robust.Server.GameObjects;
 using Robust.Shared.Audio;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Utility; //DS-14
 using Content.Server.DeadSpace.Hooligan.Objectives; // DS14
 
 namespace Content.Server.Crayon;
@@ -42,7 +40,6 @@ public sealed class CrayonSystem : SharedCrayonSystem
         SubscribeLocalEvent<CrayonComponent, DroppedEvent>(OnCrayonDropped);
         SubscribeLocalEvent<CrayonComponent, CrayonRotationMessage>(OnCrayonRotation); //DS-14
         SubscribeLocalEvent<CrayonComponent, CrayonOpacityMessage>(OnCrayonOpacity); //DS-14
-        SubscribeLocalEvent<CrayonComponent, GetVerbsEvent<AlternativeVerb>>(OnGetAltVerbs); //DS-14
     }
 
     private void OnMapInit(Entity<CrayonComponent> ent, ref MapInitEvent args)
@@ -146,8 +143,6 @@ public sealed class CrayonSystem : SharedCrayonSystem
     {
         // TODO: Use the existing event.
         _uiSystem.CloseUi(uid, CrayonUiKey.Key, args.User);
-        //DS-14 Start
-        _uiSystem.CloseUi(uid, CrayonUiKey.Opacity, args.User);
     }
 
     private void OnCrayonOpacity(Entity<CrayonComponent> ent, ref CrayonOpacityMessage args)
@@ -158,20 +153,6 @@ public sealed class CrayonSystem : SharedCrayonSystem
 
         ent.Comp.Opacity = opacity;
         Dirty(ent);
-    }
-
-    private void OnGetAltVerbs(EntityUid uid, CrayonComponent component, GetVerbsEvent<AlternativeVerb> args)
-    {
-        if (!args.CanInteract || !args.CanAccess)
-            return;
-
-        args.Verbs.Add(new AlternativeVerb
-        {
-            Text = Loc.GetString("crayon-opacity-verb"),
-            Icon = new SpriteSpecifier.Texture(new("/Textures/Interface/VerbIcons/settings.svg.192dpi.png")),
-            Act = () => _uiSystem.TryToggleUi(uid, CrayonUiKey.Opacity, args.User),
-        });
-        //DS-14 End
     }
 
     private void UseUpCrayon(EntityUid uid, EntityUid user)

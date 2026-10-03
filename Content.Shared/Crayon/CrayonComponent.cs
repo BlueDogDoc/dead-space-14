@@ -71,7 +71,6 @@ public sealed partial class CrayonComponent : Component
 public enum CrayonUiKey : byte
 {
     Key,
-    Opacity, //DS-14
 }
 
 /// <summary>

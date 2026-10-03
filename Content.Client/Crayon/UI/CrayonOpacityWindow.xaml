@@ -1,9 +1,0 @@
-<DefaultWindow xmlns="https://spacestation14.io"
-               Title="{Loc 'crayon-opacity-window'}"
-               MinSize="280 88"
-               SetSize="280 88">
-    <BoxContainer Orientation="Horizontal" Margin="8" VerticalAlignment="Center">
-        <Slider Name="OpacitySlider" MinValue="10" MaxValue="100" HorizontalExpand="True" Rounded="True"/>
-        <Label Name="PercentLabel" MinWidth="44" Margin="8 0 0 0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-    </BoxContainer>
-</DefaultWindow>
