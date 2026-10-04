@@ -8077,3 +8077,168 @@ Entries:
     message: (?) Загрузка музыки для JukeboxMK.
   - type: Fix
     message: (?) Способности демона вестника.
+- id: 768
+  author: Atickov
+  time: '2026-09-23T15:52:00.537571+00:00'
+  pr: 2381
+  changes:
+  - type: Tweak
+    message: отныне RecipeManager способен переваривать прототипы ивент-отдела (меня
+      заставил @chronomantus)
+- id: 769
+  author: RIP6100
+  time: '2026-09-24T10:31:23.185116+00:00'
+  pr: 2383
+  changes:
+  - type: Tweak
+    message: На карте Chloris теперь имеется горячая атмосфера содержащая плазму.
+  - type: Fix
+    message: Баги на картах Avrit, Loop и Chloris
+  - type: Fix
+    message: Баг со слотом атмос-голопроектора
+- id: 770
+  author: RIP6100
+  time: '2026-09-24T11:45:02.421321+00:00'
+  pr: 2375
+  changes:
+  - type: Tweak
+    message: Карты Amber, Barratry, Fland и Origin были убраны на ремапп из списка
+      карт в голосовании.
+- id: 771
+  author: KillFroozy
+  time: '2026-09-24T13:24:45.466654+00:00'
+  pr: 2376
+  changes:
+  - type: Tweak
+    message: В пояс и РПС СБ теперь помещаются болы, телескопический щит и дубинка.
+- id: 772
+  author: Manstari
+  time: '2026-09-25T04:31:28.117236+00:00'
+  pr: 2384
+  changes:
+  - type: Add
+    message: Редспейс мешок для клоуна Тайпана
+  - type: Add
+    message: Роль клоуна Тайпана
+- id: 773
+  author: pepelinitsa-cell
+  time: '2026-09-25T09:54:19.795514+00:00'
+  pr: 2378
+  changes:
+  - type: Add
+    message: Версии самодельной брони пеплоходцев с пофикшенными статами
+  - type: Add
+    message: Пепельный скафандр в ассортимент карготехомата синдиката
+  - type: Add
+    message: Самодельные голосовые маски, их крафты (используются предметы что-почти
+      никто не использует)
+  - type: Tweak
+    message: В крафте скафандра голиафа изменена дюроткань на жилы наблюдателя
+  - type: Tweak
+    message: 'новый ассортимент карготехомата: (голосовая маска, айди агента... и
+      т.д)'
+  - type: Fix
+    message: Неадекватная цена на свиток карпа (100 ка)
+- id: 774
+  author: IvanKuvalda
+  time: '2026-09-25T09:59:59.538531+00:00'
+  pr: 2377
+  changes:
+  - type: Add
+    message: Для теста вернули обломки и планетку
+- id: 775
+  author: IvanKuvalda
+  time: '2026-09-25T13:33:26.266364+00:00'
+  pr: 2390
+  changes:
+  - type: Remove
+    message: серверная будка номер 16 была успешно прогнута самим иваном кувалдой,
+      восстановил
+- id: 776
+  author: Manstari
+  time: '2026-09-26T05:43:06.142087+00:00'
+  pr: 2393
+  changes:
+  - type: Fix
+    message: Клоун Синдиката теперь спавнится в облике клоуна
+  - type: Fix
+    message: Полный доступ у клоуна Синдиката
+- id: 777
+  author: Manstari
+  time: '2026-09-26T16:19:53.778037+00:00'
+  pr: 2371
+  changes:
+  - type: Fix
+    message: Отображение способностей разумного вируса
+  - type: Fix
+    message: Возможность ревенанта вселяться в тело генокрада
+- id: 778
+  author: IvanKuvalda
+  time: '2026-09-26T18:05:20.423137+00:00'
+  pr: 2398
+  changes:
+  - type: Add
+    message: Новый арт в лобби от snovas
+- id: 779
+  author: IvanKuvalda
+  time: '2026-09-26T18:07:32.310929+00:00'
+  pr: 2399
+  changes:
+  - type: Add
+    message: Генокрад снимает с себя наручники при выходе из стазиса, Генокрад имеет
+      возможность включать и выключать кокон
+- id: 780
+  author: Manstari
+  time: '2026-09-27T08:45:34.558653+00:00'
+  pr: 2402
+  changes:
+  - type: Remove
+    message: Клоун Тайпана
+- id: 781
+  author: ZekA1L
+  time: '2026-09-27T16:03:43.657371+00:00'
+  pr: 2397
+  changes:
+  - type: Add
+    message: Сингэн добавлен в аплинк ЯО и лоны.
+  - type: Remove
+    message: Авто режим у Сингэна.
+  - type: Fix
+    message: Баг с прицелом Сингэна.
+- id: 782
+  author: MTF97
+  time: '2026-09-28T12:17:07.061152+00:00'
+  pr: 2405
+  changes:
+  - type: Tweak
+    message: Спрайты всех комбинезонов и кедов;
+  - type: Tweak
+    message: В гардеробе заключенных черные тапки заменены на оранжевые.
+- id: 783
+  author: sexualka1984
+  time: '2026-09-29T15:15:35.426509+00:00'
+  pr: 2411
+  changes:
+  - type: Add
+    message: Больший ассортимент одежды для арены.
+- id: 784
+  author: zubekkk
+  time: '2026-09-30T10:58:53.749453+00:00'
+  pr: 2414
+  changes:
+  - type: Fix
+    message: Регулятор входного давления
+- id: 785
+  author: sastr457
+  time: '2026-09-30T11:23:31.715824+00:00'
+  pr: 2415
+  changes:
+  - type: Fix
+    message: Лошадки 🐎
+- id: 786
+  author: IvanKuvalda
+  time: '2026-10-02T10:58:58.324764+00:00'
+  pr: 2403
+  changes:
+  - type: Add
+    message: новые каталоги в емагнутые автоматы, инфа в ПРе

@@ -125,7 +125,7 @@
     sprintModifier: 0.8
   - type: FootstepModifier # DS14
     footstepSoundCollection:
-      collection: SquidFootsteps 
+      collection: SquidFootsteps
 
 - type: entity
   parent: [ClothingShoesBaseButcherable, BaseHighlyIllegalContraband]
@@ -146,7 +146,7 @@
   - type: FootstepModifier
     footstepSoundCollection: null
   - type: ClothingGrantComponent
-    component: 
+    component:
       - type: RenegadeCANTRenegadeForce
 
 - type: entity

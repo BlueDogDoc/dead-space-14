@@ -817,6 +817,12 @@
         effectProto: StatusEffectSeeingRainbow
         time: 15.0
         type: Remove
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectMuted
+        type: Remove
+      - !type:ModifyStatusEffect
+        effectProto: StatusEffectDeaf
+        type: Remove
 
 - type: reagent
   id: TranexamicAcid
