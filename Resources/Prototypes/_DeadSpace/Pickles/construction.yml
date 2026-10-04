@@ -35,8 +35,5 @@
   objectType: Structure
   placementMode: SnapgridCenter
   canBuildInImpassable: false
-  icon:
-    sprite: _DeadSpace/Pickles/barrel_wood.rsi
-    state: idle
   conditions:
   - !type:TileNotBlocked
