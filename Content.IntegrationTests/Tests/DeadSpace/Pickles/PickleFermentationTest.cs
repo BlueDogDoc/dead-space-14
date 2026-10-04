@@ -1,12 +1,17 @@
-// Мёртвый Космос, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
+// Dead Space 14, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
 
 using System.Linq;
 using Content.IntegrationTests.Tests.Interaction;
 using Content.Server.Atmos.EntitySystems;
 using Content.Shared.Atmos;
+using Content.Shared.Body.Components;
+using Content.Shared.Body.Organ;
+using Content.Shared.Body.Systems;
 using Content.Shared.Chemistry.Components;
+using Content.Shared.Chemistry.Components.SolutionManager;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Chemistry.Reagent;
+using Content.Shared.Climbing.Components;
 using Content.Shared.DeadSpace.Pickles;
 using Content.Shared.DeadSpace.Pickles.Components;
 using Content.Shared.Eye.Blinding.Components;
@@ -15,11 +20,15 @@ using Content.Shared.Fluids.Components;
 using Content.Shared.Interaction;
 using Content.Shared.Nutrition;
 using Content.Shared.Nutrition.EntitySystems;
+using Content.Shared.Physics;
+using Content.Shared.Placeable;
 using Content.Shared.Verbs;
+using Robust.Client.GameObjects;
 using Robust.Shared.Containers;
 using Robust.Shared.GameObjects;
 using Robust.Shared.Localization;
 using Robust.Shared.Map;
+using Robust.Shared.Physics;
 using Robust.Shared.Prototypes;
 
 namespace Content.IntegrationTests.Tests.DeadSpace.Pickles;
@@ -37,6 +46,7 @@ public sealed class PickleFermentationTest : InteractionTest
     private static readonly ProtoId<ReagentPrototype> Vinegar = "Vinegar";
     private static readonly ProtoId<ReagentPrototype> TableSalt = "TableSalt";
     private static readonly ProtoId<ReagentPrototype> Sugar = "Sugar";
+    private static readonly ProtoId<ReagentPrototype> Water = "Water";
     private static readonly ProtoId<ReagentPrototype> Toxin = "Toxin";
     private static readonly ProtoId<ReagentPrototype> Bacteria = "PickleBacteria";
     private static readonly ProtoId<ReagentPrototype> VinegarBrine = "PickleVinegarBrine";
@@ -399,6 +409,9 @@ public sealed class PickleFermentationTest : InteractionTest
             var jarComp = SEntMan.GetComponent<PickleJarComponent>(jar);
             Assert.That(jarComp.SlipChance, Is.EqualTo(0.25f).Within(0.001f));
             Assert.That(jarComp.WineBlindChance, Is.EqualTo(0.05f).Within(0.001f));
+            Assert.That(jarComp.SlipSpill, Is.EqualTo(8f).Within(0.001f));
+            Assert.That(jarComp.PieceShare, Is.EqualTo(4f).Within(0.001f));
+            Assert.That(jarComp.ContentsStyle, Is.EqualTo(PickleJarComponent.DefaultContentsStyle));
         });
     }
 
@@ -490,7 +503,7 @@ public sealed class PickleFermentationTest : InteractionTest
             var cabbageRecipe = proto.Index(CabbageVinegarRecipe);
             Assert.That(SharedPickleJarSystem.ContentsStyleFor(tomatoRecipe), Is.EqualTo("tomato"));
             Assert.That(SharedPickleJarSystem.ContentsStyleFor(cabbageRecipe), Is.EqualTo("cabbage"));
-            Assert.That(SharedPickleJarSystem.ContentsStyleFor(null, "FoodUnknown"), Is.EqualTo("cucumber"));
+            Assert.That(SharedPickleJarSystem.ContentsStyleFor(null), Is.EqualTo(PickleJarComponent.DefaultContentsStyle));
         });
     }
 
@@ -618,6 +631,233 @@ public sealed class PickleFermentationTest : InteractionTest
             Assert.That(Containers.TryGetContainer(STarget!.Value, FermentationBarrelComponent.ProduceContainerId, out var container), Is.True);
             Assert.That(container!.ContainedEntities, Has.Count.EqualTo(3));
         });
+    }
+
+    [Test]
+    public async Task BarrelTuningAndCollisionMatchTheOverlay()
+    {
+        await SpawnTarget(WoodBarrel, PlayerCoords);
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(Barrel.VinegarReagent, Is.EqualTo(Vinegar));
+            Assert.That(Barrel.SaltReagent, Is.EqualTo(TableSalt));
+            Assert.That(Barrel.SugarReagent, Is.EqualTo(Sugar));
+            Assert.That(Barrel.WaterReagent, Is.EqualTo(Water));
+            Assert.That(Barrel.BacteriaReagent, Is.EqualTo(Bacteria));
+            Assert.That(Barrel.VinegarBrineReagent, Is.EqualTo(VinegarBrine));
+            Assert.That(Barrel.SaltBrineReagent, Is.EqualTo(SaltBrine));
+            Assert.That(Barrel.NutrimentReagent, Is.EqualTo(new ProtoId<ReagentPrototype>("Nutriment")));
+            Assert.That(Barrel.FallbackDrink, Is.EqualTo(PickleWine));
+            Assert.That(Barrel.FartInterval, Is.EqualTo(5f).Within(0.001f));
+            Assert.That(Barrel.HotFailSeconds, Is.EqualTo(5f).Within(0.001f));
+            Assert.That(Barrel.ColdFailSeconds, Is.EqualTo(25f).Within(0.001f));
+            Assert.That(Barrel.BacteriaSpeedAt, Is.EqualTo(5f).Within(0.001f));
+            Assert.That(Barrel.BacteriaBurstAt, Is.EqualTo(40f).Within(0.001f));
+            Assert.That(Barrel.DrinkPerJar, Is.EqualTo(80f).Within(0.001f));
+            Assert.That(Barrel.BrinePerPiece, Is.EqualTo(6f).Within(0.001f));
+            Assert.That(Barrel.BrineMinimum, Is.EqualTo(8f).Within(0.001f));
+            Assert.That(Barrel.LowBrinePerPiece, Is.EqualTo(2f).Within(0.001f));
+            Assert.That(Barrel.NutrimentPerPiece, Is.EqualTo(2f).Within(0.001f));
+            Assert.That(Barrel.ExtraShardChance, Is.EqualTo(0.5f).Within(0.001f));
+            Assert.That(Barrel.MinTemperature, Is.EqualTo(283.15f).Within(0.01f));
+            Assert.That(Barrel.MaxTemperature, Is.EqualTo(313.15f).Within(0.01f));
+
+            Assert.That(SEntMan.HasComponent<PlaceableSurfaceComponent>(STarget!.Value), Is.False);
+            Assert.That(SEntMan.HasComponent<ClimbableComponent>(STarget.Value), Is.False);
+            Assert.That(SEntMan.HasComponent<ExaminableSolutionComponent>(STarget.Value), Is.False);
+
+            var fixtures = SEntMan.GetComponent<FixturesComponent>(STarget.Value);
+            Assert.That(fixtures.Fixtures.TryGetValue("fix1", out var fixture), Is.True);
+            Assert.That(fixture!.CollisionMask, Is.EqualTo((int) CollisionGroup.MachineMask));
+            Assert.That(fixture.CollisionLayer, Is.EqualTo((int) CollisionGroup.MachineLayer));
+        });
+    }
+
+    [Test]
+    public async Task JarSpriteIsSmallerThanTheUiIcon()
+    {
+        await Client.WaitAssertion(() =>
+        {
+            var proto = Client.ResolveDependency<IPrototypeManager>();
+            var factory = Client.ResolveDependency<IComponentFactory>();
+            Assert.That(proto.Index(FoodJar).TryGetComponent(out SpriteComponent sprite, factory), Is.True);
+            Assert.That(sprite!.Scale.X, Is.EqualTo(0.8f).Within(0.001f));
+            Assert.That(sprite.Scale.Y, Is.EqualTo(0.8f).Within(0.001f));
+        });
+    }
+
+    [Test]
+    public async Task SaltStartsWithoutSugar()
+    {
+        await PrepareBarrel(TableSalt, Cabbage, 3);
+        await StartFermentation();
+        Assert.That(Barrel.State, Is.EqualTo(FermentationState.Fermenting));
+    }
+
+    [Test]
+    public async Task SugarDominatesVinegarAndBottlesOneJarOfWine()
+    {
+        await AddAtmosphere();
+        await SpawnTarget(WoodBarrel, PlayerCoords);
+        await EnsureRoomTemperature();
+        await AddReagent(Vinegar, 10);
+        await AddReagent(Sugar, 30);
+        for (var i = 0; i < 3; i++)
+            await InteractUsing(Grape);
+
+        await StartFermentation();
+        await FinishFermentation();
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(Barrel.ReadyMethod, Is.EqualTo(PickleMethod.Alcohol));
+            Assert.That(Solutions.TryGetSolution(STarget!.Value, FermentationBarrelComponent.SolutionName, out _, out var tank), Is.True);
+            Assert.That(tank!.GetTotalPrototypeQuantity(PickleWine), Is.EqualTo(FixedPoint2.New(Barrel.DrinkPerJar)));
+        });
+    }
+
+    [Test]
+    public async Task CiderJarTakesItsNameFromTheRecipe()
+    {
+        await PrepareBarrel(Sugar, "FoodApple", 3);
+        await StartFermentation();
+        await FinishFermentation();
+        await InteractUsing(FoodJar);
+
+        var jar = await FindEntity(FoodJar);
+        await Server.WaitAssertion(() =>
+        {
+            var jarComp = SEntMan.GetComponent<PickleJarComponent>(jar);
+            Assert.That(jarComp.IsWine, Is.True);
+            var expected = Loc.GetString("pickle-alcohol-jar-name", ("name", Loc.GetString("food-name-station-cider")));
+            Assert.That(SEntMan.GetComponent<MetaDataComponent>(jar).EntityName, Is.EqualTo(expected));
+        });
+    }
+
+    [Test]
+    public async Task WaterOnlyOrBadProduceDoesNotStart()
+    {
+        await AddAtmosphere();
+        await SpawnTarget(WoodBarrel, PlayerCoords);
+        await EnsureRoomTemperature();
+        await InteractUsing(Cucumber);
+        await StartFermentation(shouldSucceed: false);
+
+        await AddReagent(Water, 30);
+        await StartFermentation(shouldSucceed: false);
+
+        await InteractUsing(GlassShard);
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(Containers.TryGetContainer(STarget!.Value, FermentationBarrelComponent.ProduceContainerId, out var container), Is.True);
+            Assert.That(container!.ContainedEntities, Has.Count.EqualTo(1));
+            Assert.That(SEntMan.GetComponent<MetaDataComponent>(container.ContainedEntities[0]).EntityPrototype?.ID, Is.EqualTo(Cucumber.Id));
+        });
+    }
+
+    [Test]
+    public async Task ColdRoomDoesNotStart()
+    {
+        await PrepareBarrel(Vinegar, Cucumber, 3);
+        await Server.WaitAssertion(() => Barrel.MinTemperature = Atmospherics.T20C + 50f);
+        await StartFermentation(shouldSucceed: false);
+    }
+
+    [Test]
+    public async Task PickledProduceCannotGoBackIntoABarrel()
+    {
+        await PrepareBarrel(Vinegar, Cucumber, 3);
+        await StartFermentation();
+        await FinishFermentation();
+        await DeleteHeldEntity();
+        await Interact();
+
+        EntityUid piece = default;
+        await Server.WaitAssertion(() =>
+        {
+            var held = HandSys.GetActiveItem((SPlayer, Hands));
+            Assert.That(held, Is.Not.Null);
+            piece = held!.Value;
+            Assert.That(SEntMan.HasComponent<PickledProduceComponent>(piece), Is.True);
+            var pickled = SEntMan.GetComponent<PickledProduceComponent>(piece);
+            Assert.That(pickled.FoodSolution, Is.EqualTo("food"));
+            Assert.That(pickled.FoodMaxVolume, Is.EqualTo(40f).Within(0.001f));
+            Assert.That(pickled.WaterReagent, Is.EqualTo(Water));
+            Assert.That(pickled.FlavorIgnore, Does.Contain(Water));
+            Assert.That(pickled.FlavorIgnore, Does.Contain(new ProtoId<ReagentPrototype>("Nutriment")));
+            Assert.That(pickled.FlavorIgnore, Does.Contain(new ProtoId<ReagentPrototype>("Vitamin")));
+        });
+
+        await SpawnTarget(WoodBarrel, PlayerCoords);
+        await Interact();
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(Containers.TryGetContainer(STarget!.Value, FermentationBarrelComponent.ProduceContainerId, out var container), Is.True);
+            Assert.That(container!.ContainedEntities, Is.Empty);
+            Assert.That(HandSys.GetActiveItem((SPlayer, Hands)), Is.EqualTo(piece));
+        });
+    }
+
+    [Test]
+    public async Task UseInHandFollowsTheSameDietAsFood()
+    {
+        await PrepareBarrel(Vinegar, Cucumber, 3);
+        await StartFermentation();
+        await FinishFermentation();
+        await InteractUsing(FoodJar);
+
+        var jar = await FindEntity(FoodJar);
+        await Server.WaitPost(() => Server.System<OpenableSystem>().SetOpen(jar));
+
+        await AssertEatMatchesDiet(jar, "MobIPC");
+        await AssertEatMatchesDiet(jar, "MobKobold");
+        await AssertEatMatchesDiet(jar, "MobVox");
+        await AssertEatMatchesDiet(jar, "MobHuman");
+    }
+
+    private async Task AssertEatMatchesDiet(EntityUid jar, string mob)
+    {
+        await Server.WaitAssertion(() =>
+        {
+            var coords = SEntMan.GetComponent<TransformComponent>(SPlayer).Coordinates;
+            var eater = SEntMan.SpawnEntity(mob, coords);
+            Assert.That(HandSys.TryPickupAnyHand(eater, jar), Is.True, $"{mob} should hold the jar");
+
+            var before = SEntMan.GetComponent<PickleJarComponent>(jar).RemainingPieces;
+            var edible = CanDigest(eater, Cucumber);
+            var ev = new Content.Shared.Interaction.Events.UseInHandEvent(eater);
+            SEntMan.EventBus.RaiseLocalEvent(jar, ev);
+
+            var after = SEntMan.GetComponent<PickleJarComponent>(jar).RemainingPieces;
+            if (edible)
+            {
+                Assert.That(ev.Handled, Is.True, mob);
+                Assert.That(after, Is.EqualTo(before - 1), mob);
+            }
+            else
+            {
+                Assert.That(after, Is.EqualTo(before), mob);
+            }
+
+            HandSys.TryDrop(eater);
+            SEntMan.DeleteEntity(eater);
+        });
+    }
+
+    private bool CanDigest(EntityUid eater, EntProtoId produce)
+    {
+        var ingestion = Server.System<IngestionSystem>();
+        if (!ingestion.HasMouthAvailable(eater, eater))
+            return false;
+
+        if (!SEntMan.HasComponent<BodyComponent>(eater) ||
+            !Server.System<SharedBodySystem>().TryGetBodyOrganEntityComps<StomachComponent>(eater, out var stomachs))
+            return false;
+
+        var coords = SEntMan.GetComponent<TransformComponent>(eater).Coordinates;
+        var food = SEntMan.SpawnEntity(produce, coords);
+        var ok = ingestion.IsDigestibleBy(food, stomachs, out _);
+        SEntMan.DeleteEntity(food);
+        return ok;
     }
 
     private async Task PrepareBarrel(ProtoId<ReagentPrototype> reagent, EntProtoId produce, int count)

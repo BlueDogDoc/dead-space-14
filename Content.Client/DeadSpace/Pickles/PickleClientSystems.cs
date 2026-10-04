@@ -1,4 +1,4 @@
-// Мёртвый Космос, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
+// Dead Space 14, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
 
 using Content.Shared.DeadSpace.Pickles;
 using Content.Shared.DeadSpace.Pickles.Components;
@@ -42,7 +42,7 @@ public sealed class PickleJarSystem : SharedPickleJarSystem
         var clamped = Math.Clamp(count, 1, 4);
         var state = $"{style}-{clamped}";
         if (sprite.BaseRSI != null && !sprite.BaseRSI.TryGetState(state, out _))
-            state = $"cucumber-{clamped}";
+            state = $"{PickleJarComponent.DefaultContentsStyle}-{clamped}";
 
         _sprite.LayerSetVisible((ent.Owner, sprite), layer, true);
         _sprite.LayerSetRsiState((ent.Owner, sprite), layer, state);

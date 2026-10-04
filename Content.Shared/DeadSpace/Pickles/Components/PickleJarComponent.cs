@@ -1,4 +1,4 @@
-// Мёртвый Космос, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
+// Dead Space 14, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
 
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
@@ -29,16 +29,22 @@ public sealed partial class PickleJarComponent : Component
     [DataField, AutoNetworkedField]
     public bool IsWine;
 
-    [DataField, AutoNetworkedField]
-    public string ContentsStyle = "cucumber";
+    public const string DefaultContentsStyle = "cucumber";
 
-    /// <summary>Chance to drop the piece and spill a splash of brine when taking from the jar.</summary>
+    [DataField, AutoNetworkedField]
+    public string ContentsStyle = DefaultContentsStyle;
+
     [DataField]
     public float SlipChance = 0.25f;
 
-    /// <summary>Chance per wine sip to apply permanent welder-style eye damage.</summary>
     [DataField]
     public float WineBlindChance = 0.05f;
+
+    [DataField]
+    public float SlipSpill = 8f;
+
+    [DataField]
+    public float PieceShare = 4f;
 
     [DataField]
     public LocId PieceName = "pickle-piece-pickled";

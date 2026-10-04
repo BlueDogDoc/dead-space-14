@@ -1,4 +1,4 @@
-// Мёртвый Космос, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
+// Dead Space 14, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
 
 using Content.Shared.DeadSpace.Pickles.Components;
 using Content.Shared.Examine;
@@ -26,8 +26,6 @@ public abstract class SharedFermentationSystem : EntitySystem
         SubscribeLocalEvent<FermentationBarrelComponent, ComponentInit>(OnInit);
         SubscribeLocalEvent<FermentationBarrelComponent, ExaminedEvent>(OnExamined);
         SubscribeLocalEvent<FermentationBarrelComponent, GetVerbsEvent<AlternativeVerb>>(OnGetVerbs);
-        // Single subscription: client claims jar clicks so SolutionTransfer stays silent;
-        // server Override handles insert/pack/fill.
         SubscribeLocalEvent<FermentationBarrelComponent, InteractUsingEvent>(OnInteractUsing);
     }
 
@@ -36,7 +34,6 @@ public abstract class SharedFermentationSystem : EntitySystem
         if (!IsEnabled())
             return;
 
-        // Client: silence predicted SolutionTransfer/"empty" popups when using a jar on the barrel.
         if (_net.IsClient)
         {
             if (HasComp<PickleJarComponent>(args.Used))
@@ -44,7 +41,6 @@ public abstract class SharedFermentationSystem : EntitySystem
             return;
         }
 
-        // Server: jars must win over RefillableSolution/SolutionTransfer on the same entity.
         if (HasComp<PickleJarComponent>(args.Used))
         {
             HandleInteractUsing(ent, ref args);

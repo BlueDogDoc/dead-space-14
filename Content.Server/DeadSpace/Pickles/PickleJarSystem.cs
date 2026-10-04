@@ -1,4 +1,4 @@
-// Мёртвый Космос, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
+// Dead Space 14, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
 
 using Content.Shared.Body.Components;
 using Content.Shared.Body.Organ;
@@ -51,7 +51,6 @@ public sealed class PickleJarSystem : SharedPickleJarSystem
         if (args.SolutionId != PickleJarComponent.SolutionName)
             return;
 
-        // Drinking wine dry must clear IsWine so later sips of brine cannot blind.
         if (ent.Comp.RemainingPieces <= 0 &&
             ent.Comp.IsWine &&
             (!_solutions.TryGetSolution(ent.Owner, PickleJarComponent.SolutionName, out _, out var drink) ||
@@ -79,21 +78,19 @@ public sealed class PickleJarSystem : SharedPickleJarSystem
 
     protected override void OnJarSlip(Entity<PickleJarComponent> jar, EntityUid user, EntityUid piece)
     {
-        // Piece is freshly spawned and not in a hand yet — place it on the floor, do not pick it up.
         _transform.PlaceNextTo(piece, user);
 
         if (!_solutions.TryGetSolution(jar.Owner, PickleJarComponent.SolutionName, out var jarSoln, out var drink) ||
             drink.Volume <= FixedPoint2.Zero)
             return;
 
-        var spillAmt = FixedPoint2.Min(drink.Volume, FixedPoint2.New(8));
+        var spillAmt = FixedPoint2.Min(drink.Volume, FixedPoint2.New(jar.Comp.SlipSpill));
         var spilled = _solutions.SplitSolution(jarSoln.Value, spillAmt);
         _puddle.TrySpillAt(user, spilled, out _);
     }
 
     protected override bool TryEatOnePiece(Entity<PickleJarComponent> ent, EntityUid user)
     {
-        // Same gates as normal food: mouth free, has a stomach, and can digest this produce.
         if (!_ingestion.HasMouthAvailable(user, user))
             return false;
 
@@ -117,7 +114,8 @@ public sealed class PickleJarSystem : SharedPickleJarSystem
             return true;
         }
 
-        if (!_solutions.TryGetSolution(piece, "food", out var foodSoln, out var food) ||
+        if (!TryComp<PickledProduceComponent>(piece, out var pickled) ||
+            !_solutions.TryGetSolution(piece, pickled.FoodSolution, out var foodSoln, out var food) ||
             food.Volume <= FixedPoint2.Zero)
         {
             QueueDel(piece);
@@ -184,20 +182,21 @@ public sealed class PickleJarSystem : SharedPickleJarSystem
 
         var share = FixedPoint2.Min(
             jarSolution.Volume / Math.Max(jar.Comp.RemainingPieces + 1, 1),
-            FixedPoint2.New(4));
+            FixedPoint2.New(jar.Comp.PieceShare));
         if (share <= FixedPoint2.Zero)
             return;
 
         var split = _solutions.SplitSolution(jarSoln.Value, share);
 
-        if (!_solutions.TryGetSolution(piece, "food", out var foodSoln, out var food))
+        if (!TryComp<PickledProduceComponent>(piece, out var pickled) ||
+            !_solutions.TryGetSolution(piece, pickled.FoodSolution, out var foodSoln, out var food))
         {
             _solutions.TryAddSolution(jarSoln.Value, split);
             return;
         }
 
-        if (food.MaxVolume < FixedPoint2.New(40))
-            food.MaxVolume = FixedPoint2.New(40);
+        if (food.MaxVolume < FixedPoint2.New(pickled.FoodMaxVolume))
+            food.MaxVolume = FixedPoint2.New(pickled.FoodMaxVolume);
 
         _solutions.TryAddSolution(foodSoln.Value, split);
     }

@@ -1,4 +1,4 @@
-// Мёртвый Космос, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
+// Dead Space 14, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
 
 using Content.Shared.Chemistry.Reagent;
 using Robust.Shared.Audio;
@@ -17,7 +17,6 @@ public sealed partial class FermentationBarrelComponent : Component
     [DataField, AutoNetworkedField]
     public FermentationState State = FermentationState.Idle;
 
-    /// <summary>Finished batch method — vinegar/salt produce vs alcohol drink.</summary>
     [DataField, AutoNetworkedField]
     public PickleMethod? ReadyMethod;
 
@@ -62,6 +61,69 @@ public sealed partial class FermentationBarrelComponent : Component
 
     [DataField]
     public EntProtoId ShardPrototype = "ShardGlass";
+
+    [DataField]
+    public ProtoId<ReagentPrototype> VinegarReagent = "Vinegar";
+
+    [DataField]
+    public ProtoId<ReagentPrototype> SaltReagent = "TableSalt";
+
+    [DataField]
+    public ProtoId<ReagentPrototype> SugarReagent = "Sugar";
+
+    [DataField]
+    public ProtoId<ReagentPrototype> WaterReagent = "Water";
+
+    [DataField]
+    public ProtoId<ReagentPrototype> BacteriaReagent = "PickleBacteria";
+
+    [DataField]
+    public ProtoId<ReagentPrototype> VinegarBrineReagent = "PickleVinegarBrine";
+
+    [DataField]
+    public ProtoId<ReagentPrototype> SaltBrineReagent = "PickleSaltBrine";
+
+    [DataField]
+    public ProtoId<ReagentPrototype> NutrimentReagent = "Nutriment";
+
+    [DataField]
+    public ProtoId<ReagentPrototype> FallbackDrink = "PickleWine";
+
+    [DataField]
+    public LocId ReadyPieceName = "pickle-piece-wine";
+
+    [DataField]
+    public float FartInterval = 5f;
+
+    [DataField]
+    public float HotFailSeconds = 5f;
+
+    [DataField]
+    public float ColdFailSeconds = 25f;
+
+    [DataField]
+    public float BacteriaSpeedAt = 5f;
+
+    [DataField]
+    public float BacteriaBurstAt = 40f;
+
+    [DataField]
+    public float DrinkPerJar = 80f;
+
+    [DataField]
+    public float BrinePerPiece = 6f;
+
+    [DataField]
+    public float BrineMinimum = 8f;
+
+    [DataField]
+    public float LowBrinePerPiece = 2f;
+
+    [DataField]
+    public float NutrimentPerPiece = 2f;
+
+    [DataField]
+    public float ExtraShardChance = 0.5f;
 }
 
 [Serializable, NetSerializable]

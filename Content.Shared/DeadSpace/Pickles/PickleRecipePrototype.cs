@@ -1,6 +1,7 @@
-// Мёртвый Космос, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
+// Dead Space 14, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
 
 using Content.Shared.Chemistry.Reagent;
+using Content.Shared.DeadSpace.Pickles.Components;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
@@ -32,7 +33,6 @@ public sealed partial class PickleRecipePrototype : IPrototype
     [DataField]
     public float MinReagent = 10f;
 
-    /// <summary>Extra sugar required for vinegar pickles (ignored when 0).</summary>
     [DataField]
     public float MinSugar;
 
@@ -45,9 +45,8 @@ public sealed partial class PickleRecipePrototype : IPrototype
     [DataField]
     public bool LowBrine;
 
-    /// <summary>RSI produce overlay key (cucumber, tomato, …). Unused for alcohol recipes.</summary>
     [DataField]
-    public string ContentsStyle = "cucumber";
+    public string ContentsStyle = PickleJarComponent.DefaultContentsStyle;
 
     [DataField]
     public ProtoId<ReagentPrototype>? OutputDrinkReagent;

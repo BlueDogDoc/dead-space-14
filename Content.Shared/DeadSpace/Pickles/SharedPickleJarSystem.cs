@@ -1,4 +1,4 @@
-// Мёртвый Космос, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
+// Dead Space 14, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
 
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Chemistry.Reagent;
@@ -37,10 +37,6 @@ public abstract class SharedPickleJarSystem : EntitySystem
     [Dependency] private readonly SharedSolutionContainerSystem _solutions = default!;
     [Dependency] private readonly MetaDataSystem _meta = default!;
 
-    private static readonly ProtoId<ReagentPrototype> Water = "Water";
-    private static readonly ProtoId<ReagentPrototype> Nutriment = "Nutriment";
-    private static readonly ProtoId<ReagentPrototype> Vitamin = "Vitamin";
-
     private static readonly SoundSpecifier OpenSound = new SoundCollectionSpecifier("pop");
     private static readonly SoundSpecifier CloseSound = new SoundPathSpecifier("/Audio/Items/bottle_close1.ogg");
     private static readonly SoundSpecifier SlipSound = new SoundPathSpecifier("/Audio/Effects/slip.ogg");
@@ -53,7 +49,6 @@ public abstract class SharedPickleJarSystem : EntitySystem
         SubscribeLocalEvent<PickleJarComponent, GotEquippedHandEvent>(OnEquippedHand);
         SubscribeLocalEvent<PickleJarComponent, InteractHandEvent>(OnInteractHand, before: [typeof(SharedItemSystem)]);
         SubscribeLocalEvent<PickleJarComponent, UseInHandEvent>(OnUseInHand, before: [typeof(OpenableSystem)]);
-        // After Openable: it clears Handled when the jar is open (!Opened = false).
         SubscribeLocalEvent<PickleJarComponent, AfterInteractEvent>(OnAfterInteract,
             before: [typeof(SolutionTransferSystem), typeof(IngestionSystem)],
             after: [typeof(OpenableSystem)]);
@@ -96,7 +91,7 @@ public abstract class SharedPickleJarSystem : EntitySystem
         ent.Comp.PiecePrototype = null;
         ent.Comp.PieceTint = null;
         ent.Comp.IsWine = false;
-        ent.Comp.ContentsStyle = "cucumber";
+        ent.Comp.ContentsStyle = PickleJarComponent.DefaultContentsStyle;
         ent.Comp.PieceName = "pickle-piece-pickled";
         Dirty(ent);
         UpdateJarVisuals(ent);
@@ -104,28 +99,12 @@ public abstract class SharedPickleJarSystem : EntitySystem
         _meta.SetEntityDescription(ent, Loc.GetString("ent-FoodPickleJar.desc"));
     }
 
-    public static string ContentsStyleFor(PickleRecipePrototype? recipe, string? produceProto = null)
+    public static string ContentsStyleFor(PickleRecipePrototype? recipe)
     {
         if (recipe is { ContentsStyle.Length: > 0 })
             return recipe.ContentsStyle;
 
-        return produceProto switch
-        {
-            "FoodCucumber" => "cucumber",
-            "FoodCabbage" => "cabbage",
-            "FoodOnion" => "onion",
-            "FoodOnionRed" => "onionred",
-            "FoodCarrot" => "carrot",
-            "FoodGarlic" => "garlic",
-            "FoodMushroom" => "mushroom",
-            "FoodCactus" => "cactus",
-            "FoodTomato" => "tomato",
-            "FoodWatermelon" => "watermelon",
-            "FoodPumpkin" => "pumpkin",
-            "FoodChiliPepper" => "chili",
-            "FoodSoybeans" => "soy",
-            _ => "cucumber",
-        };
+        return PickleJarComponent.DefaultContentsStyle;
     }
 
     private void OnPickledExamined(Entity<PickledProduceComponent> ent, ref ExaminedEvent args)
@@ -198,8 +177,6 @@ public abstract class SharedPickleJarSystem : EntitySystem
         if (!args.CanReach || args.Target is null)
             return;
 
-        // Always claim barrel clicks and empty-jar clicks so SolutionTransfer/Ingestion stay silent.
-        // Re-set Handled even if Openable just cleared it for an open jar.
         if (HasComp<FermentationBarrelComponent>(args.Target.Value) || IsDrinkEmpty(ent))
             args.Handled = true;
     }
@@ -317,23 +294,26 @@ public abstract class SharedPickleJarSystem : EntitySystem
 
     public void ApplyPickledFlavor(EntityUid produce, PickleMethod method)
     {
+        if (!TryComp<PickledProduceComponent>(produce, out var pickled))
+            pickled = EnsureComp<PickledProduceComponent>(produce);
+
         if (TryComp<FlavorProfileComponent>(produce, out var flavor))
         {
             flavor.Flavors.Clear();
             flavor.Flavors.Add(method == PickleMethod.Salt ? "salty" : "sour");
-            flavor.IgnoreReagents.Add(Water.Id);
-            flavor.IgnoreReagents.Add(Nutriment.Id);
-            flavor.IgnoreReagents.Add(Vitamin.Id);
+            foreach (var reagent in pickled.FlavorIgnore)
+                flavor.IgnoreReagents.Add(reagent);
         }
 
-        if (!_solutions.TryGetSolution(produce, "food", out var foodSoln, out var food))
+        if (!_solutions.TryGetSolution(produce, pickled.FoodSolution, out var foodSoln, out var food))
             return;
 
-        var water = food.GetTotalPrototypeQuantity(Water);
+        var waterId = pickled.WaterReagent;
+        var water = food.GetTotalPrototypeQuantity(waterId);
         if (water <= 0)
             return;
 
-        food.RemoveReagent(new ReagentId(Water, null), water);
+        food.RemoveReagent(new ReagentId(waterId, null), water);
         _solutions.UpdateChemicals(foodSoln.Value);
     }
 
