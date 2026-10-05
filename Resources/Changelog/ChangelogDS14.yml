@@ -8305,3 +8305,10 @@ Entries:
   changes:
   - type: Add
     message: Игрушки членов команды проекта.
+- id: 794
+  author: Atickov
+  time: '2026-10-05T10:30:25.043820+00:00'
+  pr: 2435
+  changes:
+  - type: Tweak
+    message: чут-чут изменения ниндзя (вру, не чут чут)
