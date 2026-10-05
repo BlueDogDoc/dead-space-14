@@ -54,7 +54,7 @@ public sealed class PsychiatryOnsetSystem : EntitySystem
     {
         base.Update(frameTime);
         _accum += frameTime;
-        if (_accum < 2f)
+        if (_accum < _cfg.GetCVar(CCCCVars.PsychiatryDamageRollGapSec))
             return;
         _accum = 0f;
 
@@ -125,6 +125,8 @@ public sealed class PsychiatryOnsetSystem : EntitySystem
 
     private void OnDrunk(Entity<MobStateComponent> ent, ref SharedDrunkSystem.DrunkEvent args)
     {
+        if (!DamageRollReady(ent, static roll => roll.NextAlcoholRoll, static (roll, next) => roll.NextAlcoholRoll = next))
+            return;
         if (!_random.Prob(_cfg.GetCVar(CCCCVars.PsychiatryAlcoholChance)))
             return;
         Notify(ent, _psychiatry.TryOnsetOrEscalate(ent, SchizophreniaStage.Latent, "alcohol"));

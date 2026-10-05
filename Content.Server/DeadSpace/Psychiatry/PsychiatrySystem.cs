@@ -176,6 +176,9 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         if (IsPsychogenBlocked(uid))
             return false;
 
+        if (OnTreatmentHold(uid))
+            return false;
+
         var tracker = EnsureComp<SchizophreniaOnsetTrackerComponent>(uid);
         if (Timing.CurTime < tracker.NextAllowedGasOnset)
             return false;
@@ -206,6 +209,9 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
     public bool TryApplyOrEscalate(EntityUid uid, SchizophreniaStage suggested, bool pillForced, bool ignoreCooldown, string reason)
     {
         if (!_cfg.GetCVar(CCCCVars.PsychiatryEnabled))
+            return false;
+
+        if (OnTreatmentHold(uid))
             return false;
 
         if (IsPositronic(uid))
@@ -246,6 +252,9 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
     public bool TryApplyCyber(EntityUid uid, SchizophreniaStage suggested, string reason, bool ignoreCooldown = false)
     {
         if (!_cfg.GetCVar(CCCCVars.PsychiatryEnabled) || !IsPositronic(uid))
+            return false;
+
+        if (OnTreatmentHold(uid))
             return false;
 
         if (IsAntagImmune(uid, pillForced: false))
@@ -356,7 +365,7 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
 
     public void ApplyPsychogenDose(EntityUid uid, float units)
     {
-        if (units <= 0f || IsPositronic(uid))
+        if (units <= 0f || IsPositronic(uid) || OnTreatmentHold(uid))
             return;
 
         if (TryComp<SchizophreniaComponent>(uid, out var existing) && existing.Stage >= SchizophreniaStage.Acute)
@@ -374,6 +383,26 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
 
             dose.Units -= 5f;
         }
+    }
+
+    public void HoldOnset(EntityUid uid)
+    {
+        var tracker = EnsureComp<SchizophreniaOnsetTrackerComponent>(uid);
+        var until = Timing.CurTime + TimeSpan.FromSeconds(_cfg.GetCVar(CCCCVars.PsychiatryOnsetCooldownSec));
+        tracker.TreatmentHoldUntil = until;
+        tracker.NextAllowedOnset = until;
+        tracker.NextAllowedGasOnset = until;
+        tracker.NextAsphyxiationRoll = until;
+        tracker.NextRadiationRoll = until;
+        tracker.NextShockRoll = until;
+        tracker.NextAlcoholRoll = until;
+        RemComp<PsychogenDoseComponent>(uid);
+    }
+
+    private bool OnTreatmentHold(EntityUid uid)
+    {
+        return TryComp<SchizophreniaOnsetTrackerComponent>(uid, out var tracker)
+               && Timing.CurTime < tracker.TreatmentHoldUntil;
     }
 
     public void ClearIllness(EntityUid uid, string reason)
