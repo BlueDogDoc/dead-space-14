@@ -89,7 +89,7 @@ public sealed class CameraArchiveMatchTest
 
         await client.WaitPost(() => client.System<CameraArchivePlaybackSystem>().Settle());
 
-        CameraArchive? still = null;
+        CameraArchive still = null;
         await server.WaitAssertion(() =>
         {
             still = server.System<CameraArchiveSystem>().Capture(camera);
@@ -100,7 +100,7 @@ public sealed class CameraArchiveMatchTest
             Assert.That(still.GridRotation.Degrees, Is.EqualTo(90).Within(0.01));
         });
 
-        CameraArchiveView? view = null;
+        CameraArchiveView view = null;
         await client.WaitAssertion(() =>
         {
             var playback = client.System<CameraArchivePlaybackSystem>();
@@ -118,7 +118,7 @@ public sealed class CameraArchiveMatchTest
             var copy = DescribeGrid(clientEnt, view.Grid, Vector2.Zero);
             Assert.That(copy, Is.EqualTo(live), "playback sprites, pose, and rotation diverged from the live camera scene");
 
-            Assert.That(clientEnt.TryGetComponent(view.Grid, out MapGridComponent? copyGrid), Is.True);
+            Assert.That(clientEnt.TryGetComponent(view.Grid, out MapGridComponent copyGrid), Is.True);
             var mapSys = client.System<SharedMapSystem>();
             foreach (var tile in still.Tiles)
             {
@@ -172,7 +172,7 @@ public sealed class CameraArchiveMatchTest
         text.Append('|');
         text.Append(xform.Anchored ? '1' : '0');
 
-        if (!entities.TryGetComponent(uid, out SpriteComponent? sprite))
+        if (!entities.TryGetComponent(uid, out SpriteComponent sprite))
             return text.ToString();
 
         foreach (var layer in sprite.AllLayers)

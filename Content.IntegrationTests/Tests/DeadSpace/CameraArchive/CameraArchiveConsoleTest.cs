@@ -167,7 +167,7 @@ public sealed class CameraArchiveConsoleTest
         var client = pair.Client;
         var map = await pair.CreateTestMap();
         var skin = new Color(1f, 0.2f, 0.2f);
-        CameraArchive? still = null;
+        CameraArchive still = null;
 
         await server.WaitAssertion(() =>
         {
@@ -181,7 +181,7 @@ public sealed class CameraArchiveConsoleTest
             Assert.That(server.System<InventorySystem>().TryEquip(mob, shirt, "jumpsuit", force: true), Is.True);
             var tool = ents.SpawnEntity("Crowbar", map.GridCoords);
             var hands = server.System<SharedHandsSystem>();
-            string? hand = null;
+            string hand = null;
             foreach (var name in hands.EnumerateHands(mob))
             {
                 hand = name;
@@ -275,7 +275,7 @@ public sealed class CameraArchiveConsoleTest
         await using var pair = await PoolManager.GetServerClient();
         var server = pair.Server;
         var map = await pair.CreateTestMap();
-        CameraArchive? still = null;
+        CameraArchive still = null;
 
         await server.WaitAssertion(() =>
         {
