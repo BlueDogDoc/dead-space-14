@@ -30,6 +30,7 @@ chat-emote-msg-jump = прыгает
 chat-emote-msg-turn = кружится
 chat-emote-msg-bow = кланяется
 chat-emote-msg-breakdance = танцует брейкданс
+chat-emote-msg-start-tail = виляет хвостом
 chat-emote-msg-stop-tail = хвост замирает
 chat-emote-msg-teeth-clack = клацает зубами
 # Для ивента
