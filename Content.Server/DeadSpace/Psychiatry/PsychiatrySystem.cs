@@ -176,6 +176,9 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         if (IsPsychogenBlocked(uid))
             return false;
 
+        if (OnTreatmentHold(uid))
+            return false;
+
         var tracker = EnsureComp<SchizophreniaOnsetTrackerComponent>(uid);
         if (Timing.CurTime < tracker.NextAllowedGasOnset)
             return false;
@@ -206,6 +209,9 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
     public bool TryApplyOrEscalate(EntityUid uid, SchizophreniaStage suggested, bool pillForced, bool ignoreCooldown, string reason)
     {
         if (!_cfg.GetCVar(CCCCVars.PsychiatryEnabled))
+            return false;
+
+        if (OnTreatmentHold(uid))
             return false;
 
         if (IsPositronic(uid))
@@ -246,6 +252,9 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
     public bool TryApplyCyber(EntityUid uid, SchizophreniaStage suggested, string reason, bool ignoreCooldown = false)
     {
         if (!_cfg.GetCVar(CCCCVars.PsychiatryEnabled) || !IsPositronic(uid))
+            return false;
+
+        if (OnTreatmentHold(uid))
             return false;
 
         if (IsAntagImmune(uid, pillForced: false))
@@ -305,7 +314,7 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         Dirty(uid, comp);
 
         _adminLog.Add(LogType.Damaged, LogImpact.Medium,
-            $"{ToPrettyString(uid):player} developed {comp.Kind} stage {comp.Stage} ({reason}, pillForced={comp.PillForced})");
+            $"{ToPrettyString(uid):player} got {comp.Kind}, stage {comp.Stage}, from {reason}, pillForced={comp.PillForced}");
     }
 
     public void ApplyClarityDose(EntityUid uid, float units)
@@ -356,7 +365,7 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
 
     public void ApplyPsychogenDose(EntityUid uid, float units)
     {
-        if (units <= 0f || IsPositronic(uid))
+        if (units <= 0f || IsPositronic(uid) || OnTreatmentHold(uid))
             return;
 
         if (TryComp<SchizophreniaComponent>(uid, out var existing) && existing.Stage >= SchizophreniaStage.Acute)
@@ -376,14 +385,36 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         }
     }
 
+    public void HoldOnset(EntityUid uid)
+    {
+        var tracker = EnsureComp<SchizophreniaOnsetTrackerComponent>(uid);
+        var until = Timing.CurTime + TimeSpan.FromSeconds(_cfg.GetCVar(CCCCVars.PsychiatryOnsetCooldownSec));
+        tracker.TreatmentHoldUntil = until;
+        tracker.NextAllowedOnset = until;
+        tracker.NextAllowedGasOnset = until;
+        tracker.NextAsphyxiationRoll = until;
+        tracker.NextRadiationRoll = until;
+        tracker.NextShockRoll = until;
+        tracker.NextAlcoholRoll = until;
+        RemComp<PsychogenDoseComponent>(uid);
+    }
+
+    private bool OnTreatmentHold(EntityUid uid)
+    {
+        return TryComp<SchizophreniaOnsetTrackerComponent>(uid, out var tracker)
+               && Timing.CurTime < tracker.TreatmentHoldUntil;
+    }
+
     public void ClearIllness(EntityUid uid, string reason)
     {
         if (!TryComp<SchizophreniaComponent>(uid, out var comp))
             return;
 
+        var kind = comp.Kind;
+        var stage = comp.Stage;
         RemComp<SchizophreniaComponent>(uid);
         _adminLog.Add(LogType.Healed, LogImpact.High,
-            $"{ToPrettyString(uid):player} cleared {comp.Kind} ({reason})");
+            $"{ToPrettyString(uid):player} {kind} from stage {stage} to stage {SchizophreniaStage.None} ({reason})");
     }
 
     public void AdjustStage(EntityUid uid, int delta, string reason)
@@ -391,17 +422,19 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         if (!TryComp<SchizophreniaComponent>(uid, out var comp))
             return;
 
+        var from = comp.Stage;
+        var kind = comp.Kind;
         var next = delta < 0
-            ? LowerStage(comp.Stage, -delta)
-            : ClampStage((int) comp.Stage + delta);
+            ? LowerStage(from, -delta)
+            : ClampStage((int) from + delta);
         if (next == SchizophreniaStage.None)
         {
             RemComp<SchizophreniaComponent>(uid);
             _adminLog.Add(LogType.Healed, LogImpact.Medium,
-                $"{ToPrettyString(uid):player} cleared schizophrenia ({reason})");
+                $"{ToPrettyString(uid):player} {kind} from stage {from} to stage {next} ({reason})");
             return;
         }
-        if (next == comp.Stage && delta > 0)
+        if (next == from && delta > 0)
             return;
 
         if (delta < 0)
@@ -417,8 +450,8 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         ScheduleAutoEscalate(comp, uid);
         SyncHallucinations(uid, comp.Stage);
         Dirty(uid, comp);
-        _adminLog.Add(LogType.Damaged, LogImpact.Medium,
-            $"{ToPrettyString(uid):player} schizophrenia stage → {comp.Stage} ({reason})");
+        _adminLog.Add(delta < 0 ? LogType.Healed : LogType.Damaged, LogImpact.Medium,
+            $"{ToPrettyString(uid):player} {kind} from stage {from} to stage {next} ({reason})");
     }
 
     private void ScheduleAutoEscalate(SchizophreniaComponent comp, EntityUid uid)

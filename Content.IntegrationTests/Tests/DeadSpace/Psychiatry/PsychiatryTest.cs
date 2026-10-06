@@ -3,7 +3,13 @@ using Content.IntegrationTests.Tests.Interaction;
 using Content.Server.DeadSpace.Psychiatry;
 using Content.Shared.Body.Components;
 using Content.Shared.Chemistry.EntitySystems;
+using Content.Shared.Chemistry.Reagent;
+using Content.Shared.Chemistry.Reaction;
 using Content.Shared.Damage;
+using Content.Shared.EntityEffects;
+using Content.Shared.Eye.Blinding.Components;
+using Content.Shared.Eye.Blinding.Systems;
+using Content.Shared.StatusEffectNew;
 using Content.Shared.Damage.Systems;
 using Content.Shared.DeadSpace.CCCCVars;
 using Content.Shared.DeadSpace.Psychiatry;
@@ -12,6 +18,7 @@ using Content.Shared.DeadSpace.Skills.Prototypes;
 using Content.Shared.FixedPoint;
 using Content.Shared.MedicalScanner;
 using Robust.Shared.GameObjects;
+using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
@@ -22,6 +29,8 @@ namespace Content.IntegrationTests.Tests.DeadSpace.Psychiatry;
 public sealed class PsychiatryTest : InteractionTest
 {
     private static readonly ProtoId<PsychiatryRemapPrototype> MeatWallRemap = "PsychiatryRemapMeatWall";
+    private static readonly ProtoId<ReagentPrototype> Synaptizine = "Synaptizine";
+    private static readonly ProtoId<ReactionPrototype> NeuroClarityReaction = "NeuroClarity";
 
     protected override string PlayerPrototype => "MobHuman";
 
@@ -284,9 +293,11 @@ public sealed class PsychiatryTest : InteractionTest
     {
         await Server.WaitAssertion(() =>
         {
+            Server.CfgMan.SetCVar(CCCCVars.PsychiatryAsphyxiationChance, 0f);
             var damage = new DamageSpecifier();
             damage.DamageDict["Asphyxiation"] = FixedPoint2.New(80);
             Assert.That(SEntMan.System<DamageableSystem>().TryChangeDamage(SPlayer, damage), Is.True);
+            Server.CfgMan.SetCVar(CCCCVars.PsychiatryAsphyxiationChance, 0.005f);
             Assert.That(SEntMan.System<PsychiatryOnsetSystem>().TryAsphyxiationRoll(SPlayer, 0f), Is.True);
             Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Simple));
         });
@@ -328,6 +339,134 @@ public sealed class PsychiatryTest : InteractionTest
             var slipped = SEntMan.GetComponent<SchizophreniaComponent>(ipc);
             Assert.That(slipped.Kind, Is.EqualTo(PsychiatryIllnessKind.Cyberpsychosis));
             Assert.That(slipped.Stage, Is.EqualTo(SchizophreniaStage.Latent));
+        });
+    }
+
+    [Test]
+    public async Task OnsetScanSkipsNonPlayersAndUnplayableBodies()
+    {
+        await Server.WaitAssertion(() =>
+        {
+            var onset = SEntMan.System<PsychiatryOnsetSystem>();
+            var coords = SEntMan.GetComponent<TransformComponent>(SPlayer).Coordinates;
+            var mouse = SEntMan.SpawnEntity("MobMouse", coords);
+            var bystander = SEntMan.SpawnEntity("MobHuman", coords);
+            SEntMan.EnsureComponent<ActorComponent>(mouse);
+
+            Assert.That(onset.IsOnsetCandidate(SPlayer), Is.True);
+            Assert.That(onset.IsOnsetCandidate(mouse), Is.False);
+            Assert.That(onset.IsOnsetCandidate(bystander), Is.False);
+        });
+    }
+
+    [Test]
+    public async Task TickingDamageRollsOncePerGap()
+    {
+        await Server.WaitAssertion(() =>
+        {
+            Server.CfgMan.SetCVar(CCCCVars.PsychiatryAsphyxiationChance, 0f);
+            Server.CfgMan.SetCVar(CCCCVars.PsychiatryRadiationChance, 0f);
+            Server.CfgMan.SetCVar(CCCCVars.PsychiatryDamageRollGapSec, 2f);
+            var damage = new DamageSpecifier();
+            damage.DamageDict["Asphyxiation"] = FixedPoint2.New(80);
+            damage.DamageDict["Radiation"] = FixedPoint2.New(80);
+            Assert.That(SEntMan.System<DamageableSystem>().TryChangeDamage(SPlayer, damage), Is.True);
+            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.False);
+            var tracker = SEntMan.GetComponent<SchizophreniaOnsetTrackerComponent>(SPlayer);
+            var now = Server.ResolveDependency<IGameTiming>().CurTime;
+            Assert.That(tracker.NextAsphyxiationRoll, Is.GreaterThan(now));
+            Assert.That(tracker.NextRadiationRoll, Is.GreaterThan(now));
+
+            Server.CfgMan.SetCVar(CCCCVars.PsychiatryAsphyxiationChance, 1f);
+            Server.CfgMan.SetCVar(CCCCVars.PsychiatryRadiationChance, 1f);
+            var more = new DamageSpecifier();
+            more.DamageDict["Asphyxiation"] = FixedPoint2.New(1);
+            more.DamageDict["Radiation"] = FixedPoint2.New(1);
+            Assert.That(SEntMan.System<DamageableSystem>().TryChangeDamage(SPlayer, more), Is.True);
+            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.False);
+        });
+
+        await RunSeconds(2.1f);
+
+        await Server.WaitAssertion(() =>
+        {
+            var more = new DamageSpecifier();
+            more.DamageDict["Asphyxiation"] = FixedPoint2.New(1);
+            Assert.That(SEntMan.System<DamageableSystem>().TryChangeDamage(SPlayer, more), Is.True);
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Simple));
+            Server.CfgMan.SetCVar(CCCCVars.PsychiatryAsphyxiationChance, 0.005f);
+            Server.CfgMan.SetCVar(CCCCVars.PsychiatryRadiationChance, 0.02f);
+            Server.CfgMan.SetCVar(CCCCVars.PsychiatryDamageRollGapSec, 2f);
+
+            var coords = SEntMan.GetComponent<TransformComponent>(SPlayer).Coordinates;
+            var mouse = SEntMan.SpawnEntity("MobMouse", coords);
+            var bitten = new DamageSpecifier();
+            bitten.DamageDict["Asphyxiation"] = FixedPoint2.New(80);
+            Assert.That(SEntMan.System<DamageableSystem>().TryChangeDamage(mouse, bitten), Is.True);
+            Assert.That(SEntMan.HasComponent<SchizophreniaOnsetTrackerComponent>(mouse), Is.False);
+        });
+    }
+
+    [Test]
+    public async Task SynaptizineClearsBlindDeafAndMute()
+    {
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(ProtoMan.TryIndex(Synaptizine, out var reagent), Is.True);
+            ClearSensoryFault? fault = null;
+            if (reagent!.Metabolisms != null)
+            {
+                foreach (var entry in reagent.Metabolisms.Values)
+                {
+                    foreach (var effect in entry.Effects)
+                    {
+                        if (effect is ClearSensoryFault sensory)
+                            fault = sensory;
+                    }
+                }
+            }
+
+            Assert.That(fault, Is.Not.Null);
+            Assert.That(fault!.Probability, Is.EqualTo(1f));
+
+            var status = SEntMan.System<StatusEffectsSystem>();
+            Assert.That(status.TrySetStatusEffectDuration(SPlayer, "StatusEffectDeaf", null), Is.True);
+            Assert.That(status.TrySetStatusEffectDuration(SPlayer, "StatusEffectMuted", null), Is.True);
+            Assert.That(status.HasStatusEffect(SPlayer, "StatusEffectDeaf"), Is.True);
+            Assert.That(status.HasStatusEffect(SPlayer, "StatusEffectMuted"), Is.True);
+
+            Assert.That(SEntMan.TryGetComponent<BlindableComponent>(SPlayer, out var eyes), Is.True);
+            var blind = SEntMan.System<BlindableSystem>();
+            blind.AdjustEyeDamage((SPlayer, eyes), eyes!.MaxDamage - eyes.EyeDamage);
+            Assert.That(eyes.EyeDamage, Is.EqualTo(eyes.MaxDamage));
+
+            SEntMan.System<SharedEntityEffectsSystem>().ApplyEffect(SPlayer, fault!);
+        });
+
+        await RunTicks(1);
+
+        await Server.WaitAssertion(() =>
+        {
+            var status = SEntMan.System<StatusEffectsSystem>();
+            Assert.That(status.HasStatusEffect(SPlayer, "StatusEffectDeaf"), Is.False);
+            Assert.That(status.HasStatusEffect(SPlayer, "StatusEffectMuted"), Is.False);
+            Assert.That(SEntMan.GetComponent<BlindableComponent>(SPlayer).EyeDamage, Is.EqualTo(0));
+        });
+    }
+
+    [Test]
+    public async Task NeuroClarityRecipeTakesOneCarbon()
+    {
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(ProtoMan.TryIndex(NeuroClarityReaction, out var reaction), Is.True);
+            Assert.That(reaction!.Reactants.Count, Is.EqualTo(5));
+            Assert.That(reaction.Reactants["Carbon"].Amount, Is.EqualTo(FixedPoint2.New(1)));
+            Assert.That(reaction.Reactants["Benzene"].Amount, Is.EqualTo(FixedPoint2.New(1)));
+            Assert.That(reaction.Reactants["Dylovene"].Amount, Is.EqualTo(FixedPoint2.New(1)));
+            Assert.That(reaction.Reactants["Synaptizine"].Amount, Is.EqualTo(FixedPoint2.New(1)));
+            Assert.That(reaction.Reactants["Mannitol"].Amount, Is.EqualTo(FixedPoint2.New(1)));
+            Assert.That(reaction.Products["NeuroClarity"], Is.EqualTo(FixedPoint2.New(2)));
         });
     }
 }

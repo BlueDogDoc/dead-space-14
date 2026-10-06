@@ -10,7 +10,9 @@
     Syringe: 3
     PillCanisterTricordrazine: 2
     ChemistryBottleInfectizine: 1 # DS14
-    IvDripFolded: 1
+    IvDripFolded: 1 # DS14
+    HandheldEncephalograph: 1 # DS14
+    ClothingHeadNeuroMesh: 1 # DS14
   contrabandInventory:
     PillCanisterRandom: 1
 
@@ -62,6 +64,8 @@
     ChemistryBottleSaline: 4
     ShockTherapyPaddles: 1 # DS14
     LobotomyTool: 1 # DS14
+    HandheldEncephalograph: 1 # DS14
+    ClothingHeadNeuroMesh: 1 # DS14
   contrabandInventory:
     PillCanisterRandom: 3
     PillSpaceDrugs: 3

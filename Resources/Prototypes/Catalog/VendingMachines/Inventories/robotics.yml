@@ -23,3 +23,5 @@
     HardResetProbe: 1 # DS14
   contrabandInventory:
     FoodBurgerRobot: 1
+  emaggedInventory:
+    BorgModuleSecurityFirearms: 1

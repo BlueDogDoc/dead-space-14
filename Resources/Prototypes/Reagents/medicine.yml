@@ -823,6 +823,7 @@
       - !type:ModifyStatusEffect
         effectProto: StatusEffectDeaf
         type: Remove
+      - !type:ClearSensoryFault # DS14
 
 - type: reagent
   id: TranexamicAcid

@@ -276,14 +276,14 @@ public sealed class CCCCVars
 
     // Шанс от падения. Луж и бананов много, поэтому он маленький.
     public static readonly CVarDef<float> PsychiatrySlipChance =
-        CVarDef.Create("deadspace.psychiatry_slip_chance", 0.05f, CVar.SERVER | CVar.REPLICATED);
+        CVarDef.Create("deadspace.psychiatry_slip_chance", 0.01f, CVar.SERVER | CVar.REPLICATED);
 
     // Если асфиксия выше этого числа, дефиб сажает болезнь сильнее.
     public static readonly CVarDef<float> PsychiatryDefibAsphyxiation =
         CVarDef.Create("deadspace.psychiatry_defib_asphyxiation", 60f, CVar.SERVER | CVar.REPLICATED);
 
     public static readonly CVarDef<float> PsychiatryDefibHighChance =
-        CVarDef.Create("deadspace.psychiatry_defib_high_chance", 0.20f, CVar.SERVER | CVar.REPLICATED);
+        CVarDef.Create("deadspace.psychiatry_defib_high_chance", 0.01f, CVar.SERVER | CVar.REPLICATED);
 
     public static readonly CVarDef<float> PsychiatryDefibLowChance =
         CVarDef.Create("deadspace.psychiatry_defib_low_chance", 0.01f, CVar.SERVER | CVar.REPLICATED);
@@ -293,7 +293,7 @@ public sealed class CCCCVars
         CVarDef.Create("deadspace.psychiatry_defib_stage_split", 0.5f, CVar.SERVER | CVar.REPLICATED);
 
     public static readonly CVarDef<float> PsychiatryAlcoholChance =
-        CVarDef.Create("deadspace.psychiatry_alcohol_chance", 0.02f, CVar.SERVER | CVar.REPLICATED);
+        CVarDef.Create("deadspace.psychiatry_alcohol_chance", 0.0005f, CVar.SERVER | CVar.REPLICATED);
 
     // ЭМИ для позитроника опаснее обычного удара током.
     public static readonly CVarDef<float> PsychiatryEmpChance =
@@ -325,7 +325,11 @@ public sealed class CCCCVars
         CVarDef.Create("deadspace.psychiatry_asphyxiation_severe", 80f, CVar.SERVER | CVar.REPLICATED);
 
     public static readonly CVarDef<float> PsychiatryAsphyxiationChance =
-        CVarDef.Create("deadspace.psychiatry_asphyxiation_chance", 0.01f, CVar.SERVER | CVar.REPLICATED);
+        CVarDef.Create("deadspace.psychiatry_asphyxiation_chance", 0.005f, CVar.SERVER | CVar.REPLICATED);
+
+    // Пауза между бросками удушья, радиации, шока и алкоголя. Яды и лекарства проверяются с той же паузой.
+    public static readonly CVarDef<float> PsychiatryDamageRollGapSec =
+        CVarDef.Create("deadspace.psychiatry_damage_roll_gap_sec", 10f, CVar.SERVER | CVar.REPLICATED);
 
     // 0 полный иммунитет, 1 только случайные ситуации, 2 иммунитета нет.
     public static readonly CVarDef<int> PsychiatryAntagImmunityMode =
