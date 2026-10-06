@@ -70,6 +70,8 @@ public sealed partial class LobotomyToolComponent : Component
 
     [DataField]
     public float ComplicationChance = 0.3f;
+
+    public int Progress;
 }
 
 [RegisterComponent, NetworkedComponent]
@@ -86,11 +88,20 @@ public sealed partial class ShockTherapyComponent : Component
 
     [DataField]
     public float DoAfterMaxSeconds = 60f;
+
+    public int Progress;
+
+    public int ProgressSteps = 1;
+
+    public float ProgressHit;
+
+    public bool ProgressLiving;
 }
 
 [Serializable, NetSerializable]
 public sealed partial class LobotomyDoAfterEvent : DoAfterEvent
 {
+    [DataField]
     public int StepIndex;
 
     public LobotomyDoAfterEvent(int stepIndex)
@@ -108,10 +119,19 @@ public sealed partial class LobotomyDoAfterEvent : DoAfterEvent
 [Serializable, NetSerializable]
 public sealed partial class ShockTherapyDoAfterEvent : DoAfterEvent
 {
+    [DataField]
     public int Step;
+
+    [DataField]
     public int Steps = 1;
+
+    [DataField]
     public float StepSeconds = 2.5f;
+
+    [DataField]
     public float HitDamage;
+
+    [DataField]
     public bool Living;
 
     public override DoAfterEvent Clone()
