@@ -625,7 +625,7 @@ public sealed class PsychiatryTest : InteractionTest
             Assert.That(nano!.StartingInventory.ContainsKey("ClothingMaskMedicalGag"), Is.True);
             Assert.That(plus!.StartingInventory.ContainsKey("ClothingMaskMedicalGag"), Is.True);
             Assert.That(ProtoMan.TryIndex(MedicalRestock, out var product), Is.True);
-            Assert.That(product!.Cost, Is.EqualTo(1750));
+            Assert.That(product!.Cost, Is.EqualTo(1800));
 
             var coords = SEntMan.GetComponent<TransformComponent>(SPlayer).Coordinates;
             var crate = SEntMan.SpawnEntity(product.Product, coords);
