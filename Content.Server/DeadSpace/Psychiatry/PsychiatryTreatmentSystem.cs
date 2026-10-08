@@ -103,6 +103,7 @@ public sealed class PsychiatryTreatmentSystem : EntitySystem
         SubscribeLocalEvent<AdminCurePatchComponent, AfterInteractEvent>(OnAdminPatchInteract);
         SubscribeLocalEvent<AdminCurePatchComponent, AdminCurePatchDoAfterEvent>(OnAdminPatchDoAfter);
         SubscribeLocalEvent<ExpandICChatRecipientsEvent>(OnChatRecipients);
+        SubscribeLocalEvent<RegenerativeStasisExitedEvent>(OnStasisExited);
     }
 
     private static readonly EntProtoId DeafEffect = "StatusEffectDeaf";
@@ -144,6 +145,18 @@ public sealed class PsychiatryTreatmentSystem : EntitySystem
     private void ApplyMute(EntityUid target)
     {
         _newStatus.TrySetStatusEffectDuration(target, MutedEffect);
+    }
+
+    private void OnStasisExited(ref RegenerativeStasisExitedEvent args)
+    {
+        _psychiatry.ClearIllness(args.Target, "stasis");
+        _newStatus.TryRemoveStatusEffect(args.Target, DeafEffect);
+        _newStatus.TryRemoveStatusEffect(args.Target, MutedEffect);
+
+        if (!TryComp<BlindableComponent>(args.Target, out var blindable) || blindable.EyeDamage <= 0)
+            return;
+
+        _blinding.AdjustEyeDamage((args.Target, blindable), -blindable.EyeDamage);
     }
 
     private void OnChatRecipients(ExpandICChatRecipientsEvent ev)
