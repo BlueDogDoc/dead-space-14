@@ -8443,3 +8443,10 @@ Entries:
     message: Вертолёт от куная
   - type: Fix
     message: Отсутствия перекраски катаны в инвентаре
+- id: 808
+  author: BlueDogDoc
+  time: '2026-10-08T15:27:45.540682+00:00'
+  pr: 2385
+  changes:
+  - type: Add
+    message: Капельница
