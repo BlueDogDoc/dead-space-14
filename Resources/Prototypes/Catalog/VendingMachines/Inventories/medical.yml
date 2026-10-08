@@ -13,6 +13,7 @@
     IvDripFolded: 1 # DS14
     HandheldEncephalograph: 1 # DS14
     ClothingHeadNeuroMesh: 1 # DS14
+    ClothingMaskMedicalGag: 1 # DS14
   contrabandInventory:
     PillCanisterRandom: 1
 
@@ -66,6 +67,7 @@
     LobotomyTool: 1 # DS14
     HandheldEncephalograph: 1 # DS14
     ClothingHeadNeuroMesh: 1 # DS14
+    ClothingMaskMedicalGag: 1 # DS14
   contrabandInventory:
     PillCanisterRandom: 3
     PillSpaceDrugs: 3
