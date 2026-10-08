@@ -347,18 +347,9 @@ public sealed class CCCCVars
     public static readonly CVarDef<float> PsychiatryCoursePillUnits =
         CVarDef.Create("deadspace.psychiatry_course_pill_units", 15f, CVar.SERVER | CVar.REPLICATED);
 
-    // Шанс сбоя у шока. У лоботомии около 0.30, шок должен быть безопаснее.
+    // Шанс слепоты, глухоты или немоты у шока и зонда.
     public static readonly CVarDef<float> PsychiatryShockFaultChance =
-        CVarDef.Create("deadspace.psychiatry_shock_fault_chance", 0.18f, CVar.SERVER | CVar.REPLICATED);
-
-    public static readonly CVarDef<float> PsychiatryLobotomyFaultChance =
-        CVarDef.Create("deadspace.psychiatry_lobotomy_fault_chance", 0.30f, CVar.SERVER | CVar.REPLICATED);
-
-    public static readonly CVarDef<float> PsychiatryIonFaultChance =
-        CVarDef.Create("deadspace.psychiatry_ion_fault_chance", 0.40f, CVar.SERVER | CVar.REPLICATED);
-
-    public static readonly CVarDef<float> PsychiatryHardResetFaultChance =
-        CVarDef.Create("deadspace.psychiatry_hard_reset_fault_chance", 0.30f, CVar.SERVER | CVar.REPLICATED);
+        CVarDef.Create("deadspace.psychiatry_shock_fault_chance", 0.25f, CVar.SERVER | CVar.REPLICATED);
 
     // Сколько луж максимум зацепит один удар, чтобы не залить всю палубу.
     public static readonly CVarDef<int> PsychiatryPuddleChainCap =

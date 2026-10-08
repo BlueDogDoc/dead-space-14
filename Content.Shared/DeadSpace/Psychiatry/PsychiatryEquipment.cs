@@ -60,28 +60,13 @@ public sealed class EncephalographBoundUserInterfaceState : BoundUserInterfaceSt
 }
 
 [RegisterComponent, NetworkedComponent]
-public sealed partial class LobotomyToolComponent : Component
-{
-    [DataField]
-    public int Steps = 3;
-
-    [DataField]
-    public float StepSeconds = 4f;
-
-    [DataField]
-    public float ComplicationChance = 0.3f;
-
-    public int Progress;
-}
-
-[RegisterComponent, NetworkedComponent]
 public sealed partial class ShockTherapyComponent : Component
 {
     [DataField]
-    public float SideEffectChance = 0.18f;
+    public float SideEffectChance = 0.25f;
 
     [DataField]
-    public float ShockDamage = 40f;
+    public float ShockDamage = 16f;
 
     [DataField]
     public float DoAfterMinSeconds = 40f;
@@ -96,24 +81,14 @@ public sealed partial class ShockTherapyComponent : Component
     public float ProgressHit;
 
     public bool ProgressLiving;
+
+    public TimeSpan ShockUntil;
 }
 
 [Serializable, NetSerializable]
-public sealed partial class LobotomyDoAfterEvent : DoAfterEvent
+public enum ShockTherapyVisuals : byte
 {
-    [DataField]
-    public int StepIndex;
-
-    public LobotomyDoAfterEvent(int stepIndex)
-    {
-        StepIndex = stepIndex;
-    }
-
-    public LobotomyDoAfterEvent()
-    {
-    }
-
-    public override DoAfterEvent Clone() => new LobotomyDoAfterEvent(StepIndex);
+    Shocking,
 }
 
 [Serializable, NetSerializable]
@@ -158,23 +133,19 @@ public sealed partial class FirmwarePatchComponent : Component
 public sealed partial class HardResetProbeComponent : Component
 {
     [DataField]
-    public float Delay = 12f;
+    public float ShockDamage = 16f;
 
     [DataField]
-    public float FaultChance = 0.3f;
-}
-
-[RegisterComponent, NetworkedComponent]
-public sealed partial class IonScrubberComponent : Component
-{
-    [DataField]
-    public float Delay = 8f;
+    public float DoAfterMinSeconds = 40f;
 
     [DataField]
-    public float FaultChance = 0.4f;
+    public float DoAfterMaxSeconds = 60f;
 
-    [DataField]
-    public float ShockDamage = 15f;
+    public int Progress;
+
+    public int ProgressSteps = 4;
+
+    public float ProgressHit;
 }
 
 [RegisterComponent, NetworkedComponent]
@@ -203,15 +174,30 @@ public sealed partial class FirmwarePatchDoAfterEvent : SimpleDoAfterEvent
 }
 
 [Serializable, NetSerializable]
-public sealed partial class HardResetDoAfterEvent : SimpleDoAfterEvent
+public sealed partial class HardResetDoAfterEvent : DoAfterEvent
 {
-    public override DoAfterEvent Clone() => new HardResetDoAfterEvent();
-}
+    [DataField]
+    public int Step;
 
-[Serializable, NetSerializable]
-public sealed partial class IonScrubDoAfterEvent : SimpleDoAfterEvent
-{
-    public override DoAfterEvent Clone() => new IonScrubDoAfterEvent();
+    [DataField]
+    public int Steps = 4;
+
+    [DataField]
+    public float StepSeconds = 10f;
+
+    [DataField]
+    public float HitDamage;
+
+    public override DoAfterEvent Clone()
+    {
+        return new HardResetDoAfterEvent
+        {
+            Step = Step,
+            Steps = Steps,
+            StepSeconds = StepSeconds,
+            HitDamage = HitDamage,
+        };
+    }
 }
 
 [Serializable, NetSerializable]

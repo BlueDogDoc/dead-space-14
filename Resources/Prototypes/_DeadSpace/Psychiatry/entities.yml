@@ -41,7 +41,7 @@
   parent: BasePsychiatryPill
   id: PillSchizotoxin
   name: schizotoxin pill
-  description: Forces acute schizophrenia. Bypasses antagonist immunity.
+  description: Forces an acute traumatic brain injury. Bypasses antagonist immunity.
   components:
   - type: Pill
     pillType: 5
@@ -78,7 +78,7 @@
   id: PillPsychiatryRemedy
   name: psychiatry remedy
   suffix: Admin
-  description: Clears every schizophrenia stage. Does nothing to a positronic.
+  description: Clears every stage of a traumatic brain injury. Does nothing to a positronic.
   components:
   - type: Pill
     pillType: 3
@@ -122,14 +122,11 @@
   parent: BaseItem
   id: HandheldEncephalograph
   name: handheld encephalograph
-  description: A brain monitor. Through a neuro-mesh it lights the region that just fired, like speech, hearing, sight, movement, fear, arousal. Needs the Advanced Treatment skill. Works without schizophrenia.
+  description: A brain monitor. Through a neuro-mesh it lights the region that just fired, like speech, hearing, sight, movement, fear, arousal. Works without a traumatic brain injury.
   components:
   - type: Sprite
     sprite: _DeadSpace/Psychiatry/encephalograph.rsi
-    layers:
-    - state: icon
-    - state: screen
-      shader: unshaded
+    state: icon
   - type: Item
     size: Small
   - type: Encephalograph
@@ -148,48 +145,16 @@
         type: EncephalographBoundUserInterface
 
 - type: entity
-  parent: BaseItem
-  id: LobotomyTool
-  name: lobotomy kit
-  description: Cast hammer and chisel. On any organic stage it drops three at once. Complications are possible.
-  components:
-  - type: Sprite
-    sprite: _DeadSpace/Psychiatry/lobotomy_kit.rsi
-    state: icon
-  - type: Item
-    size: Normal
-  - type: LobotomyTool
-  - type: EmitSoundOnPickup
-    sound:
-      path: /Audio/_DeadSpace/Items/Handing/tools/screwdriver_pickup.ogg
-  - type: EmitSoundOnDrop
-    sound:
-      path: /Audio/Items/screwdriver_drop.ogg
-  - type: EmitSoundOnLand
-    sound:
-      path: /Audio/Items/screwdriver_drop.ogg
-
-- type: entity
   parent: [BaseItem, PowerCellSlotMediumItem]
   id: ShockTherapyPaddles
   name: shock therapy unit
-  description: A two-handed shock unit with round electrodes. Shocks any creature; without a medical gag the jaw breaks. Metal conducts to whoever is touching it. Wood does not conduct. Moisture evaporates. On any schizophrenia stage it drops two and can blind, deafen, or mute. On a positronic it scrambles the processor instead.
+  description: A two-handed shock unit with round electrodes. Shocks any creature. Without a medical gag the jaw breaks. Metal conducts to whoever is touching it. Wood does not conduct. Moisture evaporates. It clears a traumatic brain injury and can blind, deafen, or mute. On a positronic it scrambles the processor instead.
   components:
   - type: Sprite
     sprite: _DeadSpace/Psychiatry/shock_paddles.rsi
     layers:
-    - state: icon
-    - state: powered
-      map: [ "enum.ToggleableVisuals.Layer" ]
-      visible: false
-      shader: unshaded
+    - state: off-3
   - type: Appearance
-  - type: GenericVisualizer
-    visuals:
-      enum.ToggleableVisuals.Enabled:
-        enum.ToggleableVisuals.Layer:
-          True: { visible: true }
-          False: { visible: false }
   - type: Item
     size: Large
   - type: MultiHandedItem
@@ -201,11 +166,11 @@
   - type: ToggleCellDraw
   - type: PowerCellDraw
     enabled: false
-    drawRate: 3
-    useCharge: 180
+    drawRate: 0
+    useCharge: 240
   - type: ShockTherapy
-    shockDamage: 40
-    sideEffectChance: 0.18
+    shockDamage: 16
+    sideEffectChance: 0.25
     doAfterMinSeconds: 40
     doAfterMaxSeconds: 61
   - type: EmitSoundOnPickup
@@ -254,9 +219,8 @@
     node: patch
   - type: Sprite
     sprite: _DeadSpace/Psychiatry/firmware_patch.rsi
-    state: active
+    state: icon
   - type: Item
-    sprite: _DeadSpace/Psychiatry/firmware_patch.rsi
     size: Small
 
 - type: entity
@@ -271,36 +235,35 @@
     sprite: _DeadSpace/Psychiatry/firmware_patch.rsi
     state: icon
   - type: Item
-    sprite: _DeadSpace/Psychiatry/firmware_patch.rsi
     size: Small
 
 - type: entity
-  parent: BaseItem
+  parent: [BaseItem, PowerCellSlotMediumItem]
   id: HardResetProbe
   name: hard-reset probe
-  description: Drops any cyberpsychosis stage by three. The reset can burn out a sensor bus.
+  description: A battery probe with three charges. Four shocks over about a minute. Clears any cyberpsychosis stage. Can blind, deafen, or mute.
   components:
+  - type: Sprite
+    sprite: _DeadSpace/Psychiatry/hard_reset_probe.rsi
+    layers:
+    - state: control_off
+  - type: Appearance
+  - type: Item
+    size: Normal
+  - type: ItemToggle
+    soundActivate:
+      path: /Audio/Items/Defib/defib_safety_on.ogg
+    soundDeactivate:
+      path: /Audio/Items/Defib/defib_safety_off.ogg
+  - type: ToggleCellDraw
+  - type: PowerCellDraw
+    enabled: false
+    drawRate: 0
+    useCharge: 240
   - type: HardResetProbe
-  - type: Sprite
-    sprite: _DeadSpace/Psychiatry/hard_reset_probe.rsi
-    state: active
-  - type: Item
-    sprite: _DeadSpace/Psychiatry/hard_reset_probe.rsi
-    size: Normal
-
-- type: entity
-  parent: BaseItem
-  id: IonScrubber
-  name: ion scrubber
-  description: A fast discharge. On any cyberpsychosis stage it drops two, shocks the chassis, and can fault a bus.
-  components:
-  - type: IonScrubber
-  - type: Sprite
-    sprite: _DeadSpace/Psychiatry/ion_scrubber.rsi
-    state: active
-  - type: Item
-    sprite: _DeadSpace/Psychiatry/ion_scrubber.rsi
-    size: Normal
+    shockDamage: 16
+    doAfterMinSeconds: 40
+    doAfterMaxSeconds: 61
 
 - type: entity
   parent: BaseItem
@@ -322,7 +285,7 @@
   parent: GasCanister
   id: GasCanisterPsychogen
   name: psychogen canister
-  description: Open the release valve and it floods the room. Breathing it gives a biological schizophrenia.
+  description: Open the release valve and it floods the room. Breathing it raises a traumatic brain injury in the living.
   components:
   - type: Sprite
     layers:

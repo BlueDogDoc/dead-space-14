@@ -207,6 +207,60 @@
   - at: 2.48
     shift: 0, 0
 
+- type: emote
+  id: Polskorovit
+  name: chat-emote-name-polskorovit
+  available: false
+  category: Animations
+  steps:
+  - at: 0
+    shift: 0, 0
+    tilt: 0
+    face: 0
+    size: 1, 1
+  - at: 0.12
+    shift: 0, 0.22
+    size: 0.92, 1.08
+  - at: 0.24
+    shift: 0, 0
+    tilt: 20
+    size: 1, 1
+  - at: 0.36
+    shift: 0, 0.32
+    size: 0.9, 1.1
+  - at: 0.48
+    shift: 0, 0
+    size: 1.08, 0.92
+  - at: 0.6
+    shift: 0, 0.32
+    size: 0.9, 1.1
+  - at: 0.72
+    shift: 0, 0
+    size: 1, 1
+  - at: 0.9
+    shift: 0, 0.85
+    size: 0.88, 1.14
+  - at: 1.1
+    shift: 0, 0
+    tilt: -40
+    size: 1, 1
+  - at: 1.24
+    shift: 0, 0.3
+    size: 0.92, 1.08
+  - at: 1.38
+    shift: 0, 0
+    size: 1.08, 0.92
+  - at: 1.52
+    shift: 0, 0.3
+    size: 0.92, 1.08
+  - at: 1.66
+    shift: 0, 0
+    size: 1, 1
+  - at: 1.86
+    face: 90
+  - at: 2.1
+    face: 0
+
 # Using EmoteAnimation from IC action chat
 - type: emote
   id: EmoteStopTail

@@ -1,15 +1,29 @@
 #nullable enable
+using System.Collections.Generic;
+using System.Linq;
 using Content.Client.DeadSpace.Psychiatry;
+using Content.Shared.Traits.Assorted;
+using Robust.Server.Player;
+using Robust.Shared.Maths;
 using Content.IntegrationTests.Tests.Interaction;
 using Content.Server.Cargo.Systems;
+using Content.Server.Chat.Systems;
 using Content.Server.DeadSpace.Psychiatry;
+using Content.Shared.Chat.Prototypes;
+using Content.Shared.Changeling.Components;
+using Content.Shared.Sirena.Animations;
+using Content.Shared.Changeling.Systems;
+using Content.Shared.Construction.Prototypes;
+using Content.Shared.DeadSpace.Construction;
+using Content.Shared.EntityEffects.Effects.Damage;
 using Content.Shared.Body.Components;
+using Content.Shared.Body.Prototypes;
 using Content.Shared.Chemistry.EntitySystems;
+using Content.Shared.EntityEffects;
 using Content.Shared.Chemistry.Reagent;
 using Content.Shared.Cargo.Prototypes;
 using Content.Shared.Chemistry.Reaction;
 using Content.Shared.Damage;
-using Content.Shared.EntityEffects;
 using Content.Shared.Eye.Blinding.Components;
 using Content.Shared.Eye.Blinding.Systems;
 using Content.Shared.StatusEffectNew;
@@ -41,6 +55,11 @@ public sealed class PsychiatryTest : InteractionTest
     private static readonly ProtoId<VendingMachineInventoryPrototype> NanoMedInventory = "NanoMedInventory";
     private static readonly ProtoId<VendingMachineInventoryPrototype> NanoMedPlusInventory = "NanoMedPlusInventory";
     private static readonly ProtoId<CargoProductPrototype> MedicalRestock = "CrateVendingMachineRestockMedical";
+    private static readonly ProtoId<EmotePrototype> Polskorovit = "Polskorovit";
+    private static readonly ProtoId<ReagentPrototype> NeuroClarity = "NeuroClarity";
+    private static readonly ProtoId<MetabolismGroupPrototype> MedicineGroup = "Medicine";
+    private static readonly ProtoId<ConstructionPrototype> FirmwarePatchCraft = "FirmwarePatch";
+    private static readonly ProtoId<ConstructionPrototype> CascadeSpikeCraft = "CascadeSpike";
 
     protected override string PlayerPrototype => "MobHuman";
 
@@ -79,7 +98,7 @@ public sealed class PsychiatryTest : InteractionTest
 
             psych.ApplyNew(SPlayer, SchizophreniaStage.Simple, pillForced: false, reason: "test");
             psych.ApplyClarityDose(SPlayer, 15f);
-            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Acute));
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Simple));
             psych.ApplyClarityDose(SPlayer, 15f);
             Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.False);
 
@@ -89,6 +108,37 @@ public sealed class PsychiatryTest : InteractionTest
             Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.True);
             psych.ApplyClarityDose(SPlayer, 15f);
             Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.False);
+        });
+    }
+
+    [Test]
+    public async Task NeuroClarityMetabolismTickIsNotAWholePill()
+    {
+        await Server.WaitPost(() =>
+        {
+            var psych = SEntMan.System<PsychiatrySystem>();
+            psych.ApplyNew(SPlayer, SchizophreniaStage.Latent, pillForced: false, reason: "test");
+            SEntMan.System<SharedEntityEffectsSystem>().ApplyEffect(SPlayer, new PsychiatryClarityDose(), 1f);
+            var schizo = SEntMan.GetComponent<SchizophreniaComponent>(SPlayer);
+            Assert.That(schizo.Stage, Is.EqualTo(SchizophreniaStage.Latent));
+            Assert.That(schizo.CourseTaken, Is.EqualTo(0));
+            Assert.That(schizo.CourseMetabolized, Is.EqualTo(0.05f).Within(0.001f));
+        });
+    }
+
+    [Test]
+    public async Task ItemHoverEmotesSkipPolskorovit()
+    {
+        await Server.WaitAssertion(() =>
+        {
+            var ids = new List<string>();
+            PsychiatryClientSystem.CollectItemHoverEmotes(ProtoMan, ids);
+            Assert.That(ids, Does.Not.Contain("Polskorovit"));
+            Assert.That(ids, Does.Contain("EmoteJump"));
+            Assert.That(ids, Does.Contain("EmoteFlip"));
+            Assert.That(ids, Does.Contain("EmoteBow"));
+            Assert.That(ids, Does.Contain("EmoteTurn"));
+            Assert.That(ids, Does.Contain("EmoteBreakdance"));
         });
     }
 
@@ -140,63 +190,14 @@ public sealed class PsychiatryTest : InteractionTest
     }
 
     [Test]
-    public async Task LobotomyDropsTwoStages()
-    {
-        await Server.WaitPost(() =>
-        {
-            var psych = SEntMan.System<PsychiatrySystem>();
-            psych.ApplyNew(SPlayer, SchizophreniaStage.Acute, pillForced: false, reason: "test");
-            psych.AdjustStage(SPlayer, -2, "lobotomy-test");
-            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Latent));
-        });
-    }
-
-    [Test]
-    public async Task LobotomyClearsAcute()
-    {
-        await SpawnTarget("MobHuman");
-        await Server.WaitPost(() =>
-        {
-            Server.CfgMan.SetCVar(CCCCVars.PsychiatryLobotomyFaultChance, 0f);
-            var psych = SEntMan.System<PsychiatrySystem>();
-            psych.ApplyNew(STarget!.Value, SchizophreniaStage.Acute, pillForced: false, reason: "test");
-            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(STarget!.Value), Is.True);
-        });
-        await InteractUsing("LobotomyTool");
-        await RunSeconds(14f);
-        await Server.WaitAssertion(() =>
-        {
-            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(STarget!.Value), Is.False);
-            Server.CfgMan.SetCVar(CCCCVars.PsychiatryLobotomyFaultChance, 0.30f);
-        });
-    }
-
-    [Test]
-    public async Task LobotomyClearsLatent()
-    {
-        await SpawnTarget("MobHuman");
-        await Server.WaitPost(() =>
-        {
-            Server.CfgMan.SetCVar(CCCCVars.PsychiatryLobotomyFaultChance, 0f);
-            var psych = SEntMan.System<PsychiatrySystem>();
-            psych.ApplyNew(STarget!.Value, SchizophreniaStage.Latent, pillForced: false, reason: "test");
-        });
-        await InteractUsing("LobotomyTool");
-        await RunSeconds(14f);
-        await Server.WaitAssertion(() =>
-        {
-            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(STarget!.Value), Is.False);
-            Server.CfgMan.SetCVar(CCCCVars.PsychiatryLobotomyFaultChance, 0.30f);
-        });
-    }
-
-    [Test]
     public async Task TreatmentClearsAtZero()
     {
         await Server.WaitPost(() =>
         {
             var psych = SEntMan.System<PsychiatrySystem>();
             psych.ApplyNew(SPlayer, SchizophreniaStage.Latent, pillForced: false, reason: "test");
+            psych.AdjustStage(SPlayer, -1, "clear");
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Incipient));
             psych.AdjustStage(SPlayer, -1, "clear");
             Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.False);
         });
@@ -209,7 +210,7 @@ public sealed class PsychiatryTest : InteractionTest
         {
             var psych = SEntMan.System<PsychiatrySystem>();
             psych.ApplyNew(SPlayer, SchizophreniaStage.Latent, pillForced: false, reason: "test");
-            psych.AdjustStage(SPlayer, -2, "lobotomy-latent");
+            psych.AdjustStage(SPlayer, -2, "drop");
             Assert.That(SharedPsychiatrySystem.LowerStage(SchizophreniaStage.Latent, 2), Is.EqualTo(SchizophreniaStage.None));
             Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.False);
         });
@@ -255,7 +256,13 @@ public sealed class PsychiatryTest : InteractionTest
     public async Task PatternPoolsByStage()
     {
         Assert.That(PsychiatryPattern.PickPool(SchizophreniaStage.Latent, 1, 1), Is.EqualTo(PsychiatryRemapPool.Animal));
+        Assert.That(PsychiatryPattern.PickPool(SchizophreniaStage.Simple, 1, 1), Is.EqualTo(PsychiatryRemapPool.Animal));
         Assert.That(PsychiatryPattern.ShouldRemapMob(42, 7, SchizophreniaStage.None), Is.False);
+        Assert.That(PsychiatryPattern.ShouldRemapMob(1, 1, SchizophreniaStage.Incipient, 1f, 1f, 1f), Is.False);
+        Assert.That(PsychiatryPattern.ShouldRemapMob(1, 1, SchizophreniaStage.Latent, 1f, 1f, 1f), Is.False);
+        Assert.That(PsychiatryPattern.ShouldRemapMob(1, 1, SchizophreniaStage.Simple, 0f, 1f, 1f), Is.True);
+        Assert.That(PsychiatryPattern.ShouldRemapItem(1, 1, SchizophreniaStage.Simple, 1f, 1f, 1f), Is.False);
+        Assert.That(PsychiatryPattern.IsMeatWall(new Vector2i(3, 9), 123, SchizophreniaStage.Simple), Is.False);
 
         await Server.WaitAssertion(() =>
         {
@@ -343,7 +350,7 @@ public sealed class PsychiatryTest : InteractionTest
             var illness = SEntMan.GetComponent<SchizophreniaComponent>(ipc);
             Assert.That(illness.Kind, Is.EqualTo(PsychiatryIllnessKind.Cyberpsychosis));
             Assert.That(illness.Stage, Is.EqualTo(SchizophreniaStage.Simple));
-            psych.AdjustStage(ipc, -2, "hard-reset");
+            psych.AdjustStage(ipc, -(int) SchizophreniaStage.Simple, "hard-reset");
             Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(ipc), Is.False);
             Assert.That(SEntMan.System<PsychiatryOnsetSystem>().TrySlipRoll(ipc, 0f), Is.True);
             var slipped = SEntMan.GetComponent<SchizophreniaComponent>(ipc);
@@ -632,6 +639,162 @@ public sealed class PsychiatryTest : InteractionTest
             var price = SEntMan.System<PricingSystem>().GetPrice(crate);
             Assert.That(price, Is.LessThanOrEqualTo(product.Cost));
             SEntMan.DeleteEntity(crate);
+        });
+    }
+
+    [Test]
+    public async Task IncipientHasNoSymptomsAndEscalates()
+    {
+        await Server.WaitPost(() =>
+        {
+            var psych = SEntMan.System<PsychiatrySystem>();
+            var timing = Server.ResolveDependency<IGameTiming>();
+            psych.ApplyNew(SPlayer, SchizophreniaStage.Incipient, pillForced: false, reason: "test");
+            var schizo = SEntMan.GetComponent<SchizophreniaComponent>(SPlayer);
+            Assert.That(schizo.Stage, Is.EqualTo(SchizophreniaStage.Incipient));
+            Assert.That(SEntMan.HasComponent<ParacusiaComponent>(SPlayer), Is.False);
+            schizo.NextAutoEscalate = timing.CurTime - TimeSpan.FromSeconds(1);
+            SEntMan.Dirty(SPlayer, schizo);
+        });
+
+        await RunSeconds(1.5f);
+
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Latent));
+        });
+    }
+
+    [Test]
+    public async Task HeadTraumaStartsIncipient()
+    {
+        await Server.WaitPost(() =>
+        {
+            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.False);
+            SEntMan.AddComponent<PsychiatryHeadTraumaComponent>(SPlayer);
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Incipient));
+        });
+    }
+
+    [Test]
+    public async Task StasisClearsIllnessAndSensoryFaults()
+    {
+        await Server.WaitPost(() =>
+        {
+            var psych = SEntMan.System<PsychiatrySystem>();
+            var status = SEntMan.System<StatusEffectsSystem>();
+            psych.ApplyNew(SPlayer, SchizophreniaStage.Acute, pillForced: false, reason: "test");
+            status.TrySetStatusEffectDuration(SPlayer, "StatusEffectDeaf", null);
+            status.TrySetStatusEffectDuration(SPlayer, "StatusEffectMuted", null);
+            var eyes = SEntMan.GetComponent<BlindableComponent>(SPlayer);
+            SEntMan.System<BlindableSystem>().AdjustEyeDamage((SPlayer, eyes), eyes.MaxDamage);
+
+            var coords = SEntMan.GetComponent<TransformComponent>(SPlayer).Coordinates;
+            var action = SEntMan.SpawnEntity("ActionChangelingStasis", coords);
+            var system = SEntMan.System<RegenerativeStasisSystem>();
+            system.EnterStasis(action, SPlayer);
+            system.ExitStasis(action, SPlayer);
+            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.False);
+            SEntMan.DeleteEntity(action);
+        });
+
+        await RunTicks(1);
+
+        await Server.WaitAssertion(() =>
+        {
+            var status = SEntMan.System<StatusEffectsSystem>();
+            Assert.That(status.HasStatusEffect(SPlayer, "StatusEffectDeaf"), Is.False);
+            Assert.That(status.HasStatusEffect(SPlayer, "StatusEffectMuted"), Is.False);
+            Assert.That(SEntMan.GetComponent<BlindableComponent>(SPlayer).EyeDamage, Is.EqualTo(0));
+        });
+    }
+
+    [Test]
+    public async Task NeuroClarityOverdoseMatchesMercury()
+    {
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(ProtoMan.TryIndex(NeuroClarity, out var reagent), Is.True);
+            var poison = FixedPoint2.Zero;
+            var extra = false;
+            var metabolisms = reagent!.Metabolisms;
+            Assert.That(metabolisms, Is.Not.Null);
+            foreach (var effect in metabolisms![MedicineGroup].Effects)
+            {
+                if (effect is not HealthChange change || change.Damage == null)
+                    continue;
+                foreach (var (type, amount) in change.Damage.DamageDict)
+                {
+                    if (type == "Poison")
+                        poison += amount;
+                    else
+                        extra = true;
+                }
+            }
+
+            Assert.That(extra, Is.False);
+            Assert.That(poison, Is.EqualTo(FixedPoint2.New(1)));
+        });
+    }
+
+    [Test]
+    public async Task PsychiatryCraftsHaveNoSkillCheck()
+    {
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(ProtoMan.TryIndex(FirmwarePatchCraft, out var patch), Is.True);
+            Assert.That(ProtoMan.TryIndex(CascadeSpikeCraft, out var spike), Is.True);
+            Assert.That(patch!.Conditions.Any(condition => condition is SkillCondition), Is.False);
+            Assert.That(spike!.Conditions.Any(condition => condition is SkillCondition), Is.False);
+        });
+    }
+
+    [Test]
+    public async Task DeafListenerDropsNearbySpeech()
+    {
+        await Server.WaitPost(() =>
+        {
+            var status = SEntMan.System<StatusEffectsSystem>();
+            status.TrySetStatusEffectDuration(SPlayer, "StatusEffectDeaf", null);
+            var players = Server.ResolveDependency<IPlayerManager>();
+            ICommonSession? session = null;
+            foreach (var candidate in players.Sessions)
+            {
+                if (candidate.AttachedEntity == SPlayer)
+                {
+                    session = candidate;
+                    break;
+                }
+            }
+
+            Assert.That(session, Is.Not.Null);
+            var coords = SEntMan.GetComponent<TransformComponent>(SPlayer).Coordinates;
+            var speaker = SEntMan.SpawnEntity("MobHuman", coords);
+            var recipients = new Dictionary<ICommonSession, ChatSystem.ICChatRecipientData>
+            {
+                [session!] = new(1f, false),
+            };
+            var ev = new ExpandICChatRecipientsEvent(speaker, 7f, recipients);
+            SEntMan.EventBus.RaiseEvent(EventSource.Local, ev);
+            Assert.That(recipients.ContainsKey(session), Is.False);
+        });
+    }
+
+    [Test]
+    public async Task PolskorovitSteps()
+    {
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(ProtoMan.TryIndex(Polskorovit, out var emote), Is.True);
+            Assert.That(emote!.Available, Is.False);
+            Assert.That(EmoteAnimation.TryResolve(emote.Steps, out var plan, out var error), Is.True, error);
+            Assert.That(plan.Poses.Exists(pose => Math.Abs(pose.Tilt - 20f) < 0.01f), Is.True);
+            Assert.That(plan.Poses.Exists(pose => Math.Abs(pose.Tilt + 40f) < 0.01f), Is.True);
+            Assert.That(plan.Poses.Exists(pose => pose.Shift.Y > 0.7f), Is.True);
+            Assert.That(plan.Poses.Exists(pose => Math.Abs(pose.Face - 90f) < 0.01f), Is.True);
+            Assert.That(plan.Poses.Exists(pose => pose.Size.X < 1f && pose.Size.Y > 1f), Is.True);
+            Assert.That(plan.Poses[plan.Poses.Count - 1].Tilt, Is.EqualTo(0f).Within(0.01f));
+            Assert.That(plan.Poses[plan.Poses.Count - 1].Face, Is.EqualTo(0f).Within(0.01f));
         });
     }
 }

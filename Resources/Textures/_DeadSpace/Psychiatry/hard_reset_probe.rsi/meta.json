@@ -1,35 +1,12 @@
 {
     "version": 1,
     "license": "CC-BY-SA-3.0",
-    "copyright": "Created by Blue Dog Doc for Space Station 14 server Мёртвый Космос",
-    "size": {
-        "x": 32,
-        "y": 32
-    },
+    "copyright": "taken from ss220-space/Paradise https://github.com/ss220-space/Paradise/",
+    "size": { "x": 32, "y": 32 },
     "states": [
-        {
-            "name": "icon"
-        },
-        {
-            "name": "active",
-            "delays": [
-                [
-                    0.12,
-                    0.12,
-                    0.12,
-                    0.12,
-                    0.12,
-                    0.12
-                ]
-            ]
-        },
-        {
-            "name": "inhand-left",
-            "directions": 4
-        },
-        {
-            "name": "inhand-right",
-            "directions": 4
-        }
+        { "name": "control_off" },
+        { "name": "control_standby", "delays": [[0.1, 0.1, 0.1, 0.1, 0.1, 0.1]] },
+        { "name": "control_stun", "delays": [[0.1, 0.1, 0.1, 0.1, 0.1, 0.1]] },
+        { "name": "control_kill", "delays": [[0.1, 0.1, 0.1, 0.1, 0.1, 0.1]] }
     ]
 }

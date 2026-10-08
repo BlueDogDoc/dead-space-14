@@ -15,6 +15,7 @@ chat-emote-name-jump = Прыгнуть
 chat-emote-name-turn = Кружится
 chat-emote-name-bow = Поклониться
 chat-emote-name-breakdance = Брейкданс
+chat-emote-name-polskorovit = Польскоровит
 chat-emote-name-start-tail = Начать вилять хвостом
 chat-emote-name-stop-tail = Перестать вилять хвостом
 # Сообщение

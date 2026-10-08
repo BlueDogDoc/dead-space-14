@@ -118,13 +118,6 @@ public sealed class EncephalographSystem : EntitySystem
         if (args.Handled || !args.CanReach || args.Target is not { } target)
             return;
 
-        if (!_psychiatry.HasAdvancedTreatment(args.User))
-        {
-            _popup.PopupEntity(Loc.GetString("psychiatry-enceph-no-skill"), args.User, args.User, PopupType.SmallCaution);
-            args.Handled = true;
-            return;
-        }
-
         if (!_inventory.TryGetSlotEntity(target, "head", out var head) || !HasComp<NeuroMeshComponent>(head.Value))
         {
             _popup.PopupEntity(Loc.GetString("psychiatry-enceph-no-mesh"), args.User, args.User);

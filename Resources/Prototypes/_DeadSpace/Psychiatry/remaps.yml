@@ -4,7 +4,7 @@
   id: PsychiatryRemapCow
   sprite: { sprite: Mobs/Animals/cow.rsi, state: cow }
   name: psychiatry-name-cow
-  pools: [ Animal ]
+  pools: [ Animal, Item ]
   weight: 1
   prefer: true
 
@@ -33,7 +33,7 @@
   id: PsychiatryRemapSpider
   sprite: { sprite: Mobs/Animals/spider.rsi, state: hunter }
   name: psychiatry-name-spider
-  pools: [ Animal ]
+  pools: [ Animal, Item ]
   weight: 1
 
 - type: psychiatryRemap
@@ -44,10 +44,87 @@
   weight: 1
 
 - type: psychiatryRemap
+  id: PsychiatryRemapGoat
+  sprite: { sprite: Mobs/Animals/goat.rsi, state: goat }
+  name: psychiatry-name-goat
+  pools: [ Animal, Item ]
+  weight: 1
+
+- type: psychiatryRemap
+  id: PsychiatryRemapChicken
+  sprite: { sprite: Mobs/Animals/chicken.rsi, state: chicken-0 }
+  name: psychiatry-name-chicken
+  pools: [ Animal, Item ]
+  weight: 1
+
+- type: psychiatryRemap
+  id: PsychiatryRemapPenguin
+  sprite: { sprite: Mobs/Animals/penguin.rsi, state: penguin }
+  name: psychiatry-name-penguin
+  pools: [ Animal, Item ]
+  weight: 1
+
+- type: psychiatryRemap
+  id: PsychiatryRemapPig
+  sprite: { sprite: Mobs/Animals/pig.rsi, state: pig }
+  name: psychiatry-name-pig
+  pools: [ Animal, Item ]
+  weight: 1
+
+- type: psychiatryRemap
+  id: PsychiatryRemapCrab
+  sprite: { sprite: Mobs/Animals/crab.rsi, state: crab }
+  name: psychiatry-name-crab
+  pools: [ Animal, Item ]
+  weight: 1
+
+- type: psychiatryRemap
+  id: PsychiatryRemapCat
+  sprite: { sprite: Mobs/Pets/cat.rsi, state: cat }
+  name: psychiatry-name-cat
+  pools: [ Animal, Item ]
+  weight: 1
+
+- type: psychiatryRemap
+  id: PsychiatryRemapFox
+  sprite: { sprite: Mobs/Pets/fox.rsi, state: fox }
+  name: psychiatry-name-fox
+  pools: [ Animal, Item ]
+  weight: 1
+
+- type: psychiatryRemap
+  id: PsychiatryRemapSloth
+  sprite: { sprite: Mobs/Pets/sloth.rsi, state: sloth }
+  name: psychiatry-name-sloth
+  pools: [ Animal, Item ]
+  weight: 1
+
+- type: psychiatryRemap
+  id: PsychiatryRemapKangaroo
+  sprite: { sprite: Mobs/Animals/kangaroo.rsi, state: kangaroo }
+  name: psychiatry-name-kangaroo
+  pools: [ Animal, Item ]
+  weight: 1
+
+- type: psychiatryRemap
+  id: PsychiatryRemapBat
+  sprite: { sprite: Mobs/Animals/bat.rsi, state: bat }
+  name: psychiatry-name-bat
+  pools: [ Animal, Item ]
+  weight: 1
+
+- type: psychiatryRemap
+  id: PsychiatryRemapParrot
+  sprite: { sprite: Mobs/Animals/parrot/parrot.rsi, state: parrot }
+  name: psychiatry-name-parrot
+  pools: [ Animal, Item ]
+  weight: 1
+
+- type: psychiatryRemap
   id: PsychiatryRemapCarp
   sprite: { sprite: Mobs/Aliens/Carps/space.rsi, state: alive }
   name: psychiatry-name-carp
-  pools: [ Animal ]
+  pools: [ Animal, Item ]
   weight: 1
 
 - type: psychiatryRemap
@@ -105,6 +182,41 @@
   name: psychiatry-name-legion
   pools: [ Monster ]
   weight: 25
+
+- type: psychiatryRemap
+  id: PsychiatryRemapHivelord
+  sprite: { sprite: Mobs/Aliens/Asteroid/hivelord.rsi, state: hivelord }
+  name: psychiatry-name-hivelord
+  pools: [ Monster ]
+  weight: 25
+
+- type: psychiatryRemap
+  id: PsychiatryRemapBear
+  sprite: { sprite: Mobs/Animals/bear.rsi, state: bear }
+  name: psychiatry-name-bear
+  pools: [ Monster ]
+  weight: 25
+
+- type: psychiatryRemap
+  id: PsychiatryRemapBehonker
+  sprite: { sprite: Mobs/Demons/behonker.rsi, state: alive }
+  name: psychiatry-name-behonker
+  pools: [ Monster ]
+  weight: 15
+
+- type: psychiatryRemap
+  id: PsychiatryRemapSlime
+  sprite: { sprite: Mobs/Aliens/slimes.rsi, state: blue_adult_slime }
+  name: psychiatry-name-slime
+  pools: [ Monster ]
+  weight: 20
+
+- type: psychiatryRemap
+  id: PsychiatryRemapShark
+  sprite: { sprite: Mobs/Aliens/Carps/sharkminnow.rsi, state: alive }
+  name: psychiatry-name-shark
+  pools: [ Monster ]
+  weight: 20
 
 - type: psychiatryRemap
   id: PsychiatryRemapWatcher

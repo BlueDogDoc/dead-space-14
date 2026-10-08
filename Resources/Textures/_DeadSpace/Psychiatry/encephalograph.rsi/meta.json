@@ -1,37 +1,12 @@
 {
     "version": 1,
     "license": "CC-BY-SA-3.0",
-    "copyright": "Created by Blue Dog Doc for Space Station 14 server Мёртвый Космос",
-    "size": {
-        "x": 32,
-        "y": 32
-    },
+    "copyright": "taken from tgstation at commit https://github.com/tgstation/tgstation/commit/db963ad418e63bbbed7a00541acd8160cbff966f",
+    "size": { "x": 32, "y": 32 },
     "states": [
         {
-            "name": "icon"
-        },
-        {
-            "name": "screen",
-            "delays": [
-                [
-                    0.12,
-                    0.12,
-                    0.12,
-                    0.12,
-                    0.12,
-                    0.12,
-                    0.12,
-                    0.12
-                ]
-            ]
-        },
-        {
-            "name": "inhand-left",
-            "directions": 4
-        },
-        {
-            "name": "inhand-right",
-            "directions": 4
+            "name": "icon",
+            "delays": [[1.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]]
         }
     ]
 }

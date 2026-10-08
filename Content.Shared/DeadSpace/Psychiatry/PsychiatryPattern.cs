@@ -15,31 +15,21 @@ public static class PsychiatryPattern
 {
     public static bool IsMeatWall(Vector2i idx, int seed, SchizophreniaStage stage)
     {
-        if (stage < SchizophreniaStage.Simple)
+        if (stage < SchizophreniaStage.Acute)
             return false;
         var n = Fbm(idx.X, idx.Y, seed + 17, 0.09f);
-        var intensity = (int) stage / 3f;
+        var intensity = 1f;
         var threshold = MathHelper.Lerp(0.58f, 0.36f, intensity);
         return n > threshold;
     }
 
-    public static bool IsLavaFloor(Vector2i idx, int seed)
-    {
-        var n = Fbm(idx.X, idx.Y, seed, 0.11f);
-        return n > 0.55f;
-    }
-
-    public static bool IsWaterFloor(Vector2i idx, int seed)
-    {
-        var n = Fbm(idx.X, idx.Y, seed + 41, 0.11f);
-        return n > 0.55f && !IsLavaFloor(idx, seed);
-    }
-
     public static bool ShouldRemapMob(int entityHash, int seed, SchizophreniaStage stage, float latent = 0.45f, float simple = 0.65f, float acute = 0.9f)
     {
+        if (stage < SchizophreniaStage.Simple)
+            return false;
+
         var chance = stage switch
         {
-            SchizophreniaStage.Latent => latent,
             SchizophreniaStage.Simple => simple,
             SchizophreniaStage.Acute => acute,
             _ => 0f,
@@ -50,7 +40,7 @@ public static class PsychiatryPattern
 
     public static bool ShouldRemapItem(int entityHash, int seed, SchizophreniaStage stage, float latent = 0.35f, float simple = 0.45f, float acute = 0.55f)
     {
-        if (stage < SchizophreniaStage.Latent)
+        if (stage < SchizophreniaStage.Acute)
             return false;
         var chance = stage switch
         {

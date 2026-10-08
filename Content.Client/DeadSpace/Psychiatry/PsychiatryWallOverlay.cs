@@ -27,7 +27,7 @@ public sealed class PsychiatryWallOverlay : Overlay
 
     public override OverlaySpace Space => OverlaySpace.WorldSpaceBelowFOV;
 
-    private readonly List<Vector2> _draw = new();
+    private readonly List<(Vector2 Pos, Angle Rot)> _draw = new();
     private Texture? _meat;
     private bool _texTried;
     private float _time;
@@ -46,7 +46,7 @@ public sealed class PsychiatryWallOverlay : Overlay
     {
         _time += frameTime;
         _draw.Clear();
-        if (schizo.Stage < SchizophreniaStage.Simple)
+        if (schizo.Stage < SchizophreniaStage.Acute)
             return;
 
         var origin = _xform.GetMapCoordinates(subject);
@@ -71,7 +71,7 @@ public sealed class PsychiatryWallOverlay : Overlay
             if (!PsychiatryPattern.IsMeatWall(tile, schizo.Seed, schizo.Stage))
                 continue;
 
-            _draw.Add(_xform.GetWorldPosition(uid));
+            _draw.Add((_xform.GetWorldPosition(uid), _xform.GetWorldRotation(uid)));
         }
 
         EnsureTexture();
@@ -96,20 +96,23 @@ public sealed class PsychiatryWallOverlay : Overlay
             return;
 
         var handle = args.WorldHandle;
+        handle.SetTransform(Matrix3x2.Identity);
         // Красный канал тоже дышит. Пульс только по G/B на стене не видно.
         var wave = 0.5f + 0.5f * MathF.Sin(_time * 2.8f);
         var pulse = 0.42f + 0.58f * wave;
         var color = new Color(pulse, pulse * 0.55f, pulse * 0.48f);
-        var size = new Vector2(1f, 1f);
+        var quad = Box2.FromDimensions(new Vector2(-0.5f, -0.5f), Vector2.One);
 
-        foreach (var pos in _draw)
+        foreach (var (pos, rot) in _draw)
         {
-            var box = Box2.CenteredAround(pos, size);
+            handle.SetTransform(Matrix3Helpers.CreateTransform(pos, rot));
             if (_meat != null)
-                handle.DrawTextureRect(_meat, box, color);
+                handle.DrawTextureRect(_meat, quad, color);
             else
-                handle.DrawRect(box, color);
+                handle.DrawRect(quad, color);
         }
+
+        handle.SetTransform(Matrix3x2.Identity);
     }
 
     public void Clear() => _draw.Clear();

@@ -2,12 +2,10 @@
 
 namespace Content.Shared.DeadSpace.Psychiatry;
 
-public enum SchizophreniaStage : byte
+/// <summary>
+/// Trait marker. Round start gives the asymptomatic illness stage.
+/// </summary>
+[RegisterComponent]
+public sealed partial class PsychiatryHeadTraumaComponent : Component
 {
-    None = 0,
-    // Нет симптомов. Через автопрогресс становится латентной.
-    Incipient = 1,
-    Latent = 2,
-    Simple = 3,
-    Acute = 4,
 }
