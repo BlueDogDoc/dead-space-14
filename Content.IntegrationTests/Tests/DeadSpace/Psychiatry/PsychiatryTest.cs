@@ -17,6 +17,7 @@ using Content.Shared.Construction.Prototypes;
 using Content.Shared.DeadSpace.Construction;
 using Content.Shared.EntityEffects.Effects.Damage;
 using Content.Shared.Body.Components;
+using Content.Shared.Body.Prototypes;
 using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.EntityEffects;
 using Content.Shared.Chemistry.Reagent;
@@ -55,6 +56,10 @@ public sealed class PsychiatryTest : InteractionTest
     private static readonly ProtoId<VendingMachineInventoryPrototype> NanoMedPlusInventory = "NanoMedPlusInventory";
     private static readonly ProtoId<CargoProductPrototype> MedicalRestock = "CrateVendingMachineRestockMedical";
     private static readonly ProtoId<EmotePrototype> Polskorovit = "Polskorovit";
+    private static readonly ProtoId<ReagentPrototype> NeuroClarity = "NeuroClarity";
+    private static readonly ProtoId<MetabolismGroupPrototype> MedicineGroup = "Medicine";
+    private static readonly ProtoId<ConstructionPrototype> FirmwarePatchCraft = "FirmwarePatch";
+    private static readonly ProtoId<ConstructionPrototype> CascadeSpikeCraft = "CascadeSpike";
 
     protected override string PlayerPrototype => "MobHuman";
 
@@ -709,10 +714,12 @@ public sealed class PsychiatryTest : InteractionTest
     {
         await Server.WaitAssertion(() =>
         {
-            Assert.That(ProtoMan.TryIndex<ReagentPrototype>("NeuroClarity", out var reagent), Is.True);
+            Assert.That(ProtoMan.TryIndex(NeuroClarity, out var reagent), Is.True);
             var poison = FixedPoint2.Zero;
             var extra = false;
-            foreach (var effect in reagent!.Metabolisms["Medicine"].Effects)
+            var metabolisms = reagent!.Metabolisms;
+            Assert.That(metabolisms, Is.Not.Null);
+            foreach (var effect in metabolisms![MedicineGroup].Effects)
             {
                 if (effect is not HealthChange change || change.Damage == null)
                     continue;
@@ -735,8 +742,8 @@ public sealed class PsychiatryTest : InteractionTest
     {
         await Server.WaitAssertion(() =>
         {
-            Assert.That(ProtoMan.TryIndex<ConstructionPrototype>("FirmwarePatch", out var patch), Is.True);
-            Assert.That(ProtoMan.TryIndex<ConstructionPrototype>("CascadeSpike", out var spike), Is.True);
+            Assert.That(ProtoMan.TryIndex(FirmwarePatchCraft, out var patch), Is.True);
+            Assert.That(ProtoMan.TryIndex(CascadeSpikeCraft, out var spike), Is.True);
             Assert.That(patch!.Conditions.Any(condition => condition is SkillCondition), Is.False);
             Assert.That(spike!.Conditions.Any(condition => condition is SkillCondition), Is.False);
         });
