@@ -5,10 +5,3 @@
   targetNode: patch
   category: construction-category-utilities
   objectType: Item
-  conditions:
-  - !type:SkillCondition
-    skill: Robotics
-    popup: psychiatry-patch-roboticist
-    guideIcon:
-      sprite: Interface/Misc/job_icons.rsi
-      state: Roboticist

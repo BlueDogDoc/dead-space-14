@@ -53,6 +53,13 @@ public sealed class EmoteAnimationSystem : SharedEmoteAnimationSystem
     }
 
     //DS-14 start
+    public void PlayLocal(EntityUid uid, string id)
+    {
+        PlayFromPrototype(uid, id);
+    }
+    //DS-14 end
+
+    //DS-14 start
     private void OnAnimationCompleted(EntityUid uid, EmoteAnimationComponent component, AnimationCompletedEvent args)
     {
         if (args.Key != AnimationKey)

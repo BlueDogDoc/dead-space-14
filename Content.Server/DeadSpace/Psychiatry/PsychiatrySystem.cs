@@ -68,6 +68,7 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         base.Initialize();
         SubscribeLocalEvent<SchizophreniaComponent, ComponentStartup>(OnIllnessStartup);
         SubscribeLocalEvent<SchizophreniaComponent, ComponentShutdown>(OnIllnessShutdown);
+        SubscribeLocalEvent<PsychiatryHeadTraumaComponent, ComponentStartup>(OnHeadTrauma);
         SubscribeLocalEvent<RoleAddedEvent>(OnRoleAdded);
     }
 
@@ -142,7 +143,7 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
                 continue;
             }
 
-            if (schizo.Stage >= SchizophreniaStage.Simple)
+            if (schizo.Stage >= SchizophreniaStage.Latent)
                 TryWhisper(uid, schizo);
         }
     }
@@ -358,7 +359,7 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
             return;
 
         if (comp.CourseNeeded <= 0)
-            comp.CourseNeeded = Math.Max(1, (int) comp.Stage);
+            comp.CourseNeeded = CourseTablets(comp.Stage);
 
         comp.CourseMetabolized += units;
         while (comp.CourseMetabolized + 0.001f >= pill)
@@ -370,10 +371,6 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
                 ClearIllness(uid, "NeuroClarity");
                 return;
             }
-
-            AdjustStage(uid, +1, "incomplete-course");
-            if (!TryComp<SchizophreniaComponent>(uid, out comp))
-                return;
         }
     }
 
@@ -417,6 +414,14 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
     private void StampHarm(SchizophreniaOnsetTrackerComponent tracker)
     {
         tracker.NextHarmStage = Timing.CurTime + TimeSpan.FromSeconds(_cfg.GetCVar(CCCCVars.PsychiatryHarmStageCooldownSec));
+    }
+
+    private void OnHeadTrauma(Entity<PsychiatryHeadTraumaComponent> ent, ref ComponentStartup args)
+    {
+        if (IsPositronic(ent.Owner) || HasComp<SchizophreniaComponent>(ent.Owner))
+            return;
+
+        ApplyNew(ent.Owner, SchizophreniaStage.Incipient, pillForced: false, reason: "head-trauma");
     }
 
     private void OnRoleAdded(RoleAddedEvent args)
@@ -711,8 +716,15 @@ public sealed class PsychiatrySystem : SharedPsychiatrySystem
         if (stage <= SchizophreniaStage.None)
             return;
 
-        if (!HasComp<ParacusiaComponent>(uid))
-            EnsureComp<PsychiatryParacusiaComponent>(uid);
+        if (stage < SchizophreniaStage.Simple)
+        {
+            if (!HasComp<PsychiatryParacusiaComponent>(uid))
+                return;
+
+            RemComp<ParacusiaComponent>(uid);
+            RemComp<PsychiatryParacusiaComponent>(uid);
+            return;
+        }
 
         if (!HasComp<PsychiatryParacusiaComponent>(uid))
             return;

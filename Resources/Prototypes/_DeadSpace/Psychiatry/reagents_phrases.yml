@@ -51,7 +51,6 @@
         damage:
           types:
             Poison: 1
-            Asphyxiation: 1
       - !type:Jitter
         conditions:
         - !type:ReagentCondition

@@ -1,9 +1,14 @@
 // Мёртвый Космос, Licensed under custom terms with restrictions on public hosting and commercial use, full text: https://raw.githubusercontent.com/dead-space-server/space-station-14-fobos/master/LICENSE.TXT
 
+using System.Numerics;
 using Content.Client.Examine;
+using Content.Client.Gameplay;
 using Content.Client.Humanoid;
+using Content.Client.Sirena.Animations;
 using Content.Client.UserInterface.Systems.Chat;
 using Content.Shared.Chat;
+using Content.Shared.Chat.Prototypes;
+using Content.Shared.Tag;
 using Content.Shared.DeadSpace.CCCCVars;
 using Content.Shared.DeadSpace.Psychiatry;
 using Content.Shared.Examine;
@@ -20,7 +25,9 @@ using Content.Shared.Wall;
 using Robust.Client.Audio;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
+using Robust.Client.Input;
 using Robust.Client.Player;
+using Robust.Client.State;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Audio;
@@ -52,10 +59,14 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly SharedTransformSystem _xform = default!;
     [Dependency] private readonly SpriteSystem _sprites = default!;
+    [Dependency] private readonly EmoteAnimationSystem _emotes = default!;
+    [Dependency] private readonly TagSystem _tags = default!;
+    [Dependency] private readonly IInputManager _input = default!;
+    [Dependency] private readonly IEyeManager _eye = default!;
+    [Dependency] private readonly IStateManager _state = default!;
 
     private static readonly SoundPathSpecifier SfxFallback = new("/Audio/Magic/fireball.ogg");
 
-    private PsychiatryFloorOverlay? _floorOverlay;
     private PsychiatryWallOverlay? _wallOverlay;
     private PsychiatryScareOverlay? _scareOverlay;
 
@@ -72,6 +83,15 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
     private bool _chatReady;
     private TimeSpan _lastEdit;
     private TimeSpan _lastParacusia;
+    private readonly Dictionary<EntityUid, int> _leaveSalt = new();
+    private float _cowLookAccum;
+    private readonly List<string> _itemHoverEmotes = new();
+    private static readonly ProtoId<EmotePrototype> Polskorovit = "Polskorovit";
+    private static readonly ProtoId<TagPrototype> CowTag = "Cow";
+    private static readonly ResPath CowRsi = new("Mobs/Animals/cow.rsi");
+    private const float CowLookRange = 4f;
+    private const float CowLookGap = 0.4f;
+    private const float ItemHoverEmoteChance = 0.1f;
 
     public override void Initialize()
     {
@@ -210,7 +230,6 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
 
         _activeSubject = subject;
         EnsureOverlays(schizo);
-        _floorOverlay?.UpdateClusters(subject, schizo, _cfg.GetCVar(CCCCVars.PsychiatryRemapRadius));
         _wallOverlay?.Update(subject, schizo, frameTime, _cfg.GetCVar(CCCCVars.PsychiatryRemapRadius));
         NoteParacusia(subject);
         if (_scareOverlay != null)
@@ -222,6 +241,7 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
         }
 
         RefreshActiveRemaps();
+        NoteCowLook(subject, schizo, frameTime);
 
         _discoverAccum += frameTime;
         if (_discoverAccum >= 0.2f)
@@ -231,20 +251,103 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
         }
     }
 
-    private void EnsureOverlays(SchizophreniaComponent schizo)
+    private void NoteCowLook(EntityUid subject, SchizophreniaComponent schizo, float frameTime)
     {
-        if (_floorOverlay == null)
+        _cowLookAccum += frameTime;
+        if (_cowLookAccum < CowLookGap)
+            return;
+        _cowLookAccum = 0f;
+
+        if (!TryHovered(out var hovered) || hovered == subject)
+            return;
+
+        var here = _xform.GetMapCoordinates(subject);
+        var there = _xform.GetMapCoordinates(hovered);
+        if (there.MapId != here.MapId || (there.Position - here.Position).Length() > CowLookRange)
+            return;
+
+        if (LooksLikeCow(hovered))
         {
-            _floorOverlay = new PsychiatryFloorOverlay(EntityManager, _map);
-            _overlays.AddOverlay(_floorOverlay);
+            if (schizo.Stage >= SchizophreniaStage.Latent)
+                _emotes.PlayLocal(hovered, Polskorovit);
+            return;
         }
 
-        if (schizo.Stage >= SchizophreniaStage.Simple && _wallOverlay == null)
+        if (schizo.Stage < SchizophreniaStage.Acute || !HasComp<ItemComponent>(hovered))
+            return;
+        if (!_random.Prob(ItemHoverEmoteChance) || !TryPickItemHoverEmote(out var emote))
+            return;
+
+        _emotes.PlayLocal(hovered, emote);
+    }
+
+    private bool TryHovered(out EntityUid uid)
+    {
+        uid = default;
+        if (_state.CurrentState is not GameplayStateBase screen || !_input.MouseScreenPosition.IsValid)
+            return false;
+
+        var mouse = _eye.PixelToMap(_input.MouseScreenPosition);
+        if (screen.GetClickedEntity(mouse) is not { Valid: true } hovered)
+            return false;
+
+        uid = hovered;
+        return true;
+    }
+
+    private bool TryPickItemHoverEmote(out string emote)
+    {
+        emote = string.Empty;
+        if (_itemHoverEmotes.Count == 0)
+            CollectItemHoverEmotes(_proto, _itemHoverEmotes);
+        if (_itemHoverEmotes.Count == 0)
+            return false;
+
+        emote = _random.Pick(_itemHoverEmotes);
+        return true;
+    }
+
+    internal static void CollectItemHoverEmotes(IPrototypeManager proto, List<string> into)
+    {
+        into.Clear();
+        foreach (var emote in proto.EnumeratePrototypes<EmotePrototype>())
+        {
+            if (emote.ID == Polskorovit || emote.Steps is not { Count: > 0 })
+                continue;
+            into.Add(emote.ID);
+        }
+    }
+
+    private bool LooksLikeCow(EntityUid uid)
+    {
+        if (_tags.HasTag(uid, CowTag))
+            return true;
+
+        if (TryComp<PsychiatryRemapComponent>(uid, out var remap)
+            && remap.DrawState == "cow"
+            && remap.DrawRsi == CowRsi)
+            return true;
+
+        if (!TryComp<SpriteComponent>(uid, out var sprite))
+            return false;
+
+        foreach (ISpriteLayer layer in sprite.AllLayers)
+        {
+            if (layer.Visible && layer.RsiState == "cow" && layer.Rsi?.Path == CowRsi)
+                return true;
+        }
+
+        return false;
+    }
+
+    private void EnsureOverlays(SchizophreniaComponent schizo)
+    {
+        if (schizo.Stage >= SchizophreniaStage.Acute && _wallOverlay == null)
         {
             _wallOverlay = new PsychiatryWallOverlay(EntityManager, _map, _xform, _lookup);
             _overlays.AddOverlay(_wallOverlay);
         }
-        else if (schizo.Stage < SchizophreniaStage.Simple && _wallOverlay != null)
+        else if (schizo.Stage < SchizophreniaStage.Acute && _wallOverlay != null)
         {
             _wallOverlay.Clear();
             _overlays.RemoveOverlay(_wallOverlay);
@@ -298,13 +401,6 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
 
     private void RemoveOverlays()
     {
-        if (_floorOverlay != null)
-        {
-            _floorOverlay.Clear();
-            _overlays.RemoveOverlay(_floorOverlay);
-            _floorOverlay = null;
-        }
-
         if (_wallOverlay != null)
         {
             _wallOverlay.Clear();
@@ -349,7 +445,7 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
         }
 
         foreach (var uid in stale)
-            Restore(uid);
+            Restore(uid, leftArea: true);
     }
 
     private void RefreshActiveRemaps()
@@ -405,7 +501,7 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
                 pool,
                 uid.GetHashCode(),
                 schizo.Seed,
-                salt: 11,
+                salt: 11 + LeaveSalt(uid),
                 prefer: chefLike || PsychiatryPattern.PreferCow(uid.GetHashCode(), schizo.Seed));
             return TryVisual(pick, out rsi, out state, out fakeName, out kind);
         }
@@ -421,7 +517,7 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
                 _cfg.GetCVar(CCCCVars.PsychiatryRemapItemSimple),
                 _cfg.GetCVar(CCCCVars.PsychiatryRemapItemAcute)))
         {
-            var pick = PickRemap(PsychiatryRemapPool.Item, uid.GetHashCode(), schizo.Seed, salt: 29, prefer: false);
+            var pick = PickRemap(PsychiatryRemapPool.Item, uid.GetHashCode(), schizo.Seed, salt: 29 + LeaveSalt(uid), prefer: false);
             return TryVisual(pick, out rsi, out state, out fakeName, out kind);
         }
 
@@ -504,11 +600,16 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
         var hasFake = _sprites.LayerMapTryGet(ent, RemapLayer.Fake, out var fake, false);
         if (remap.OriginalLayerVisible.Count == 0)
         {
+            remap.LayerVisibility ??= new List<bool>();
             var seen = 0;
             foreach (ISpriteLayer layer in sprite.AllLayers)
             {
                 if (!hasFake || seen != fake)
+                {
                     remap.OriginalLayerVisible[LayerKey(layer, seen)] = layer.Visible;
+                    remap.LayerVisibility.Add(layer.Visible);
+                }
+
                 seen++;
             }
         }
@@ -563,10 +664,13 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
         return false;
     }
 
-    private void Restore(EntityUid uid)
+    private void Restore(EntityUid uid, bool leftArea = false)
     {
         if (!TryComp(uid, out PsychiatryRemapComponent? remap))
             return;
+
+        if (leftArea)
+            NoteLeft(uid);
 
         if (TryComp(uid, out SpriteComponent? sprite))
         {
@@ -574,20 +678,34 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
             if (!_sprites.RemoveLayer(ent, RemapLayer.Fake, false))
                 RemoveUnmappedReplacement(ent, sprite, remap);
 
+            var savedLayers = remap.LayerVisibility;
             var i = 0;
             foreach (ISpriteLayer layer in sprite.AllLayers)
             {
-                // Wall remaps used to hide real layers; always show them again.
-                // Other remaps restore the snapshot, or stay visible if the key is unknown.
-                var visible = remap.IsWall
-                    || !remap.OriginalLayerVisible.TryGetValue(LayerKey(layer, i), out var saved)
-                    || saved;
+                bool visible;
+                if (remap.IsWall)
+                    visible = true;
+                else if (savedLayers != null && i < savedLayers.Count)
+                    visible = savedLayers[i];
+                else
+                    visible = !remap.OriginalLayerVisible.TryGetValue(LayerKey(layer, i), out var saved) || saved;
                 _sprites.LayerSetVisible(ent, i, visible);
                 i++;
             }
         }
 
         RemCompDeferred<PsychiatryRemapComponent>(uid);
+    }
+
+    private int LeaveSalt(EntityUid uid)
+    {
+        return _leaveSalt.TryGetValue(uid, out var salt) ? salt : 0;
+    }
+
+    private void NoteLeft(EntityUid uid)
+    {
+        _leaveSalt.TryGetValue(uid, out var salt);
+        _leaveSalt[uid] = salt + 1;
     }
 
     private void RemoveUnmappedReplacement(Entity<SpriteComponent> ent, SpriteComponent sprite, PsychiatryRemapComponent remap)
@@ -677,7 +795,7 @@ public sealed class PsychiatryClientSystem : SharedPsychiatrySystem
 
     private void OnWhisper(PsychiatryWhisperEvent ev)
     {
-        if (!TryGetSubject(out _, out var schizo) || schizo.Stage < SchizophreniaStage.Simple)
+        if (!TryGetSubject(out _, out var schizo) || schizo.Stage < SchizophreniaStage.Latent)
             return;
 
         var source = EntityUid.Invalid;

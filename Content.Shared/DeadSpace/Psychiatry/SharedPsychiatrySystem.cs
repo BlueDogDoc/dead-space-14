@@ -43,6 +43,15 @@ public abstract class SharedPsychiatrySystem : EntitySystem
         return !pillForced && !gas;
     }
 
+    public static int CourseTablets(SchizophreniaStage stage) => stage switch
+    {
+        SchizophreniaStage.Incipient => 1,
+        SchizophreniaStage.Latent => 1,
+        SchizophreniaStage.Simple => 2,
+        SchizophreniaStage.Acute => 3,
+        _ => 1,
+    };
+
     public static SchizophreniaStage ClampStage(int stage) =>
         (SchizophreniaStage) Math.Clamp(stage, 0, (int) SchizophreniaStage.Acute);
 

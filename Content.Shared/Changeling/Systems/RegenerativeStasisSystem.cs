@@ -178,6 +178,11 @@ public sealed partial class RegenerativeStasisSystem : EntitySystem
             _metaData.SetEntityDescription(ent, ent.Comp.InitialDescription);
 
         _actions.SetToggled(ent.Owner, ent.Comp.IsInStasis);
+
+        //DS-14 start
+        var healed = new RegenerativeStasisExitedEvent(target);
+        RaiseLocalEvent(ref healed);
+        //DS-14 end
     }
 
     /// <summary>
@@ -227,3 +232,8 @@ public sealed partial class RegenerativeStasisSystem : EntitySystem
 /// Action event for entering/leaving the stasis.
 /// </summary>
 public sealed partial class ChangelingStasisActionEvent : InstantActionEvent;
+
+//DS-14 start
+[ByRefEvent]
+public record struct RegenerativeStasisExitedEvent(EntityUid Target);
+//DS-14 end
