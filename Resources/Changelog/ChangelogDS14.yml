@@ -8450,3 +8450,12 @@ Entries:
   changes:
   - type: Add
     message: Капельница
+- id: 809
+  author: pe4enkakris
+  time: '2026-10-08T15:32:27.210157+00:00'
+  pr: 2475
+  changes:
+  - type: Add
+    message: Респрайт ЛКП by Nano_Jump
+  - type: Tweak
+    message: У ядерных оперативников изменение цен, смотрите в PR.
