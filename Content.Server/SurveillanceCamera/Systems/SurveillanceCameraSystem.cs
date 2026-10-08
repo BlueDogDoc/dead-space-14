@@ -153,6 +153,16 @@ public sealed class SurveillanceCameraSystem : SharedSurveillanceCameraSystem
         _adminLogger.Add(LogType.Chat, LogImpact.Low, $"{ToPrettyString(args.Actor)} set the name of {ToPrettyString(uid)} to \"{args.Name}.\"");
     }
 
+    //DS-14 start
+    public string? GetConfiguredName(EntityUid uid, SurveillanceCameraComponent? camera = null)
+    {
+        if (!Resolve(uid, ref camera, false) || !camera.NameSet || string.IsNullOrWhiteSpace(camera.CameraId))
+            return null;
+
+        return camera.CameraId;
+    }
+    //DS-14 end
+
     private void OnSetNetwork(EntityUid uid, SurveillanceCameraComponent component,
         SurveillanceCameraSetupSetNetwork args)
     {
