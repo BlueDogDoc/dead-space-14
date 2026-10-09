@@ -13,7 +13,6 @@ using Content.Shared.Jittering;
 using Content.Shared.Mobs.Systems;
 using Content.Shared.Polymorph;
 using Content.Shared.Standing;
-using Robust.Shared.Configuration;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 
@@ -22,12 +21,10 @@ namespace Content.Server.DeadSpace.SlimeForm;
 public sealed class SlimeFormSystem : EntitySystem
 {
     private static readonly ProtoId<PolymorphPrototype> SlimePolymorph = "SlimePersonForm";
-    private static readonly EntProtoId FormAction = "ActionSlimeForm";
 
     [Dependency] private readonly SharedActionsSystem _actions = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly SharedBodySystem _body = default!;
-    [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly SharedCuffableSystem _cuffs = default!;
     [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
@@ -63,7 +60,7 @@ public sealed class SlimeFormSystem : EntitySystem
     private void OnMapInit(Entity<SlimeFormComponent> ent, ref MapInitEvent args)
     {
         EntityUid? action = null;
-        if (_actions.AddAction(ent, ref action, FormAction))
+        if (_actions.AddAction(ent, ref action, ent.Comp.FormAction))
             ent.Comp.Action = action;
     }
 
@@ -109,7 +106,7 @@ public sealed class SlimeFormSystem : EntitySystem
         if (args.IsRevert)
         {
             if (TryComp<SlimeFormComponent>(args.NewEntity, out var form) && form.Action is { } action)
-                _actions.SetCooldown(action, TimeSpan.FromSeconds(_cfg.GetCVar(SlimeFormCVars.Cooldown)));
+                _actions.SetCooldown(action, TimeSpan.FromSeconds(ent.Comp.FormCooldown));
 
             return;
         }
@@ -128,7 +125,7 @@ public sealed class SlimeFormSystem : EntitySystem
         if (ent.Comp.Busy || _mobState.IsDead(ent))
             return false;
 
-        var time = TimeSpan.FromSeconds(Math.Max(_cfg.GetCVar(SlimeFormCVars.Duration), 0f));
+        var time = TimeSpan.FromSeconds(Math.Max(ent.Comp.FormDuration, 0f));
         var doAfter = new DoAfterArgs(EntityManager, ent, time, doAfterEvent, ent)
         {
             BreakOnMove = true,
@@ -193,7 +190,7 @@ public sealed class SlimeFormSystem : EntitySystem
             return;
 
         ent.Comp.LimbInterval = time.Ticks > 0
-            ? time / (double) ent.Comp.Limbs.Count
+            ? time / (double) (ent.Comp.Limbs.Count + 1)
             : TimeSpan.Zero;
         ent.Comp.NextLimbDrop = _timing.CurTime + ent.Comp.LimbInterval;
     }

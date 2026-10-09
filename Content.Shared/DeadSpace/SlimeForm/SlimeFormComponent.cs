@@ -2,6 +2,7 @@
 
 using Content.Shared.Actions;
 using Content.Shared.DoAfter;
+using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared.DeadSpace.SlimeForm;
@@ -10,7 +11,15 @@ namespace Content.Shared.DeadSpace.SlimeForm;
 public sealed partial class SlimeFormComponent : Component
 {
     [DataField]
+    public EntProtoId FormAction = "ActionSlimeForm";
+    [DataField]
     public bool IsSlime;
+
+    [DataField]
+    public float FormCooldown = 300f;
+
+    [DataField]
+    public float FormDuration = 4f;
 
     public bool Busy;
 
