@@ -10,7 +10,7 @@ namespace Content.Client.DeadSpace.PdaArcade;
 
 public sealed class PdaSnakeBoard : PdaArcadeBoard
 {
-    private const int Size = 26;
+    private const int Cells = 26;
     private readonly List<(int X, int Y)> _snake = new();
     private (int X, int Y) _food;
     private int _dirX = 1;
@@ -97,7 +97,7 @@ public sealed class PdaSnakeBoard : PdaArcadeBoard
         _dirY = _nextY;
         var head = _snake[0];
         var next = (X: head.X + _dirX, Y: head.Y + _dirY);
-        if (next.X < 0 || next.Y < 0 || next.X >= Size || next.Y >= Size || _snake.Contains(next))
+        if (next.X < 0 || next.Y < 0 || next.X >= Cells || next.Y >= Cells || _snake.Contains(next))
         {
             End();
             return;
@@ -120,7 +120,7 @@ public sealed class PdaSnakeBoard : PdaArcadeBoard
     {
         for (var i = 0; i < 40; i++)
         {
-            var cell = (_random.Next(Size), _random.Next(Size));
+            var cell = (_random.Next(Cells), _random.Next(Cells));
             if (!_snake.Contains(cell))
             {
                 _food = cell;
@@ -133,17 +133,17 @@ public sealed class PdaSnakeBoard : PdaArcadeBoard
     {
         DrawFloor(handle);
         var inner = Inner(8);
-        var cell = (int) Math.Min(inner.Width, inner.Height) / Size;
+        var cell = (int) Math.Min(inner.Width, inner.Height) / Cells;
         if (cell < 2)
             return;
 
-        var boardW = cell * Size;
-        var boardH = cell * Size;
+        var boardW = cell * Cells;
+        var boardH = cell * Cells;
         var originX = (int) (inner.Left + (inner.Width - boardW) / 2);
         var originY = (int) (inner.Top + (inner.Height - boardH) / 2);
         handle.DrawRect(new UIBox2(originX - 3, originY - 3, originX + boardW + 3, originY + boardH + 3), Color.FromHex("#0d2416"));
-        for (var x = 0; x < Size; x++)
-        for (var y = 0; y < Size; y++)
+        for (var x = 0; x < Cells; x++)
+        for (var y = 0; y < Cells; y++)
         {
             if ((x + y) % 2 == 0)
                 handle.DrawRect(Cell(originX, originY, cell, x, y), Color.FromHex("#1e4a2c"));

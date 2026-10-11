@@ -8,9 +8,9 @@ namespace Content.Client.DeadSpace.PdaArcade;
 
 public sealed class PdaMatchBoard : PdaArcadeBoard
 {
-    private const int Size = 8;
+    private const int Cells = 8;
     private int Kinds => PdaArcadeArt.Profile.Fruits.Count;
-    private readonly int[,] _grid = new int[Size, Size];
+    private readonly int[,] _grid = new int[Cells, Cells];
     private int _cx;
     private int _cy;
     private int _sx = -1;
@@ -42,8 +42,8 @@ public sealed class PdaMatchBoard : PdaArcadeBoard
         _sy = -1;
         for (var attempt = 0; attempt < 40; attempt++)
         {
-            for (var x = 0; x < Size; x++)
-            for (var y = 0; y < Size; y++)
+            for (var x = 0; x < Cells; x++)
+            for (var y = 0; y < Cells; y++)
                 _grid[x, y] = _random.Next(Kinds);
 
             if (Find().Count == 0 && HasMove())
@@ -57,8 +57,8 @@ public sealed class PdaMatchBoard : PdaArcadeBoard
 
     private void Move(int dx, int dy)
     {
-        _cx = Math.Clamp(_cx + dx, 0, Size - 1);
-        _cy = Math.Clamp(_cy + dy, 0, Size - 1);
+        _cx = Math.Clamp(_cx + dx, 0, Cells - 1);
+        _cy = Math.Clamp(_cy + dy, 0, Cells - 1);
     }
 
     private void Choose()
@@ -97,8 +97,8 @@ public sealed class PdaMatchBoard : PdaArcadeBoard
 
     private bool _clearing;
     private float _pulse;
-    private readonly bool[,] _pop = new bool[Size, Size];
-    private readonly float[,] _offset = new float[Size, Size];
+    private readonly bool[,] _pop = new bool[Cells, Cells];
+    private readonly float[,] _offset = new float[Cells, Cells];
 
     private void BeginClear()
     {
@@ -133,8 +133,8 @@ public sealed class PdaMatchBoard : PdaArcadeBoard
         }
 
         var moving = false;
-        for (var x = 0; x < Size; x++)
-        for (var y = 0; y < Size; y++)
+        for (var x = 0; x < Cells; x++)
+        for (var y = 0; y < Cells; y++)
         {
             if (_offset[x, y] >= 0f)
                 continue;
@@ -154,11 +154,11 @@ public sealed class PdaMatchBoard : PdaArcadeBoard
 
     private void Collapse()
     {
-        for (var x = 0; x < Size; x++)
+        for (var x = 0; x < Cells; x++)
         {
             var stack = new List<int>();
             var from = new List<int>();
-            for (var y = Size - 1; y >= 0; y--)
+            for (var y = Cells - 1; y >= 0; y--)
             {
                 if (_pop[x, y] || _grid[x, y] < 0)
                     continue;
@@ -167,7 +167,7 @@ public sealed class PdaMatchBoard : PdaArcadeBoard
                 from.Add(y);
             }
 
-            for (var y = 0; y < Size; y++)
+            for (var y = 0; y < Cells; y++)
             {
                 _pop[x, y] = false;
                 _grid[x, y] = -1;
@@ -176,12 +176,12 @@ public sealed class PdaMatchBoard : PdaArcadeBoard
 
             for (var i = 0; i < stack.Count; i++)
             {
-                var y = Size - 1 - i;
+                var y = Cells - 1 - i;
                 _grid[x, y] = stack[i];
                 _offset[x, y] = from[i] - y;
             }
 
-            var empty = Size - stack.Count;
+            var empty = Cells - stack.Count;
             for (var y = empty - 1; y >= 0; y--)
             {
                 _grid[x, y] = _random.Next(Kinds);
@@ -202,10 +202,10 @@ public sealed class PdaMatchBoard : PdaArcadeBoard
         foreach (var cell in matched)
             _grid[cell.X, cell.Y] = -1;
 
-        for (var x = 0; x < Size; x++)
+        for (var x = 0; x < Cells; x++)
         {
-            var write = Size - 1;
-            for (var y = Size - 1; y >= 0; y--)
+            var write = Cells - 1;
+            for (var y = Cells - 1; y >= 0; y--)
             {
                 if (_grid[x, y] < 0)
                     continue;
@@ -226,12 +226,12 @@ public sealed class PdaMatchBoard : PdaArcadeBoard
     private List<(int X, int Y)> Find()
     {
         var cells = new HashSet<(int X, int Y)>();
-        for (var y = 0; y < Size; y++)
+        for (var y = 0; y < Cells; y++)
         {
             var run = 1;
-            for (var x = 1; x <= Size; x++)
+            for (var x = 1; x <= Cells; x++)
             {
-                if (x < Size && _grid[x, y] >= 0 && _grid[x, y] == _grid[x - 1, y])
+                if (x < Cells && _grid[x, y] >= 0 && _grid[x, y] == _grid[x - 1, y])
                 {
                     run++;
                     continue;
@@ -247,12 +247,12 @@ public sealed class PdaMatchBoard : PdaArcadeBoard
             }
         }
 
-        for (var x = 0; x < Size; x++)
+        for (var x = 0; x < Cells; x++)
         {
             var run = 1;
-            for (var y = 1; y <= Size; y++)
+            for (var y = 1; y <= Cells; y++)
             {
-                if (y < Size && _grid[x, y] >= 0 && _grid[x, y] == _grid[x, y - 1])
+                if (y < Cells && _grid[x, y] >= 0 && _grid[x, y] == _grid[x, y - 1])
                 {
                     run++;
                     continue;
@@ -273,12 +273,12 @@ public sealed class PdaMatchBoard : PdaArcadeBoard
 
     private bool HasMove()
     {
-        for (var x = 0; x < Size; x++)
-        for (var y = 0; y < Size; y++)
+        for (var x = 0; x < Cells; x++)
+        for (var y = 0; y < Cells; y++)
         {
-            if (x + 1 < Size && WouldMatch(x, y, x + 1, y))
+            if (x + 1 < Cells && WouldMatch(x, y, x + 1, y))
                 return true;
-            if (y + 1 < Size && WouldMatch(x, y, x, y + 1))
+            if (y + 1 < Cells && WouldMatch(x, y, x, y + 1))
                 return true;
         }
 
@@ -304,14 +304,14 @@ public sealed class PdaMatchBoard : PdaArcadeBoard
             FillBackground(handle, field);
 
         var inner = Inner(8);
-        var cell = (int) Math.Min(inner.Width, inner.Height) / Size;
+        var cell = (int) Math.Min(inner.Width, inner.Height) / Cells;
         if (cell < 4)
             return;
 
-        var originX = (int) (inner.Left + (inner.Width - cell * Size) / 2);
-        var originY = (int) (inner.Top + (inner.Height - cell * Size) / 2);
-        for (var x = 0; x < Size; x++)
-        for (var y = 0; y < Size; y++)
+        var originX = (int) (inner.Left + (inner.Width - cell * Cells) / 2);
+        var originY = (int) (inner.Top + (inner.Height - cell * Cells) / 2);
+        for (var x = 0; x < Cells; x++)
+        for (var y = 0; y < Cells; y++)
         {
             var drop = _offset[x, y] * cell;
             var rect = new UIBox2(originX + x * cell + 2, originY + y * cell + 2 + drop, originX + (x + 1) * cell - 2, originY + (y + 1) * cell - 2 + drop);
@@ -337,12 +337,12 @@ public sealed class PdaMatchBoard : PdaArcadeBoard
             handle.DrawTextureRect(PdaArcadeArt.Texture(PdaArcadeArt.Profile.Fruits[kind]), new UIBox2(rect.Left + pad, rect.Top + pad, rect.Right - pad, rect.Bottom - pad));
         }
 
-        for (var i = 0; i <= Size; i++)
+        for (var i = 0; i <= Cells; i++)
         {
             var x = originX + i * cell;
             var y = originY + i * cell;
-            handle.DrawLine(new System.Numerics.Vector2(x, originY), new System.Numerics.Vector2(x, originY + cell * Size), Color.FromHex("#12151f"));
-            handle.DrawLine(new System.Numerics.Vector2(originX, y), new System.Numerics.Vector2(originX + cell * Size, y), Color.FromHex("#12151f"));
+            handle.DrawLine(new System.Numerics.Vector2(x, originY), new System.Numerics.Vector2(x, originY + cell * Cells), Color.FromHex("#12151f"));
+            handle.DrawLine(new System.Numerics.Vector2(originX, y), new System.Numerics.Vector2(originX + cell * Cells, y), Color.FromHex("#12151f"));
         }
     }
 }

@@ -10,9 +10,9 @@ namespace Content.Client.DeadSpace.PdaArcade;
 
 public sealed class PdaBlocksBoard : PdaArcadeBoard
 {
-    private const int Width = 10;
-    private const int Height = 20;
-    private readonly bool[,] _well = new bool[Width, Height];
+    private const int Columns = 10;
+    private const int Rows = 20;
+    private readonly bool[,] _well = new bool[Columns, Rows];
     private readonly (int X, int Y)[][] _shapes;
     private (int X, int Y)[] _piece = Array.Empty<(int, int)>();
     private int _px;
@@ -70,8 +70,8 @@ public sealed class PdaBlocksBoard : PdaArcadeBoard
 
     protected override void OnRestart()
     {
-        for (var x = 0; x < Width; x++)
-        for (var y = 0; y < Height; y++)
+        for (var x = 0; x < Columns; x++)
+        for (var y = 0; y < Rows; y++)
             _well[x, y] = false;
         _drop = 0f;
         _locked = 0;
@@ -126,7 +126,7 @@ public sealed class PdaBlocksBoard : PdaArcadeBoard
         _kind = _next;
         _piece = ((int X, int Y)[]) _shapes[_kind].Clone();
         _next = _random.Next(_shapes.Length);
-        _px = Width / 2;
+        _px = Columns / 2;
         _py = 1;
         if (!Fits(_piece, _px, _py))
             End();
@@ -147,15 +147,15 @@ public sealed class PdaBlocksBoard : PdaArcadeBoard
         {
             var x = _px + cell.X;
             var y = _py + cell.Y;
-            if (x >= 0 && y >= 0 && x < Width && y < Height)
+            if (x >= 0 && y >= 0 && x < Columns && y < Rows)
                 _well[x, y] = true;
         }
 
         var cleared = 0;
-        for (var y = Height - 1; y >= 0; y--)
+        for (var y = Rows - 1; y >= 0; y--)
         {
             var full = true;
-            for (var x = 0; x < Width; x++)
+            for (var x = 0; x < Columns; x++)
             {
                 if (!_well[x, y])
                     full = false;
@@ -166,9 +166,9 @@ public sealed class PdaBlocksBoard : PdaArcadeBoard
 
             cleared++;
             for (var up = y; up > 0; up--)
-            for (var x = 0; x < Width; x++)
+            for (var x = 0; x < Columns; x++)
                 _well[x, up] = _well[x, up - 1];
-            for (var x = 0; x < Width; x++)
+            for (var x = 0; x < Columns; x++)
                 _well[x, 0] = false;
             y++;
         }
@@ -186,7 +186,7 @@ public sealed class PdaBlocksBoard : PdaArcadeBoard
         {
             var x = px + cell.X;
             var y = py + cell.Y;
-            if (x < 0 || x >= Width || y >= Height)
+            if (x < 0 || x >= Columns || y >= Rows)
                 return false;
             if (y >= 0 && _well[x, y])
                 return false;
@@ -203,16 +203,16 @@ public sealed class PdaBlocksBoard : PdaArcadeBoard
         var inner = Inner(8);
         var preview = 52f;
         var well = new UIBox2(inner.Left, inner.Top, Math.Max(inner.Left + 20, inner.Right - preview), inner.Bottom);
-        var cell = (int) Math.Min(well.Width / Width, well.Height / Height);
+        var cell = (int) Math.Min(well.Width / Columns, well.Height / Rows);
         if (cell < 2)
             return;
 
-        var originX = (int) (well.Left + (well.Width - cell * Width) / 2);
-        var originY = (int) (well.Top + (well.Height - cell * Height) / 2);
+        var originX = (int) (well.Left + (well.Width - cell * Columns) / 2);
+        var originY = (int) (well.Top + (well.Height - cell * Rows) / 2);
         var settled = Visual.Settled ?? Color.White;
-        handle.DrawRect(new UIBox2(originX - 2, originY - 2, originX + cell * Width + 2, originY + cell * Height + 2), settled.WithAlpha(0.35f));
-        for (var x = 0; x < Width; x++)
-        for (var y = 0; y < Height; y++)
+        handle.DrawRect(new UIBox2(originX - 2, originY - 2, originX + cell * Columns + 2, originY + cell * Rows + 2), settled.WithAlpha(0.35f));
+        for (var x = 0; x < Columns; x++)
+        for (var y = 0; y < Rows; y++)
         {
             if (_well[x, y])
                 Paint(handle, originX, originY, cell, x, y, settled);
