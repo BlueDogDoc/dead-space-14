@@ -25,7 +25,6 @@ using Content.Shared.Mobs.Components;
 using Content.Shared.Inventory;
 using Content.Shared.Medical;
 using Content.Shared.Mind;
-using Content.Shared.Mobs.Components;
 using Content.Shared.PDA;
 using Content.Shared.Popups;
 using Content.Shared.Radio.Components;
