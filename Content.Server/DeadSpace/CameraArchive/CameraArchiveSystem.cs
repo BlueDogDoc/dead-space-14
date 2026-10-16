@@ -250,7 +250,7 @@ public sealed class CameraArchiveSystem : EntitySystem
 
     private bool OnCentComm(EntityUid uid)
     {
-        if (!TryComp<TransformComponent>(uid, out _))
+        if (!TryComp(uid, out TransformComponent? _))
             return false;
 
         return _station.GetOwningStation(uid) is { } station && HasComp<CentCommStationComponent>(station);
