@@ -28,7 +28,7 @@ public sealed partial class RcdBuildSiteComponent : Component
     [DataField, AutoNetworkedField]
     public bool Downward;
 
-    [DataField, AutoNetworkedField]
+    [AutoNetworkedField]
     public NetEntity User = NetEntity.Invalid;
 
     [DataField, AutoNetworkedField]
