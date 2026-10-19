@@ -54,14 +54,14 @@ public sealed class RcdBuildSiteSystem : EntitySystem
         var query = EntityQueryEnumerator<RcdBuildSiteComponent>();
         while (query.MoveNext(out var uid, out var site))
         {
-            if (site.Running)
+            if (site.Active)
             {
                 if (ProgressOf(site) >= 1f &&
                     _timing.CurTime - site.StartTime > TimeSpan.FromSeconds(site.FullDelay + 1f))
                 {
                     site.Progress = 1f;
                     site.StartProgress = 1f;
-                    site.Running = false;
+                    site.Active = false;
                     site.User = NetEntity.Invalid;
                     site.Touched = _timing.CurTime;
                     Dirty(uid, site);
@@ -129,12 +129,12 @@ public sealed class RcdBuildSiteSystem : EntitySystem
             EnsureComp<RcdBuildSiteIndexComponent>(grid).Sites[key] = uid;
         }
 
-        if (!site.Running)
+        if (!site.Active)
         {
             site.StartProgress = site.Progress;
             site.StartTime = _timing.CurTime;
             site.FullDelay = fullDelay;
-            site.Running = true;
+            site.Active = true;
         }
 
         site.User = GetNetEntity(user);
@@ -164,7 +164,7 @@ public sealed class RcdBuildSiteSystem : EntitySystem
         var progress = ProgressOf(site);
         site.Progress = progress;
         site.StartProgress = progress;
-        site.Running = false;
+        site.Active = false;
         site.User = NetEntity.Invalid;
         site.Touched = _timing.CurTime;
         Dirty(uid, site);
@@ -186,7 +186,7 @@ public sealed class RcdBuildSiteSystem : EntitySystem
 
     public float ProgressOf(RcdBuildSiteComponent site)
     {
-        if (!site.Running || site.FullDelay <= 0f)
+        if (!site.Active || site.FullDelay <= 0f)
             return Math.Clamp(site.Progress, 0f, 1f);
 
         var elapsed = (float) (_timing.CurTime - site.StartTime).TotalSeconds;
@@ -196,7 +196,7 @@ public sealed class RcdBuildSiteSystem : EntitySystem
     private void OnUnpaused(EntityUid uid, RcdBuildSiteComponent site, ref EntityUnpausedEvent args)
     {
         site.Touched += args.PausedTime;
-        if (site.Running)
+        if (site.Active)
             site.StartTime += args.PausedTime;
 
         if (_net.IsServer)

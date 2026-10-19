@@ -44,7 +44,7 @@ public sealed class RcdBuildSiteOverlay : Overlay
                 continue;
 
             Vector2? hand = null;
-            if (site.Running && site.User.IsValid())
+            if (site.Active && site.User.IsValid())
             {
                 var user = _entities.GetEntity(site.User);
                 if (_entities.EntityExists(user))

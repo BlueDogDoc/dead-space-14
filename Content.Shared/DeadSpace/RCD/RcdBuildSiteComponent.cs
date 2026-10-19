@@ -23,7 +23,7 @@ public sealed partial class RcdBuildSiteComponent : Component
     public float FullDelay;
 
     [DataField, AutoNetworkedField]
-    public bool Running;
+    public bool Active;
 
     [DataField, AutoNetworkedField]
     public bool Downward;
