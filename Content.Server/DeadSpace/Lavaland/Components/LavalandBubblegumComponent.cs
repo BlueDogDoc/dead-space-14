@@ -106,6 +106,44 @@ public sealed partial class LavalandBubblegumComponent : Component
     [DataField]
     public string BloodGibsPrototype = "LavalandBubblegumBloodGibs";
 
+    // Walls of blood: a player it has not caught up with for long enough gets a line of blood across the way,
+    // sooner and sooner as its health goes down.
+
+    [DataField]
+    public string BloodWallPrototype = "LavalandBubblegumBloodWall";
+
+    /// <summary>
+    /// Closer than this (tiles) it has caught up with the player: the running away starts over. Its charges and warps
+    /// pass by often, so only really getting at them counts.
+    /// </summary>
+    [DataField]
+    public float KiteDistance = 3f;
+
+    /// <summary>Seconds of getting away from it before a wall, at full health.</summary>
+    [DataField]
+    public float KiteTimeFullHealth = 5f;
+
+    /// <summary>Seconds of getting away from it before a wall, near death.</summary>
+    [DataField]
+    public float KiteTimeLowHealth = 1.5f;
+
+    /// <summary>Tiles across the way.</summary>
+    [DataField]
+    public int BloodWallLength = 7;
+
+    /// <summary>How far ahead of the runner (tiles) the wall rises.</summary>
+    [DataField]
+    public float BloodWallAhead = 2.5f;
+
+    [DataField]
+    public SoundSpecifier? BloodWallSound = new SoundPathSpecifier("/Audio/_DeadSpace/Necromorfs/TheCircle/scout_blink.ogg");
+
+    [ViewVariables]
+    public readonly Dictionary<EntityUid, float> KiteTime = new();
+
+    [ViewVariables]
+    public readonly List<EntityUid> BloodWalls = new();
+
     [DataField]
     public string LandingPrototype = "LavalandBubblegumLanding";
 
@@ -132,6 +170,45 @@ public sealed partial class LavalandBubblegumComponent : Component
 
     [DataField]
     public string ClonePrototype = "LavalandBubblegumClone";
+
+    // DS14: tgstation hallucination charges and the deadly hand.
+
+    /// <summary>Chance to use the hallucination ring (clones around the target, all charging at once) instead of a charge.</summary>
+    [DataField]
+    public float HallucinationRingChance = 0.3f;
+
+    /// <summary>Chance to use the hallucination surround (clones from close by, then the real charge).</summary>
+    [DataField]
+    public float HallucinationSurroundChance = 0.2f;
+
+    [DataField]
+    public int HallucinationRingClones = 6;
+
+    [DataField]
+    public int HallucinationRingRadius = 6;
+
+    /// <summary>Below half health the ring comes in this many waves, closer and faster each time.</summary>
+    [DataField]
+    public int HallucinationEnragedWaves = 3;
+
+    [DataField]
+    public TimeSpan HallucinationWaveDelay = TimeSpan.FromSeconds(0.9);
+
+    [DataField]
+    public int HallucinationSurroundRounds = 4;
+
+    [DataField]
+    public TimeSpan HallucinationSurroundDelay = TimeSpan.FromSeconds(0.6);
+
+    [DataField]
+    public string DeadlyHandPrototype = "LavalandBubblegumDeadlyHand";
+
+    /// <summary>Chance that a hand attack brings the deadly red hand along.</summary>
+    [DataField]
+    public float DeadlyHandChance = 0.6f;
+
+    [ViewVariables]
+    public readonly List<LavalandBubblegumHallucinationWave> HallucinationWaves = new();
 
     [DataField]
     public float CloneHealthThreshold = 0.5f;
@@ -329,6 +406,34 @@ public sealed class LavalandBubblegumActiveClone
 {
     public EntityUid Entity;
     public TimeSpan DespawnAt;
+}
+
+/// <summary>A wave of the hallucination charge, scheduled after the first one.</summary>
+public sealed class LavalandBubblegumHallucinationWave
+{
+    public EntityUid Target;
+    public TimeSpan At;
+    public int Clones;
+    public int Radius;
+    public bool IncludeSelf;
+}
+
+/// <summary>The one hand that is redder than the rest: standing on it for a moment kills.</summary>
+[RegisterComponent]
+public sealed partial class LavalandBubblegumDeadlyHandComponent : Component
+{
+    /// <summary>Seconds a player may stand on it.</summary>
+    [DataField]
+    public float KillTime = 1f;
+
+    [DataField]
+    public DamageSpecifier Damage = new()
+    {
+        DamageDict = new() { { "Blunt", 400 } },
+    };
+
+    [ViewVariables]
+    public readonly Dictionary<EntityUid, float> StandTime = new();
 }
 
 public sealed class LavalandBubblegumCloneCharge
