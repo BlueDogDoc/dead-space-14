@@ -255,7 +255,8 @@ public sealed class RCDSystem : EntitySystem
             delay = _sites.RemainingDelay(gridUid.Value, position, prototype, component.ConstructionDirection, target, delay);
 
         EntityUid? effect = null;
-        if (fullDelay <= 0)
+        var deviceEffect = prototype.Mode != RcdMode.Deconstruct && component.ConstructionEffect != null;
+        if (fullDelay <= 0 || deviceEffect)
             effect = Spawn(effectPrototype, _mapSystem.ToCenterCoordinates(tile, mapGrid));
         //DS-14 end
 
