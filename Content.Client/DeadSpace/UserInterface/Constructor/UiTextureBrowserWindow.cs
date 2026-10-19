@@ -19,7 +19,7 @@ namespace Content.Client.DeadSpace.UserInterface.Constructor;
 
 public sealed class UiTextureBrowserWindow : DefaultWindow
 {
-    private static readonly ResPath Root = new("/Textures");
+    private static readonly ResPath TextureRoot = new("/Textures");
     private static readonly string[] PictureExtensions = { ".png", ".jpg", ".jpeg", ".webp", ".gif" };
 
     public event Action<UiTextureChoice>? OnSelected;
@@ -55,7 +55,7 @@ public sealed class UiTextureBrowserWindow : DefaultWindow
         SeparationOverride = 4,
     };
 
-    private ResPath _directory = Root;
+    private ResPath _directory = TextureRoot;
     private string _selected = "";
     private string _state = "";
     private int _direction;
@@ -84,7 +84,7 @@ public sealed class UiTextureBrowserWindow : DefaultWindow
             SeparationOverride = 6,
         };
         bar.AddChild(Make("Вверх", Up));
-        bar.AddChild(Make("Текстуры", () => OpenDirectory(Root)));
+        bar.AddChild(Make("Текстуры", () => OpenDirectory(TextureRoot)));
         bar.AddChild(_path);
         root.AddChild(bar);
         root.AddChild(_filter);
@@ -134,19 +134,19 @@ public sealed class UiTextureBrowserWindow : DefaultWindow
         Contents.AddChild(root);
 
         _filter.OnTextChanged += _ => Fill();
-        OpenDirectory(Root);
+        OpenDirectory(TextureRoot);
     }
 
     private void Up()
     {
-        if (_directory == Root)
+        if (_directory == TextureRoot)
             return;
 
         var text = _directory.ToString();
         var slash = text.LastIndexOf('/');
         if (slash <= 0)
         {
-            OpenDirectory(Root);
+            OpenDirectory(TextureRoot);
             return;
         }
 
