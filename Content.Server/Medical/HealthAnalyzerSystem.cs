@@ -283,20 +283,18 @@ public sealed class HealthAnalyzerSystem : EntitySystem
             bodyTemperature = temp.CurrentTemperature;
 
         // DS14-start
-        if (TryComp<LimbBodyComponent>(entity, out var timed)
-            && timed.Died is { } died
-            && TryComp<MobStateComponent>(entity, out var mob)
-            && mob.CurrentState == MobState.Dead)
-            bodyTemperature = LimbWoundRules.CorpseKelvin((float) (_timing.CurTime - died).TotalMinutes);
-        // DS14-end
-
-        // DS14-start
         // Use the same effective threshold as temperature damage, including container protection.
         var overheating = TryComp<TemperatureDamageComponent>(entity, out var temperatureDamage) &&
                           bodyTemperature > (temperatureDamage.ParentHeatDamageThreshold ?? temperatureDamage.HeatDamageThreshold) &&
                           temperatureDamage.DamageCap > 0 &&
                           temperatureDamage.HeatDamage.DamageDict.GetValueOrDefault("Heat") > 0 &&
                           damageable.Damage.DamageDict.ContainsKey("Heat");
+
+        if (TryComp<LimbBodyComponent>(entity, out var timed)
+            && timed.Died is { } died
+            && TryComp<MobStateComponent>(entity, out var mob)
+            && mob.CurrentState == MobState.Dead)
+            bodyTemperature = LimbWoundRules.CorpseKelvin((float) (_timing.CurTime - died).TotalMinutes);
         // DS14-end
 
         var bloodAmount = float.NaN;
