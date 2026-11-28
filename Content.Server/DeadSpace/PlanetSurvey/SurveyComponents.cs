@@ -229,6 +229,21 @@ public sealed partial class SurveyDirectorComponent : Component
 
     [ViewVariables]
     public readonly Dictionary<EntityUid, SurveyEavesdrop> Eavesdroppers = new();
+
+    [ViewVariables]
+    public readonly List<SurveyField> Fields = new();
+
+    [ViewVariables, AutoPausedField]
+    public TimeSpan ShiftAt;
+
+    [ViewVariables]
+    public bool FieldsPending;
+
+    [ViewVariables]
+    public readonly List<SurveyPatrol> Patrols = new();
+
+    [ViewVariables]
+    public readonly HashSet<int> Surveyed = new();
 }
 
 public sealed class SurveyEavesdrop
@@ -246,6 +261,7 @@ public enum SurveyPoiKind : byte
     Shelter,
     Site,
     Device,
+    Anomaly,
 }
 
 public sealed class SurveyPoi

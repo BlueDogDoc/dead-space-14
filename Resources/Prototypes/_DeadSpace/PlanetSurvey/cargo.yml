@@ -137,6 +137,7 @@
     radius: 2
     energy: 1.2
     color: "#e8662a"
+    castShadows: false
   - type: Damageable
     damageContainer: StructuralInorganic
     damageModifierSet: StructuralMetallic

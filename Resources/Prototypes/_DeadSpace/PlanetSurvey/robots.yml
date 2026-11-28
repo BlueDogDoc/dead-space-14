@@ -189,6 +189,7 @@
   - type: PointLight
     radius: 2.5
     energy: 1.2
+    castShadows: false
     color: "#ff4a3a"
   - type: HTN
     rootTask:
@@ -353,6 +354,7 @@
   - type: PointLight
     radius: 2
     energy: 1.2
+    castShadows: false
     color: "#6affc8"
   - type: MeleeWeapon
     altDisarm: false

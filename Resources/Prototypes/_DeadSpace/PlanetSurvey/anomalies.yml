@@ -1,0 +1,569 @@
+- type: entity
+  abstract: true
+  id: SurveyAnomalyBase
+  placement:
+    mode: SnapgridCenter
+  components:
+  - type: Transform
+    anchored: true
+  - type: Physics
+    bodyType: Static
+  - type: Fixtures
+    fixtures:
+      anomaly:
+        shape:
+          !type:PhysShapeCircle
+          radius: 0.35
+        hard: false
+        layer:
+        - HighImpassable
+  - type: Appearance
+  - type: Sprite
+    sprite: _DeadSpace/PlanetSurvey/anomalies.rsi
+    drawdepth: FloorObjects
+    layers:
+    - state: burner
+      map: [ "base" ]
+
+- type: entity
+  parent: SurveyAnomalyBase
+  id: SurveyAnomalyBurner
+  name: жарка
+  description: Воздух дрожит, трава вокруг выжжена кольцом.
+  components:
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: burner, color: "#ffffff12" }
+          Revealed: { state: burner, color: "#ffffffb0" }
+          Windup: { state: burner-pulse, color: "#ffffffd0" }
+          Active: { state: burner-pulse, color: "#ffffff" }
+  - type: SurveyAnomaly
+    kind: Burner
+    radius: 1.2
+    cooldown: 2.5
+    power: 3
+    damage:
+      types:
+        Heat: 14
+    sound:
+      path: /Audio/_DeadSpace/Weapons/Guns/Gunshots/flamethrower_effect.ogg
+
+- type: entity
+  parent: SurveyAnomalyBase
+  id: SurveyAnomalyElectra
+  name: электра
+  description: Тихий треск, будто кто-то трёт шерсть о стекло.
+  components:
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: electra, color: "#ffffff12" }
+          Revealed: { state: electra, color: "#ffffffb0" }
+          Windup: { state: electra, color: "#ffffff" }
+          Active: { state: electra-pulse, color: "#ffffff" }
+  - type: SurveyAnomaly
+    kind: Electra
+    radius: 1.4
+    cooldown: 3
+    windup: 0.3
+    power: 20
+    windupSound:
+      path: /Audio/Effects/sparks2.ogg
+    sound:
+      path: /Audio/Items/Defib/defib_zap.ogg
+
+- type: entity
+  parent: SurveyAnomalyBase
+  id: SurveyAnomalyVortex
+  name: воронка
+  description: Пыль и листья медленно кружат над одной точкой.
+  components:
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: vortex, color: "#ffffff12" }
+          Revealed: { state: vortex, color: "#ffffffb0" }
+          Windup: { state: vortex-pulse, color: "#ffffffd0" }
+          Active: { state: vortex-pulse, color: "#ffffff" }
+  - type: SurveyAnomaly
+    kind: Vortex
+    radius: 1.8
+    cooldown: 5
+    windup: 1
+    power: 6
+    damage:
+      types:
+        Blunt: 18
+    windupSound:
+      path: /Audio/_DeadSpace/TauCeti/gravanomalies.ogg
+    sound:
+      path: /Audio/Items/Anomaly/grav_crit.ogg
+    effect: EffectGravityPulse
+
+- type: entity
+  parent: SurveyAnomalyBase
+  id: SurveyAnomalyFrost
+  name: морозник
+  description: Иней на земле, хотя вокруг тепло.
+  components:
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: frost, color: "#ffffff12" }
+          Revealed: { state: frost, color: "#ffffffb0" }
+          Windup: { state: frost, color: "#ffffff" }
+          Active: { state: frost-pulse, color: "#ffffff" }
+  - type: SpeedModifierContacts
+    walkSpeedModifier: 0.45
+    sprintSpeedModifier: 0.45
+  - type: SurveyAnomaly
+    kind: Frost
+    radius: 1.2
+    cooldown: 2
+    power: 4
+    damage:
+      types:
+        Cold: 10
+    sound:
+      path: /Audio/Items/hiss.ogg
+
+- type: entity
+  parent: SurveyAnomalyBase
+  id: SurveyAnomalyJelly
+  name: холодец
+  description: Лужа зелёной слизи. Пахнет батарейкой.
+  components:
+  - type: Sprite
+    drawdepth: FloorTiles
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: jelly, color: "#ffffff18" }
+          Revealed: { state: jelly, color: "#ffffffb0" }
+          Windup: { state: jelly, color: "#ffffff" }
+          Active: { state: jelly-pulse, color: "#ffffff" }
+  - type: SpeedModifierContacts
+    walkSpeedModifier: 0.35
+    sprintSpeedModifier: 0.35
+  - type: SurveyAnomaly
+    kind: Jelly
+    radius: 0.6
+    cooldown: 1.5
+    damage:
+      types:
+        Caustic: 6
+    sound:
+      path: /Audio/Voice/Slime/slime_squish.ogg
+
+- type: entity
+  parent: SurveyAnomalyBase
+  id: SurveyAnomalyRift
+  name: разрыв
+  description: Кусок пейзажа смотрит не в ту сторону.
+  components:
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: rift, color: "#ffffff12" }
+          Revealed: { state: rift, color: "#ffffffb0" }
+          Windup: { state: rift, color: "#ffffff" }
+          Active: { state: rift-pulse, color: "#ffffff" }
+  - type: SurveyAnomaly
+    kind: Rift
+    cooldown: 1
+    sound:
+      path: /Audio/Effects/teleport_departure.ogg
+    effect: EffectFlashBluespace
+
+- type: entity
+  parent: SurveyAnomalyBase
+  id: SurveyAnomalyPsi
+  name: пси-пятно
+  description: Здесь хочется сесть и больше никуда не идти.
+  components:
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: psi, color: "#ffffff0a" }
+          Revealed: { state: psi, color: "#ffffffb0" }
+          Windup: { state: psi, color: "#ffffff" }
+          Active: { state: psi-pulse, color: "#ffffff" }
+  - type: SurveyAnomaly
+    kind: Psi
+    radius: 2.2
+    cooldown: 8
+    power: 1.5
+    damage:
+      types:
+        Cellular: 2
+    sound:
+      path: /Audio/_DeadSpace/TauCeti/gravityoff.ogg
+
+- type: entity
+  parent: SurveyAnomalyBase
+  id: SurveyAnomalySpore
+  name: жгучий пух
+  description: Пушистые шары размером с кулак. Тронешь, и воздух станет жёлтым.
+  components:
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: spore, color: "#ffffff1c" }
+          Revealed: { state: spore, color: "#ffffffb0" }
+          Windup: { state: spore, color: "#ffffff" }
+          Active: { state: spore-pulse, color: "#ffffff" }
+  - type: SurveyAnomaly
+    kind: Jelly
+    radius: 1.8
+    cooldown: 4
+    damage:
+      types:
+        Poison: 9
+    sound:
+      path: /Audio/Items/hiss.ogg
+
+- type: entity
+  parent: SurveyAnomalyBase
+  id: SurveyAnomalySpringboard
+  name: трамплин
+  description: Трава прижата к земле ровным кругом, как под тяжёлым колесом.
+  components:
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: springboard, color: "#ffffff10" }
+          Revealed: { state: springboard, color: "#ffffffb0" }
+          Windup: { state: springboard-pulse, color: "#ffffffd0" }
+          Active: { state: springboard-pulse, color: "#ffffff" }
+  - type: SurveyAnomaly
+    kind: Springboard
+    radius: 0.8
+    cooldown: 4
+    windup: 0.35
+    power: 9
+    damage:
+      types:
+        Blunt: 12
+    windupSound:
+      path: /Audio/_DeadSpace/TauCeti/gravityon.ogg
+    sound:
+      path: /Audio/Items/Anomaly/grav_crit.ogg
+
+- type: entity
+  parent: SurveyAnomalyBase
+  id: SurveyAnomalyEmp
+  name: глушилка
+  description: Часы останавливаются, фонарь мигает. Батареи тут живут недолго.
+  components:
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: emp, color: "#ffffff12" }
+          Revealed: { state: emp, color: "#ffffffb0" }
+          Windup: { state: emp, color: "#ffffff" }
+          Active: { state: emp-pulse, color: "#ffffff" }
+  - type: SurveyAnomaly
+    kind: Emp
+    radius: 3
+    cooldown: 8
+    windup: 0.4
+    power: 500
+    windupSound:
+      path: /Audio/Effects/sparks4.ogg
+    sound:
+      path: /Audio/Effects/flash_bang.ogg
+
+- type: entity
+  parent: SurveyAnomalyBase
+  id: SurveyAnomalyQuicksand
+  name: зыбун
+  description: Песок медленно закручивается внутрь. Сапоги вязнут уже на краю.
+  components:
+  - type: Sprite
+    drawdepth: FloorTiles
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: quicksand, color: "#ffffff20" }
+          Revealed: { state: quicksand, color: "#ffffffb0" }
+          Windup: { state: quicksand, color: "#ffffff" }
+          Active: { state: quicksand-pulse, color: "#ffffff" }
+  - type: SpeedModifierContacts
+    walkSpeedModifier: 0.15
+    sprintSpeedModifier: 0.15
+  - type: SurveyAnomaly
+    kind: Jelly
+    radius: 0.6
+    cooldown: 2
+    damage:
+      types:
+        Asphyxiation: 4
+    sound:
+      path: /Audio/Voice/Slime/slime_squish.ogg
+
+- type: entity
+  parent: SurveyAnomalyBase
+  id: SurveyAnomalyHotspot
+  name: фонящее пятно
+  description: Земля светится бледно-зелёным. Счётчик Гейгера рядом захлёбывается.
+  components:
+  - type: Sprite
+    drawdepth: FloorTiles
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: hotspot, color: "#ffffff22" }
+          Revealed: { state: hotspot, color: "#ffffffb0" }
+          Windup: { state: hotspot, color: "#ffffff" }
+          Active: { state: hotspot-pulse, color: "#ffffff" }
+  - type: RadiationSource
+    intensity: 1.2
+    slope: 0.6
+  - type: SurveyAnomaly
+    kind: Jelly
+    radius: 0.8
+    cooldown: 2
+    damage:
+      types:
+        Radiation: 6
+    sound:
+      path: /Audio/Items/hiss.ogg
+
+- type: entity
+  abstract: true
+  parent: SurveyAnomalyBase
+  id: SurveyHazardBase
+  components:
+  - type: Sprite
+    sprite: _DeadSpace/PlanetSurvey/hazards.rsi
+    drawdepth: FloorObjects
+
+- type: entity
+  parent: SurveyHazardBase
+  id: SurveyHazardPress
+  name: гидропресс
+  description: Плита падает с ровным ритмом. Считай и проходи.
+  components:
+  - type: Sprite
+    drawdepth: Objects
+    layers:
+    - state: press-base
+      map: [ "base" ]
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: press-base }
+          Revealed: { state: press-base }
+          Windup: { state: press-warn }
+          Active: { state: press-push }
+  - type: SurveyAnomaly
+    kind: Press
+    visible: true
+    radius: 0.55
+    cycle: 3.5
+    windup: 1
+    damage:
+      types:
+        Blunt: 45
+    windupSound:
+      path: /Audio/Ambience/Objects/crushing.ogg
+    sound:
+      path: /Audio/Effects/clang.ogg
+
+- type: entity
+  parent: SurveyHazardBase
+  id: SurveyHazardSaw
+  name: циркулярная пила
+  description: Диск выныривает из щели в полу и уходит обратно. Режет всё, что не успело.
+  components:
+  - type: Sprite
+    layers:
+    - state: saw
+      map: [ "base" ]
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: saw }
+          Revealed: { state: saw }
+          Windup: { state: saw }
+          Active: { state: saw-active }
+  - type: SurveyAnomaly
+    kind: Press
+    visible: true
+    radius: 0.55
+    cycle: 2.5
+    windup: 0.6
+    damage:
+      types:
+        Slash: 32
+    windupSound:
+      path: /Audio/Effects/sparks1.ogg
+    sound:
+      path: /Audio/Effects/clang.ogg
+
+- type: entity
+  parent: SurveyHazardBase
+  id: SurveyHazardSteam
+  name: паровой клапан
+  description: Шипит, потом плюётся паром. Потом снова шипит.
+  components:
+  - type: Sprite
+    layers:
+    - state: steam
+      map: [ "base" ]
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: steam }
+          Revealed: { state: steam }
+          Windup: { state: steam }
+          Active: { state: steam-burst }
+  - type: SurveyAnomaly
+    kind: Steam
+    visible: true
+    radius: 1.6
+    cycle: 5
+    windup: 1.5
+    power: 3
+    damage:
+      types:
+        Heat: 16
+    windupSound:
+      path: /Audio/Ambience/Objects/gas_hiss.ogg
+    sound:
+      path: /Audio/Magic/Cults/ClockCult/steam_whoosh.ogg
+
+- type: entity
+  parent: SurveyHazardBase
+  id: SurveyHazardNozzle
+  name: огнемётная форсунка
+  description: В полу тлеет запальник. Раз в несколько секунд он вспоминает, зачем его поставили.
+  components:
+  - type: Sprite
+    sprite: Structures/Piping/Atmospherics/vent.rsi
+    layers:
+    - state: vent_off
+      map: [ "base" ]
+    - sprite: Effects/fire.rsi
+      state: "1"
+      map: [ "flame" ]
+      visible: false
+      shader: unshaded
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: vent_off }
+          Revealed: { state: vent_off }
+          Windup: { state: vent_out }
+          Active: { state: vent_out }
+        flame:
+          Hidden: { visible: false }
+          Revealed: { visible: false }
+          Windup: { visible: false }
+          Active: { visible: true }
+  - type: SurveyAnomaly
+    kind: Burner
+    visible: true
+    radius: 1.6
+    cycle: 4.5
+    windup: 1
+    power: 2
+    damage:
+      types:
+        Heat: 12
+    windupSound:
+      path: /Audio/Ambience/Objects/gas_hiss.ogg
+    sound:
+      path: /Audio/_DeadSpace/Weapons/Guns/Gunshots/flamethrower.ogg
+
+- type: entity
+  parent: SurveyHazardBase
+  id: SurveyHazardConveyor
+  name: конвейер
+  description: Лента тащит всё, что на неё встанет. Обычно прямо в пресс.
+  components:
+  - type: Sprite
+    sprite: Structures/conveyor.rsi
+    drawdepth: FloorObjects
+    layers:
+    - state: conveyor_started_cw
+      map: [ "base" ]
+  - type: SurveyAnomaly
+    kind: Push
+    visible: true
+    radius: 0.5
+    cycle: 0.8
+    power: 1.6
+
+- type: entity
+  parent: SurveyHazardBase
+  id: SurveyHazardLaser
+  name: лазерная растяжка
+  description: Тонкий луч у самого пола. Охрана узнает, если его пересечь.
+  components:
+  - type: Sprite
+    layers:
+    - state: laser
+      map: [ "base" ]
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: laser, color: "#ffffff14" }
+          Revealed: { state: laser, color: "#ffffffc0" }
+          Windup: { state: laser-active, color: "#ffffff" }
+          Active: { state: laser-active, color: "#ffffff" }
+  - type: SurveyAnomaly
+    kind: Laser
+    radius: 0.6
+    cooldown: 4
+    damage:
+      types:
+        Heat: 12
+    sound:
+      path: /Audio/Weapons/Guns/Hits/laser_sear_wall.ogg
+
+- type: entity
+  parent: SurveyHazardBase
+  id: SurveyHazardMagnet
+  name: магнитная катушка
+  description: Под решёткой гудит катушка. Вокруг валяются гайки и чьи-то стволы.
+  components:
+  - type: Sprite
+    layers:
+    - state: magnet
+      map: [ "base" ]
+  - type: GenericVisualizer
+    visuals:
+      enum.SurveyAnomalyVisuals.State:
+        base:
+          Hidden: { state: magnet, color: "#ffffff30" }
+          Revealed: { state: magnet, color: "#ffffffd0" }
+          Windup: { state: magnet-active, color: "#ffffff" }
+          Active: { state: magnet-active, color: "#ffffff" }
+  - type: SurveyAnomaly
+    kind: Magnet
+    radius: 2.5
+    cooldown: 6
+    windup: 0.5
+    windupSound:
+      path: /Audio/_DeadSpace/TauCeti/gravityon.ogg
+    sound:
+      path: /Audio/Weapons/Guns/Gunshots/magnetic_shot.ogg

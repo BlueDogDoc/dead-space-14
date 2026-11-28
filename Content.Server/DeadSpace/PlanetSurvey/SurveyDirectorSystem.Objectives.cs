@@ -102,6 +102,11 @@ public sealed partial class SurveyDirectorSystem
 
         if (director.Outposts.Any(o => o.Squad != null))
             Objective(director, "stealth", "survey-obj-stealth", 1, 2500, 500, false);
+
+        Objective(director, "sectors", "survey-obj-sectors", 6, 2500, 400, true);
+
+        if (director.Fields.Count > 0)
+            Objective(director, "artifact", world.FactoryHalls ? "survey-obj-prototype" : "survey-obj-artifact", director.Fields.Count, 2000, 400, false);
     }
 
     private static void Objective(SurveyDirectorComponent director, string id, LocId text, int goal, int money, int personal, bool shown)
@@ -159,6 +164,9 @@ public sealed partial class SurveyDirectorSystem
                     Reveal(director, "study");
                     break;
                 case SurveyPoiKind.Shelter:
+                    break;
+                case SurveyPoiKind.Anomaly:
+                    Reveal(director, "artifact");
                     break;
                 case SurveyPoiKind.Device:
                     Reveal(director, "power");

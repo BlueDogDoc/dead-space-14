@@ -200,6 +200,7 @@
     staticPacks:
     - ChemistryStatic
     - SurgeryStatic
+    - SurveyScienceStatic # DS14
     dynamicPacks:
     - AdvancedTools
     - ScienceEquipment

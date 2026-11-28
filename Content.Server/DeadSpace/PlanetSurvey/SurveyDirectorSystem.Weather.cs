@@ -50,6 +50,7 @@ public sealed partial class SurveyDirectorSystem
             director.StormAt = now + RandomGap(world);
             _weather.SetWeather(mapId, world.Calm is { } calm ? _proto.Index(calm) : null, null);
             Warn(ent.Owner, Loc.GetString("survey-storm-over"));
+            ShiftFields(ent, world);
             if (!director.StormLoss && director.Kind == SurveyKind.DeadElement && _players.Count > 0)
                 Progress(ent.Owner, "kind");
             return;

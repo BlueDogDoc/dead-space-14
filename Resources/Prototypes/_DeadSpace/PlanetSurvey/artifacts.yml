@@ -1,0 +1,656 @@
+- type: entity
+  abstract: true
+  parent: BaseItem
+  id: SurveyArtifactBase
+  components:
+  - type: Sprite
+    sprite: _DeadSpace/PlanetSurvey/artifacts.rsi
+  - type: Item
+    sprite: _DeadSpace/PlanetSurvey/artifacts.rsi
+    size: Small
+  - type: PointLight
+    radius: 1.6
+    energy: 1.2
+    castShadows: false
+  - type: RadiationSource
+    intensity: 0.5
+    slope: 0.4
+  - type: SurveyArtifact
+
+- type: entity
+  parent: SurveyArtifactBase
+  id: SurveyArtifactJellyfish
+  name: медуза
+  description: Полупрозрачный комок, тёплый и чуть липкий. Рядом с ним легче дышится.
+  components:
+  - type: Sprite
+    state: jellyfish
+  - type: Item
+    heldPrefix: jellyfish
+  - type: PointLight
+    color: "#80d1aa"
+  - type: SurveyArtifact
+    tier: 1
+    points: 3000
+    boons:
+    - boon: Purity
+      value: 0.3
+    - boon: Swift
+      value: -0.05
+  - type: StaticPrice
+    price: 2500
+
+- type: entity
+  parent: SurveyArtifactBase
+  id: SurveyArtifactStoneFlower
+  name: каменный цветок
+  description: Лепестки из камня, тяжёлые, как гиря. Кожа под ним грубеет.
+  components:
+  - type: Sprite
+    state: stoneflower
+  - type: Item
+    heldPrefix: stoneflower
+  - type: PointLight
+    color: "#dfb887"
+  - type: SurveyArtifact
+    tier: 1
+    points: 3000
+    boons:
+    - boon: Plating
+      value: 0.15
+    - boon: Stamina
+      value: 0.2
+    - boon: Swift
+      value: -0.05
+  - type: StaticPrice
+    price: 2500
+
+- type: entity
+  parent: SurveyArtifactBase
+  id: SurveyArtifactSpark
+  name: искра
+  description: Внутри стеклянного шарика пляшет молния. Волосы встают дыбом.
+  components:
+  - type: Sprite
+    state: spark
+  - type: Item
+    heldPrefix: spark
+  - type: PointLight
+    color: "#408ebf"
+  - type: SurveyArtifact
+    tier: 1
+    points: 3000
+    boons:
+    - boon: Insulation
+      value: 0.3
+    - boon: Purity
+      value: -0.1
+  - type: StaticPrice
+    price: 2500
+
+- type: entity
+  parent: SurveyArtifactBase
+  id: SurveyArtifactSinew
+  name: жила
+  description: Скрученный тугой жгут, тянется и не рвётся. С ним кости и суставы держатся крепче.
+  components:
+  - type: Sprite
+    state: sinew
+  - type: Item
+    heldPrefix: sinew
+  - type: PointLight
+    color: "#ce5555"
+  - type: SurveyArtifact
+    tier: 1
+    points: 3500
+    boons:
+    - boon: Sinew
+      value: 0.45
+    - boon: Swift
+      value: -0.08
+  - type: StaticPrice
+    price: 3000
+
+- type: entity
+  parent: SurveyArtifactBase
+  id: SurveyArtifactFlesh
+  name: живая ткань
+  description: Розовый ком пульсирует в ладони. Порезы рядом с ним затягиваются на глазах.
+  components:
+  - type: Sprite
+    state: flesh
+  - type: Item
+    heldPrefix: flesh
+  - type: PointLight
+    color: "#c77092"
+  - type: SurveyArtifact
+    tier: 1
+    points: 4000
+    boons:
+    - boon: Mending
+      value: 1.5
+    - boon: Purity
+      value: -0.15
+  - type: StaticPrice
+    price: 3500
+
+- type: entity
+  parent: SurveyArtifactBase
+  id: SurveyArtifactGravi
+  name: гравиядро
+  description: Висит в пальцах чуть выше ладони. Ноги становятся лёгкими.
+  components:
+  - type: Sprite
+    state: gravi
+  - type: Item
+    heldPrefix: gravi
+  - type: PointLight
+    color: "#b2a9bd"
+  - type: RadiationSource
+    intensity: 0.8
+  - type: SurveyArtifact
+    tier: 2
+    points: 6000
+    boons:
+    - boon: Swift
+      value: 0.25
+    - boon: Stamina
+      value: 0.3
+    - boon: Plating
+      value: -0.1
+  - type: StaticPrice
+    price: 6000
+
+- type: entity
+  parent: SurveyArtifactBase
+  id: SurveyArtifactCrystal
+  name: кристальная колючка
+  description: Острые иглы растут друг из друга. Жар и ток уходят в них, как в землю.
+  components:
+  - type: Sprite
+    state: crystal
+  - type: Item
+    heldPrefix: crystal
+  - type: PointLight
+    color: "#64b5af"
+  - type: RadiationSource
+    intensity: 0.8
+  - type: SurveyArtifact
+    tier: 2
+    points: 6000
+    boons:
+    - boon: Insulation
+      value: 0.4
+    - boon: Plating
+      value: 0.15
+    - boon: Purity
+      value: -0.2
+  - type: StaticPrice
+    price: 6000
+
+- type: entity
+  parent: SurveyArtifactBase
+  id: SurveyArtifactCarapace
+  name: панцирь
+  description: Тёмная пластина в прожилках. Удар отдаётся в ней, а не в костях.
+  components:
+  - type: Sprite
+    state: carapace
+  - type: Item
+    heldPrefix: carapace
+  - type: PointLight
+    color: "#b38e53"
+  - type: RadiationSource
+    intensity: 1
+  - type: SurveyArtifact
+    tier: 3
+    points: 9000
+    boons:
+    - boon: Plating
+      value: 0.35
+    - boon: Sinew
+      value: 0.4
+    - boon: Swift
+      value: -0.15
+  - type: StaticPrice
+    price: 9000
+
+- type: entity
+  parent: SurveyArtifactBase
+  id: SurveyArtifactHeart
+  name: сердце планеты
+  description: Бьётся медленно, раз в несколько секунд. С ним не умирают так просто.
+  components:
+  - type: Sprite
+    state: heart
+  - type: Item
+    heldPrefix: heart
+  - type: PointLight
+    color: "#ce5555"
+    radius: 2.4
+  - type: RadiationSource
+    intensity: 1.4
+  - type: SurveyArtifact
+    tier: 3
+    points: 12000
+    boons:
+    - boon: Mending
+      value: 3
+    - boon: Sinew
+      value: 0.5
+    - boon: Plating
+      value: -0.1
+  - type: StaticPrice
+    price: 12000
+
+- type: entity
+  parent: SurveyArtifactBase
+  id: SurveyArtifactThunder
+  name: громовой осколок
+  description: Жёлтый зигзаг, застывший в стекле. Само по себе ничего не даёт, но НИО вплавит его в спусковой механизм.
+  components:
+  - type: Sprite
+    state: thunder
+  - type: Item
+    heldPrefix: thunder
+  - type: PointLight
+    color: "#e8cc71"
+  - type: RadiationSource
+    intensity: 0.8
+  - type: SurveyArtifact
+    tier: 2
+    points: 7000
+    boons:
+    - boon: Rapid
+      value: 0.5
+    - boon: Stamina
+      value: -0.1
+  - type: StaticPrice
+    price: 7000
+
+- type: entity
+  parent: SurveyArtifactBase
+  id: SurveyArtifactBane
+  name: шип погибели
+  description: Чёрная игла с красной жилой внутри. Пули с её частицей рвут всё нечеловеческое.
+  components:
+  - type: Sprite
+    state: bane
+  - type: Item
+    heldPrefix: bane
+  - type: PointLight
+    color: "#ae3b49"
+  - type: RadiationSource
+    intensity: 1.2
+  - type: SurveyArtifact
+    tier: 3
+    points: 10000
+    boons:
+    - boon: Bane
+      value: 0.6
+    - boon: Purity
+      value: -0.15
+  - type: StaticPrice
+    price: 10000
+
+- type: entity
+  abstract: true
+  parent: SurveyArtifactBase
+  id: SurveyPrototypeBase
+  components:
+  - type: RadiationSource
+    intensity: 0.3
+
+- type: entity
+  parent: SurveyPrototypeBase
+  id: SurveyPrototypeServo
+  name: опытный сервопривод
+  description: Цеховой образец с клеймом «не выносить». Если пристегнуть к поясу, шаг становится длиннее.
+  components:
+  - type: Sprite
+    state: servo
+  - type: Item
+    heldPrefix: servo
+  - type: PointLight
+    color: "#e8cc71"
+  - type: SurveyArtifact
+    tier: 2
+    points: 6000
+    boons:
+    - boon: Swift
+      value: 0.2
+    - boon: Stamina
+      value: 0.35
+  - type: StaticPrice
+    price: 6000
+
+- type: entity
+  parent: SurveyPrototypeBase
+  id: SurveyPrototypeMesh
+  name: нанопряжа
+  description: Катушка серой нити, которая сама вплетается в ткань. Руки и ноги с ней не отлетают.
+  components:
+  - type: Sprite
+    state: mesh
+  - type: Item
+    heldPrefix: mesh
+  - type: PointLight
+    color: "#a9b0bb"
+  - type: SurveyArtifact
+    tier: 2
+    points: 6500
+    boons:
+    - boon: Sinew
+      value: 0.5
+    - boon: Plating
+      value: 0.15
+  - type: StaticPrice
+    price: 6500
+
+- type: entity
+  parent: SurveyPrototypeBase
+  id: SurveyPrototypeNanites
+  name: ампула нанитов
+  description: Серебристая взвесь шевелится за стеклом. Латает тело быстрее любого медика.
+  components:
+  - type: Sprite
+    state: nanites
+  - type: Item
+    heldPrefix: nanites
+  - type: PointLight
+    color: "#cad0db"
+  - type: SurveyArtifact
+    tier: 3
+    points: 9000
+    boons:
+    - boon: Mending
+      value: 2.5
+    - boon: Sinew
+      value: 0.3
+    - boon: Purity
+      value: -0.1
+  - type: StaticPrice
+    price: 9000
+
+- type: entity
+  parent: SurveyPrototypeBase
+  id: SurveyPrototypeTrigger
+  name: опытный спусковой блок
+  description: Цеховая заготовка скорострельного механизма. НИО знает, куда её вставить.
+  components:
+  - type: Sprite
+    state: thunder
+  - type: Item
+    heldPrefix: thunder
+  - type: PointLight
+    color: "#e8cc71"
+  - type: SurveyArtifact
+    tier: 2
+    points: 6500
+    boons:
+    - boon: Rapid
+      value: 0.4
+  - type: StaticPrice
+    price: 6500
+
+- type: entity
+  abstract: true
+  parent: BaseItem
+  id: SurveyToolBase
+  components:
+  - type: Sprite
+    sprite: _DeadSpace/PlanetSurvey/tools.rsi
+  - type: Item
+    sprite: _DeadSpace/PlanetSurvey/tools.rsi
+    size: Small
+
+- type: entity
+  parent: SurveyToolBase
+  id: SurveyAnomalyDetector
+  name: детектор аномалий
+  description: Пищит чаще, когда рядом аномалия, и подсвечивает ту, что совсем близко. Ловит сигнал артефактов. Держать в руке.
+  components:
+  - type: Sprite
+    sprite: _DeadSpace/PlanetSurvey/detector.rsi
+    layers:
+    - state: icon
+    - state: screen
+      shader: unshaded
+  - type: Item
+    sprite: _DeadSpace/PlanetSurvey/detector.rsi
+  - type: SurveyDetector
+  - type: StaticPrice
+    price: 300
+
+- type: entity
+  parent: SurveyToolBase
+  id: SurveyArtifactAnalyzer
+  name: анализатор артефактов
+  description: Учёный прибор. Показывает свойства артефакта и отправляет данные в РНД. Без допуска НИО не включается.
+  components:
+  - type: Sprite
+    sprite: _DeadSpace/PlanetSurvey/analyzer.rsi
+    state: icon
+  - type: Item
+    sprite: _DeadSpace/PlanetSurvey/analyzer.rsi
+  - type: SurveyAnalyzer
+  - type: StaticPrice
+    price: 300
+
+- type: entity
+  parent: SurveyToolBase
+  id: SurveyArtifactStabilizer
+  name: стабилизатор артефактов
+  description: Расщепляет изученный артефакт на безопасные вставки для брони, одежды или оружия. Живую ткань превращает в полевую пену. Без допуска НИО не включается.
+  components:
+  - type: Sprite
+    sprite: _DeadSpace/PlanetSurvey/stabilizer.rsi
+    state: icon
+  - type: Item
+    sprite: _DeadSpace/PlanetSurvey/stabilizer.rsi
+  - type: SurveyStabilizer
+    products:
+      Mending: SurveyLimbFoam
+  - type: StaticPrice
+    price: 500
+
+- type: entity
+  parent: SurveyToolBase
+  id: SurveyInfusionPlate
+  name: аномальная вставка
+  description: Тонкая пластина со стабилизированным осколком артефакта. Вшивается в одежду, броню или оружие.
+  components:
+  - type: Sprite
+    state: plate
+  - type: Item
+    heldPrefix: plate
+    size: Tiny
+  - type: SurveyPlate
+  - type: StaticPrice
+    price: 800
+
+- type: entity
+  parent: BaseLimbRestorer
+  id: SurveyLimbFoam
+  name: регенерирующая пена
+  description: Баллон с пеной из живой ткани. Пришивает оторванные руки и ноги, сращивает кости и останавливает кровь прямо в бою.
+  components:
+  - type: Sprite
+    sprite: _DeadSpace/PlanetSurvey/tools.rsi
+    state: foam
+  - type: Item
+    sprite: _DeadSpace/PlanetSurvey/tools.rsi
+    heldPrefix: foam
+  - type: LimbRestorer
+    charges: 1
+    maxCharges: 1
+    prime: 1
+    primeWindow: 60
+    delay: 4
+    selfDelay: 6
+    health: 0.5
+    regrow: 0.4
+    heal:
+    - Bleed
+    - Fracture
+    - Shard
+    - Flesh
+    - Skin
+    - Limbs
+  - type: StaticPrice
+    price: 1500
+
+- type: entity
+  parent: BaseStorageItem
+  id: SurveyLeadCase
+  name: свинцовый кейс
+  description: Тяжёлый кейс для артефактов. Внутри они не фонят и не действуют.
+  components:
+  - type: Sprite
+    sprite: _DeadSpace/PlanetSurvey/tools.rsi
+    layers:
+    - state: leadcase
+      map: [ base ]
+  - type: Item
+    sprite: _DeadSpace/PlanetSurvey/tools.rsi
+    heldPrefix: leadcase
+    size: Large
+  - type: Storage
+    maxItemSize: Small
+    grid:
+    - 0,0,3,1
+    whitelist:
+      components:
+      - SurveyArtifact
+    storageOpenSound: /Audio/Items/toolbox_open.ogg
+    storageCloseSound: /Audio/Items/toolbox_close.ogg
+  - type: Appearance
+  - type: GenericVisualizer
+    visuals:
+      enum.StorageVisuals.Open:
+        base:
+          True: { state: leadcase-open }
+          False: { state: leadcase }
+  - type: EmitSoundOnLand
+    sound:
+      path: /Audio/Items/toolbox_drop.ogg
+  - type: SurveyLeadCase
+  - type: StaticPrice
+    price: 400
+
+- type: entity
+  parent: SurveyToolBase
+  id: SurveyBeacon
+  name: маяк разведки
+  description: Складная тренога с передатчиком. Поставьте в неразмеченном секторе планеты и продержитесь, пока она передаёт карту. Туземцы услышат.
+  components:
+  - type: Sprite
+    state: beacon
+  - type: Item
+    heldPrefix: beacon
+    size: Normal
+  - type: SurveyBeacon
+  - type: StaticPrice
+    price: 150
+
+- type: entity
+  parent: BaseStructure
+  id: SurveyBeaconDeployed
+  name: работающий маяк разведки
+  description: Передаёт карту сектора на станцию. Если его сломают раньше, сектор останется белым пятном.
+  placement:
+    mode: SnapgridCenter
+  components:
+  - type: Transform
+    anchored: true
+  - type: Clickable
+  - type: InteractionOutline
+  - type: Sprite
+    sprite: _DeadSpace/PlanetSurvey/tools.rsi
+    state: beacon-deployed
+    drawdepth: Objects
+  - type: PointLight
+    radius: 2.5
+    energy: 1.5
+    color: "#df8e5a"
+    castShadows: false
+  - type: Physics
+    bodyType: Static
+  - type: Fixtures
+    fixtures:
+      fix1:
+        shape:
+          !type:PhysShapeAabb
+          bounds: "-0.3,-0.3,0.3,0.3"
+        density: 50
+        mask:
+        - MachineMask
+        layer:
+        - MidImpassable
+        - LowImpassable
+        - BulletImpassable
+  - type: Damageable
+    damageContainer: StructuralInorganic
+  - type: Destructible
+    thresholds:
+    - trigger:
+        !type:DamageTrigger
+        damage: 60
+      behaviors:
+      - !type:DoActsBehavior
+        acts: [ "Destruction" ]
+  - type: SurveyBeaconDeployed
+
+- type: latheRecipePack
+  id: SurveyScienceStatic
+  recipes:
+  - SurveyArtifactAnalyzer
+  - SurveyArtifactStabilizer
+
+- type: latheRecipe
+  id: SurveyArtifactAnalyzer
+  result: SurveyArtifactAnalyzer
+  completetime: 4
+  materials:
+    Steel: 200
+    Glass: 300
+    Silver: 100
+
+- type: latheRecipe
+  id: SurveyArtifactStabilizer
+  result: SurveyArtifactStabilizer
+  completetime: 6
+  materials:
+    Steel: 300
+    Plasma: 200
+    Gold: 100
+
+- type: cargoProduct
+  id: SurveyAnomalyDetector
+  icon:
+    sprite: _DeadSpace/PlanetSurvey/detector.rsi
+    state: icon
+  product: SurveyAnomalyDetector
+  cost: 600
+  category: cargoproduct-category-name-cargo
+  group: market
+
+- type: cargoProduct
+  id: SurveyLeadCase
+  icon:
+    sprite: _DeadSpace/PlanetSurvey/tools.rsi
+    state: leadcase
+  product: SurveyLeadCase
+  cost: 800
+  category: cargoproduct-category-name-cargo
+  group: market
+
+- type: cargoProduct
+  id: SurveyBeacon
+  icon:
+    sprite: _DeadSpace/PlanetSurvey/tools.rsi
+    state: beacon
+  product: SurveyBeacon
+  cost: 400
+  category: cargoproduct-category-name-cargo
+  group: market

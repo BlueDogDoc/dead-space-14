@@ -79,6 +79,7 @@
   - type: PointLight
     radius: 1.5
     energy: 1
+    castShadows: false
     color: "#ff8a3a"
 
 - type: entity
@@ -109,6 +110,7 @@
   - type: PointLight
     radius: 1.5
     energy: 1
+    castShadows: false
     color: "#7aff6a"
 
 - type: entity
@@ -126,6 +128,7 @@
   - type: PointLight
     radius: 2.5
     energy: 1.6
+    castShadows: false
     color: "#ff7a2a"
 
 - type: entity
@@ -171,6 +174,7 @@
   - type: PointLight
     radius: 1.8
     energy: 1.2
+    castShadows: false
     color: "#9aff5a"
 
 - type: entity
@@ -188,6 +192,7 @@
   - type: PointLight
     radius: 1.2
     energy: 0.8
+    castShadows: false
     color: "#ff3a3a"
 
 - type: entity
@@ -305,6 +310,7 @@
   - type: PointLight
     radius: 1.8
     energy: 1.2
+    castShadows: false
     color: "#6affc8"
   - type: SurveyAutodoc
     heal: 12
@@ -324,6 +330,7 @@
   - type: PointLight
     radius: 1.8
     energy: 1.2
+    castShadows: false
     color: "#6ad8ff"
   - type: SurveyAutodoc
     heal: 10
@@ -370,6 +377,7 @@
   - type: PointLight
     radius: 1.5
     energy: 0.8
+    castShadows: false
     color: "#ff5a5a"
 
 - type: entity
@@ -388,4 +396,5 @@
   - type: PointLight
     radius: 1.5
     energy: 0.8
+    castShadows: false
     color: "#ffd35a"

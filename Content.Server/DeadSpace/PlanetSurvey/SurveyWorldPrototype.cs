@@ -215,6 +215,30 @@ public sealed partial class SurveyWorldPrototype : IPrototype
 
     [DataField]
     public int RepairCount;
+
+    [DataField]
+    public List<EntProtoId> Anomalies = new();
+
+    [DataField]
+    public List<EntProtoId> PathHazards = new();
+
+    [DataField]
+    public int FieldCount;
+
+    [DataField]
+    public int FieldSize = 9;
+
+    [DataField]
+    public float FieldDensity = 0.3f;
+
+    [DataField]
+    public List<EntProtoId> Artifacts = new();
+
+    [DataField]
+    public List<EntProtoId> RareArtifacts = new();
+
+    [DataField]
+    public TimeSpan ShiftGap = TimeSpan.FromMinutes(8);
 }
 
 [DataDefinition]

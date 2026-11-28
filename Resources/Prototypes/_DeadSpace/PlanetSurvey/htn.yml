@@ -36,6 +36,7 @@
         key: Target
       operator: !type:GunOperator
         targetKey: Target
+        ignoreLoose: true
         requireLOS: true
         opaqueKey: true
       services:
@@ -50,6 +51,7 @@
   - preconditions:
     - !type:TargetInLOSPrecondition
       targetKey: SurveyTarget
+      ignoreLoose: true
       rangeKey: SurveyFireRange
     tasks:
     - !type:HTNCompoundTask
@@ -96,6 +98,7 @@
         key: Target
       operator: !type:GunOperator
         targetKey: Target
+        ignoreLoose: true
         opaqueKey: true
       services:
       - !type:UtilityService
@@ -123,6 +126,7 @@
       rangeKey: SurveyAmbushRange
     - !type:TargetInLOSPrecondition
       targetKey: SurveyTarget
+      ignoreLoose: true
       rangeKey: SurveyAmbushRange
     tasks:
     - !type:HTNCompoundTask
@@ -176,6 +180,7 @@
       rangeKey: SurveyPostRange
     - !type:TargetInLOSPrecondition
       targetKey: SurveyTarget
+      ignoreLoose: true
       rangeKey: SurveyAmbushRange
     - !type:GunAmmoPrecondition
       minPercent: 0.001
@@ -439,6 +444,7 @@
       rangeKey: SurveyBlockRange
     - !type:TargetInLOSPrecondition
       targetKey: SurveyTarget
+      ignoreLoose: true
       rangeKey: SurveyBlockRange
     - !type:GunAmmoPrecondition
       minPercent: 0.001
@@ -526,6 +532,7 @@
         key: Target
       operator: !type:GunOperator
         targetKey: Target
+        ignoreLoose: true
         opaqueKey: true
       services:
       - !type:UtilityService

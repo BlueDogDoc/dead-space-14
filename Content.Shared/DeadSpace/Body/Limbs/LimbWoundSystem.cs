@@ -1698,7 +1698,9 @@ public sealed partial class LimbWoundSystem : EntitySystem
             return true;
         }
 
-        return false;
+        var ev = new LimbSeverAttemptEvent(zone, true);
+        RaiseLocalEvent(uid, ref ev);
+        return ev.Cancelled;
     }
 
     public bool SeverProof(EntityUid uid, LimbZone zone)
@@ -1710,7 +1712,9 @@ public sealed partial class LimbWoundSystem : EntitySystem
                 return true;
         }
 
-        return false;
+        var ev = new LimbSeverAttemptEvent(zone, false);
+        RaiseLocalEvent(uid, ref ev);
+        return ev.Cancelled;
     }
 
     private void OnBlast(Entity<LimbBodyComponent> ent, ref BeforeExplodeEvent args)

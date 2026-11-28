@@ -102,7 +102,7 @@ public sealed partial class SurveyDirectorSystem
         _popup.PopupEntity(Loc.GetString("survey-study-done", ("points", points)), ent, args.User, PopupType.Medium);
     }
 
-    private void GivePoints(EntityUid? station, int points)
+    public void GivePoints(EntityUid? station, int points)
     {
         EntityUid? fallback = null;
         var query = EntityQueryEnumerator<ResearchServerComponent>();

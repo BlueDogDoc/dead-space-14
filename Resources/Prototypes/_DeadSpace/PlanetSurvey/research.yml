@@ -46,6 +46,7 @@
     radius: 2.5
     energy: 1.5
     color: "#8fd3ff"
+    castShadows: false
   - type: SurveyResearchSite
     points: 4500
     time: 14

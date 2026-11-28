@@ -1,5 +1,9 @@
 - type: surveyWorld
   id: SurveyRaiderCity
+  anomalies: [ SurveyAnomalyBurner, SurveyAnomalyElectra, SurveyAnomalyVortex, SurveyAnomalyRift, SurveyAnomalyPsi, SurveyAnomalyEmp, SurveyAnomalySpringboard, SurveyAnomalyHotspot ]
+  fieldCount: 3
+  artifacts: [ SurveyArtifactJellyfish, SurveyArtifactStoneFlower, SurveyArtifactSpark, SurveyArtifactSinew, SurveyArtifactFlesh ]
+  rareArtifacts: [ SurveyArtifactGravi, SurveyArtifactCrystal, SurveyArtifactCarapace, SurveyArtifactHeart, SurveyArtifactThunder, SurveyArtifactBane ]
   kind: Raiders
   land: survey-land-city
   biomes: [ Continental, Grasslands ]
@@ -41,6 +45,10 @@
 
 - type: surveyWorld
   id: SurveyPirateCove
+  anomalies: [ SurveyAnomalyJelly, SurveyAnomalyVortex, SurveyAnomalyElectra, SurveyAnomalyRift, SurveyAnomalyQuicksand, SurveyAnomalySpringboard ]
+  fieldCount: 3
+  artifacts: [ SurveyArtifactJellyfish, SurveyArtifactStoneFlower, SurveyArtifactSpark, SurveyArtifactSinew, SurveyArtifactFlesh ]
+  rareArtifacts: [ SurveyArtifactGravi, SurveyArtifactCrystal, SurveyArtifactCarapace, SurveyArtifactHeart, SurveyArtifactThunder, SurveyArtifactBane ]
   kind: Pirates
   land: survey-land-cove
   biomes: [ Continental ]
@@ -82,6 +90,13 @@
 
 - type: surveyWorld
   id: SurveyFactory
+  anomalies: [ SurveyHazardLaser, SurveyHazardLaser, SurveyHazardMagnet, SurveyHazardSteam, SurveyHazardNozzle, SurveyHazardConveyor, SurveyAnomalyEmp ]
+  pathHazards: [ SurveyHazardPress, SurveyHazardPress, SurveyHazardSaw, SurveyHazardSteam, SurveyHazardConveyor ]
+  fieldCount: 3
+  fieldDensity: 0.25
+  shiftGap: 420
+  artifacts: [ SurveyPrototypeServo, SurveyPrototypeMesh, SurveyPrototypeTrigger ]
+  rareArtifacts: [ SurveyPrototypeNanites, SurveyPrototypeMesh, SurveyArtifactBane ]
   kind: Factory
   land: survey-land-factory
   biomes: [ Continental ]
@@ -105,7 +120,7 @@
   cargoCount: 3
   sites: [ SurveySiteObelisk, SurveySiteProbe, SurveySiteCrystal ]
   relics: [ SurveyRelicEmpty, SurveyRelicBattery, SurveyRelicEgg, SurveyRelicIdol ]
-  traps: [ LandMineKick, LandMineExplosive ]
+  traps: [ LandMineExplosive ]
   trapCount: 8
   devices: true
   scout: SurveyMobWatcher
@@ -115,6 +130,10 @@
 
 - type: surveyWorld
   id: SurveyForest
+  anomalies: [ SurveyAnomalyJelly, SurveyAnomalyPsi, SurveyAnomalyVortex, SurveyAnomalyRift, SurveyAnomalyBurner, SurveyAnomalySpore, SurveyAnomalySpore, SurveyAnomalySpringboard ]
+  fieldCount: 4
+  artifacts: [ SurveyArtifactJellyfish, SurveyArtifactStoneFlower, SurveyArtifactSpark, SurveyArtifactSinew, SurveyArtifactFlesh ]
+  rareArtifacts: [ SurveyArtifactGravi, SurveyArtifactCrystal, SurveyArtifactCarapace, SurveyArtifactHeart, SurveyArtifactThunder, SurveyArtifactBane ]
   kind: Beasts
   land: survey-land-forest
   biomes: [ Grasslands ]
@@ -142,6 +161,10 @@
 
 - type: surveyWorld
   id: SurveyAcidJungle
+  anomalies: [ SurveyAnomalyJelly, SurveyAnomalyJelly, SurveyAnomalyPsi, SurveyAnomalyVortex, SurveyAnomalyRift, SurveyAnomalySpore, SurveyAnomalyHotspot ]
+  fieldCount: 4
+  artifacts: [ SurveyArtifactJellyfish, SurveyArtifactStoneFlower, SurveyArtifactSpark, SurveyArtifactSinew, SurveyArtifactFlesh ]
+  rareArtifacts: [ SurveyArtifactGravi, SurveyArtifactCrystal, SurveyArtifactCarapace, SurveyArtifactHeart, SurveyArtifactThunder, SurveyArtifactBane ]
   kind: Beasts
   land: survey-land-jungle
   biomes: [ Continental ]
@@ -177,6 +200,10 @@
 
 - type: surveyWorld
   id: SurveyTundra
+  anomalies: [ SurveyAnomalyFrost, SurveyAnomalyFrost, SurveyAnomalyElectra, SurveyAnomalyVortex, SurveyAnomalyRift, SurveyAnomalySpringboard, SurveyAnomalyEmp ]
+  fieldCount: 4
+  artifacts: [ SurveyArtifactJellyfish, SurveyArtifactStoneFlower, SurveyArtifactSpark, SurveyArtifactSinew, SurveyArtifactFlesh ]
+  rareArtifacts: [ SurveyArtifactGravi, SurveyArtifactCrystal, SurveyArtifactCarapace, SurveyArtifactHeart, SurveyArtifactThunder, SurveyArtifactBane ]
   kind: Beasts
   land: survey-land-tundra
   biomes: [ Snow ]
@@ -212,6 +239,10 @@
 
 - type: surveyWorld
   id: SurveyFrozenWaste
+  anomalies: [ SurveyAnomalyFrost, SurveyAnomalyFrost, SurveyAnomalyElectra, SurveyAnomalyPsi, SurveyAnomalyRift, SurveyAnomalyHotspot, SurveyAnomalyEmp ]
+  fieldCount: 4
+  artifacts: [ SurveyArtifactJellyfish, SurveyArtifactStoneFlower, SurveyArtifactSpark, SurveyArtifactSinew, SurveyArtifactFlesh ]
+  rareArtifacts: [ SurveyArtifactGravi, SurveyArtifactCrystal, SurveyArtifactCarapace, SurveyArtifactHeart, SurveyArtifactThunder, SurveyArtifactBane ]
   kind: DeadElement
   land: survey-land-frost
   biomes: [ Snow ]
@@ -248,6 +279,10 @@
 
 - type: surveyWorld
   id: SurveyDustWaste
+  anomalies: [ SurveyAnomalyBurner, SurveyAnomalyBurner, SurveyAnomalyVortex, SurveyAnomalyElectra, SurveyAnomalyRift, SurveyAnomalyQuicksand, SurveyAnomalyQuicksand, SurveyAnomalySpringboard ]
+  fieldCount: 4
+  artifacts: [ SurveyArtifactJellyfish, SurveyArtifactStoneFlower, SurveyArtifactSpark, SurveyArtifactSinew, SurveyArtifactFlesh ]
+  rareArtifacts: [ SurveyArtifactGravi, SurveyArtifactCrystal, SurveyArtifactCarapace, SurveyArtifactHeart, SurveyArtifactThunder, SurveyArtifactBane ]
   kind: DeadElement
   land: survey-land-dust
   biomes: [ LowDesert ]

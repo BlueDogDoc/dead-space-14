@@ -3,6 +3,7 @@ using Content.Server.NPC.Components;
 using Content.Shared.Prototypes;
 using Content.Shared.CombatMode;
 using Content.Shared.Interaction;
+using Content.Shared.Mobs.Components; //DS-14
 using Content.Shared.Physics;
 using Content.Shared.Weapons.Hitscan.Components;
 using Content.Shared.Weapons.Ranged.Components;
@@ -23,6 +24,7 @@ public sealed partial class NPCCombatSystem
     private EntityQuery<RechargeBasicEntityAmmoComponent> _rechargeQuery;
     private EntityQuery<PhysicsComponent> _physicsQuery;
     private EntityQuery<TransformComponent> _xformQuery;
+    private SharedInteractionSystem.Ignored _loose = default!; //DS-14
 
     private const float FallbackProjectileLeadSpeed = 20f;
 
@@ -38,6 +40,7 @@ public sealed partial class NPCCombatSystem
         _rechargeQuery = GetEntityQuery<RechargeBasicEntityAmmoComponent>();
         _steeringQuery = GetEntityQuery<NPCSteeringComponent>();
         _xformQuery = GetEntityQuery<TransformComponent>();
+        _loose = IsLoose; //DS-14
 
         SubscribeLocalEvent<NPCRangedCombatComponent, ComponentStartup>(OnRangedStartup);
         SubscribeLocalEvent<NPCRangedCombatComponent, ComponentShutdown>(OnRangedShutdown);
@@ -139,7 +142,7 @@ public sealed partial class NPCCombatSystem
 
                 // For consistency with NPC steering.
                 var collisionGroup = comp.UseOpaqueForLOSChecks ? CollisionGroup.Opaque : (CollisionGroup.Impassable | CollisionGroup.InteractImpassable);
-                comp.TargetInLOS = _interaction.InRangeUnobstructed(uid, comp.Target, distance + 0.1f, collisionGroup);
+                comp.TargetInLOS = _interaction.InRangeUnobstructed(uid, comp.Target, distance + 0.1f, collisionGroup, comp.IgnoreLoose ? _loose : null); //DS-14
             }
 
             if (!comp.TargetInLOS)
@@ -210,6 +213,13 @@ public sealed partial class NPCCombatSystem
             _gun.AttemptShoot(uid, gun, targetCordinates, comp.Target);
         }
     }
+
+    //DS-14 start
+    public bool IsLoose(EntityUid uid)
+    {
+        return _xformQuery.TryGetComponent(uid, out var xform) && !xform.Anchored && !HasComp<MobStateComponent>(uid);
+    }
+    //DS-14 end
 
     private Vector2 GetRangedTargetSpot(Entity<GunComponent> gun, Vector2 targetPos, Vector2 targetVelocity, float distance)
     {

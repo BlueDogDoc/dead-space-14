@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "license": "CC-BY-SA-3.0",
+  "copyright": "Created by Blue Dog Doc for Space Station 14 server Мёртвый Космос. press-* and saw-* are edited by Blue Dog Doc from vent_off: Taken from https://github.com/BeeStation/BeeStation-Hornet at commit 4ccd79de285e79e504308bcd6fa5908d6b7685f7",
+  "size": {
+    "x": 32,
+    "y": 32
+  },
+  "states": [
+    {
+      "name": "press-base"
+    },
+    {
+      "name": "press-warn",
+      "delays": [
+        [
+          0.15,
+          0.15
+        ]
+      ]
+    },
+    {
+      "name": "press-push",
+      "delays": [
+        [
+          0.08,
+          0.08,
+          0.08,
+          0.08,
+          0.08,
+          0.08
+        ]
+      ]
+    },
+    {
+      "name": "steam",
+      "delays": [
+        [
+          0.2,
+          0.2,
+          0.2,
+          0.2
+        ]
+      ]
+    },
+    {
+      "name": "steam-burst",
+      "delays": [
+        [
+          0.09,
+          0.09,
+          0.09,
+          0.09,
+          0.09,
+          0.09
+        ]
+      ]
+    },
+    {
+      "name": "laser",
+      "delays": [
+        [
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "laser-active",
+      "delays": [
+        [
+          0.08,
+          0.08
+        ]
+      ]
+    },
+    {
+      "name": "magnet"
+    },
+    {
+      "name": "magnet-active",
+      "delays": [
+        [
+          0.08,
+          0.08,
+          0.08,
+          0.08,
+          0.08,
+          0.08
+        ]
+      ]
+    },
+    {
+      "name": "saw",
+      "delays": [
+        [
+          0.06,
+          0.06,
+          0.06,
+          0.06
+        ]
+      ]
+    },
+    {
+      "name": "saw-active",
+      "delays": [
+        [
+          0.04,
+          0.04,
+          0.04,
+          0.04
+        ]
+      ]
+    }
+  ]
+}

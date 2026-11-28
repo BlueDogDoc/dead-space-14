@@ -47,6 +47,9 @@ public sealed partial class NPCRangedCombatComponent : Component
     // ReSharper disable once InconsistentNaming
     public bool UseOpaqueForLOSChecks = false;
 
+    [ViewVariables(VVAccess.ReadWrite)]
+    public bool IgnoreLoose; //DS-14
+
     /// <summary>
     /// Delay after target is in LOS before we start shooting.
     /// </summary>

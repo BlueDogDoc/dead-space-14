@@ -1,4 +1,5 @@
 using Content.Server.Interaction;
+using Content.Server.NPC.Systems; //DS-14
 using Content.Shared.Physics;
 
 namespace Content.Server.NPC.HTN.Preconditions;
@@ -7,6 +8,7 @@ public sealed partial class TargetInLOSPrecondition : HTNPrecondition
 {
     [Dependency] private IEntityManager _entManager = default!;
     private InteractionSystem _interaction = default!;
+    private NPCCombatSystem _combat = default!; //DS-14
 
     [DataField("targetKey")]
     public string TargetKey = "Target";
@@ -17,10 +19,14 @@ public sealed partial class TargetInLOSPrecondition : HTNPrecondition
     [DataField("opaqueKey")]
     public bool UseOpaqueForLOSChecksKey = true;
 
+    [DataField("ignoreLoose")]
+    public bool IgnoreLoose; //DS-14
+
     public override void Initialize(IEntitySystemManager sysManager)
     {
         base.Initialize(sysManager);
         _interaction = sysManager.GetEntitySystem<InteractionSystem>();
+        _combat = sysManager.GetEntitySystem<NPCCombatSystem>(); //DS-14
     }
 
     public override bool IsMet(NPCBlackboard blackboard)
@@ -32,6 +38,9 @@ public sealed partial class TargetInLOSPrecondition : HTNPrecondition
 
         var range = blackboard.GetValueOrDefault<float>(RangeKey, _entManager);
         var collisionGroup = UseOpaqueForLOSChecksKey ? CollisionGroup.Opaque : (CollisionGroup.Impassable | CollisionGroup.InteractImpassable);
+
+        if (IgnoreLoose) //DS-14
+            return _interaction.InRangeUnobstructed(owner, target, range, collisionGroup, _combat.IsLoose); //DS-14
 
         return _interaction.InRangeUnobstructed(owner, target, range, collisionGroup);
     }

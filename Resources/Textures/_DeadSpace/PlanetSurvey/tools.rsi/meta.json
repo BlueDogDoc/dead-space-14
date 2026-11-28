@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "license": "CC-BY-SA-3.0",
+  "copyright": "Created by Blue Dog Doc for Space Station 14 server Мёртвый Космос",
+  "size": {
+    "x": 32,
+    "y": 32
+  },
+  "states": [
+    {
+      "name": "plate"
+    },
+    {
+      "name": "plate-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "plate-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "foam"
+    },
+    {
+      "name": "foam-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "foam-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "leadcase"
+    },
+    {
+      "name": "leadcase-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "leadcase-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "beacon"
+    },
+    {
+      "name": "beacon-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "beacon-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "beacon-deployed",
+      "delays": [
+        [
+          0.5,
+          0.5
+        ]
+      ]
+    },
+    {
+      "name": "leadcase-open"
+    }
+  ]
+}

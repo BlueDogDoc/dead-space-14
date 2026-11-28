@@ -176,6 +176,7 @@ public sealed partial class SurveyDirectorSystem
                 SurveyPoiKind.Device => "survey-place-device",
                 SurveyPoiKind.Site => "survey-place-site",
                 SurveyPoiKind.Den => "survey-place-den",
+                SurveyPoiKind.Anomaly => "survey-place-anomaly",
                 _ => "survey-place-settlement",
             });
         }

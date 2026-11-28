@@ -1,0 +1,277 @@
+{
+  "version": 1,
+  "license": "CC-BY-SA-3.0",
+  "copyright": "Created by Blue Dog Doc for Space Station 14 server Мёртвый Космос",
+  "size": {
+    "x": 32,
+    "y": 32
+  },
+  "states": [
+    {
+      "name": "jellyfish",
+      "delays": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "jellyfish-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "jellyfish-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "stoneflower",
+      "delays": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "stoneflower-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "stoneflower-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "spark",
+      "delays": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "spark-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "spark-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "sinew",
+      "delays": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "sinew-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "sinew-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "flesh",
+      "delays": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "flesh-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "flesh-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "gravi",
+      "delays": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "gravi-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "gravi-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "crystal",
+      "delays": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "crystal-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "crystal-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "carapace",
+      "delays": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "carapace-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "carapace-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "heart",
+      "delays": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "heart-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "heart-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "servo",
+      "delays": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "servo-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "servo-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "mesh",
+      "delays": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "mesh-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "mesh-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "nanites",
+      "delays": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "nanites-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "nanites-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "thunder",
+      "delays": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "thunder-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "thunder-inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "bane",
+      "delays": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ]
+    },
+    {
+      "name": "bane-inhand-left",
+      "directions": 4
+    },
+    {
+      "name": "bane-inhand-right",
+      "directions": 4
+    }
+  ]
+}

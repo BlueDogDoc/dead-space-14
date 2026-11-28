@@ -273,7 +273,7 @@ public sealed partial class SurveyDirectorSystem
     {
         var range = (to.Position - from.Position).Length() + 1f;
         return _interaction.InRangeUnobstructed(from, to, range, CollisionGroup.BulletImpassable,
-            e => e == shooter || e == target || HasComp<Content.Shared.Mobs.Components.MobStateComponent>(e));
+            e => e == shooter || e == target || HasComp<Content.Shared.Mobs.Components.MobStateComponent>(e) || !Transform(e).Anchored);
     }
 
     private bool ShotBlocked(EntityUid shooter, EntityUid target)

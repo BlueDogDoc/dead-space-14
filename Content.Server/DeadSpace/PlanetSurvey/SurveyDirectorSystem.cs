@@ -84,6 +84,7 @@ public sealed partial class SurveyDirectorSystem : EntitySystem
         InitializeOutposts();
         InitializeReflex();
         InitializeEavesdrop();
+        InitializeSurveying();
     }
 
     public void Wake(Entity<SurveyDirectorComponent> ent)
@@ -160,6 +161,9 @@ public sealed partial class SurveyDirectorSystem : EntitySystem
         TickSupport(ent);
         TickRadio(ent);
         TickWeather(ent);
+        TickFields(ent);
+        TickPatrols(ent);
+        TickBeacons(ent);
         TickPressure(ent);
         TickHunt(ent);
         TickAlarm(ent);
@@ -319,6 +323,8 @@ public sealed partial class SurveyDirectorSystem : EntitySystem
         SpawnTurrets(ent, world, random, spots);
         if (!world.FactoryHalls)
             SpawnScatter(ent, world, random, arenaRadius, far);
+        SpawnFields(ent, world, random);
+        SetupPatrols(ent, random);
         SpawnSupport(ent, world, random, spots);
         BuildObjectives(ent, world);
         ent.Comp.NextWave = _timing.CurTime + TimeSpan.FromSeconds(90);
@@ -347,7 +353,10 @@ public sealed partial class SurveyDirectorSystem : EntitySystem
     private void QueueBake(Entity<SurveyDirectorComponent> ent)
     {
         if (!TryComp<BiomeComponent>(ent, out var biome))
+        {
+            FieldsBaked(ent);
             return;
+        }
 
         biome.Enabled = false;
         var size = BiomeSystem.BakeChunkSize;
@@ -372,6 +381,9 @@ public sealed partial class SurveyDirectorSystem : EntitySystem
         {
             ent.Comp.Bake.Enqueue(chunk);
         }
+
+        if (ent.Comp.Bake.Count == 0)
+            FieldsBaked(ent);
     }
 
     private void Bake(Entity<SurveyDirectorComponent> ent)
@@ -379,6 +391,7 @@ public sealed partial class SurveyDirectorSystem : EntitySystem
         if (!TryComp<BiomeComponent>(ent, out var biome) || !TryComp<MapGridComponent>(ent, out var grid))
         {
             ent.Comp.Bake.Clear();
+            FieldsBaked(ent);
             return;
         }
 
@@ -393,7 +406,10 @@ public sealed partial class SurveyDirectorSystem : EntitySystem
         }
 
         if (ent.Comp.Bake.Count == 0)
+        {
             RemComp<BiomeComponent>(ent);
+            FieldsBaked(ent);
+        }
     }
 
     private static bool NearPad(SurveyDirectorComponent director, Vector2 pos, float range)

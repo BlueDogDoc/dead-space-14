@@ -296,3 +296,76 @@ cmd-surveydebug-desc = Toggles the planet natives debug overlay.
 cmd-surveydebug-help = surveydebug: shows role, plan step, target, steering and flags above natives within 25 tiles. Run again to turn off.
 cmd-surveydebug-on = Natives debug on.
 cmd-surveydebug-off = Natives debug off.
+
+survey-obj-artifact = Recover artifacts from anomaly fields: { $done }/{ $goal }
+survey-obj-prototype = Carry prototypes out of the test grounds: { $done }/{ $goal }
+survey-place-anomaly = by the anomaly field
+survey-fields-shift = The ground shook. The anomalies moved, new artifacts may have grown in the fields.
+survey-fields-shift-factory = The plant restarted its test grounds. Traps are set anew, prototypes are back.
+
+survey-psi-whisper-1 = Sit down. Rest. It's nice here.
+survey-psi-whisper-2 = Someone is following you. Don't turn around.
+survey-psi-whisper-3 = You've been here before. You never left.
+survey-psi-whisper-4 = Drop the gun. You don't need it anymore.
+survey-magnet-disarm = The coil rips the gun out of your hands!
+
+survey-detector-artifact = Artifact signal: about { $distance } m { $direction }.
+survey-detector-dir-n = north
+survey-detector-dir-ne = north-east
+survey-detector-dir-e = east
+survey-detector-dir-se = south-east
+survey-detector-dir-s = south
+survey-detector-dir-sw = south-west
+survey-detector-dir-w = west
+survey-detector-dir-nw = north-west
+
+survey-artifact-unknown = [color=#b0a0ff]Artifact.[/color] Properties unknown: needs an R&D analyzer.
+survey-artifact-tier = [color=#b0a0ff]Artifact, class { $tier }.[/color]
+survey-boon-line-good = [color=#7fd87f]+{ $value } { $boon }[/color]
+survey-boon-line-bad = [color=#ff7f7f]-{ $value } { $boon }[/color]
+survey-boon-plating = protection from blunt, cuts and bullets
+survey-boon-insulation = protection from heat, cold and shock
+survey-boon-purity = protection from poison, acid and radiation
+survey-boon-swift = speed
+survey-boon-stamina = stamina
+survey-boon-mending = healing every 2 seconds
+survey-boon-sinew = chance a limb stays on
+
+survey-analyzer-noaccess = It won't turn on. Needs R&D access.
+survey-analyzer-done = Analysis complete.
+survey-analyzer-known = Already studied. Examine it to see its properties.
+survey-analyzer-plate = Examine the insert to see its property.
+survey-stabilizer-unknown = Study the artifact with an analyzer first.
+survey-stabilizer-empty = Nothing in this artifact to stabilize.
+survey-stabilizer-done = The artifact broke down. Got { $count }.
+
+survey-plate-name = insert: { $boon }
+survey-plate-taken = There is already an insert here.
+survey-plate-done = Insert sewn in.
+survey-plate-wrong-plating = This insert goes into armor, a jumpsuit or a helmet.
+survey-plate-wrong-insulation = This insert goes into armor, a jumpsuit or a helmet.
+survey-plate-wrong-purity = This insert goes into armor, a jumpsuit or a helmet.
+survey-plate-wrong-swift = This insert goes into shoes.
+survey-plate-wrong-stamina = This insert goes into armor or a jumpsuit.
+survey-plate-wrong-mending = This insert goes into a jumpsuit.
+survey-plate-wrong-sinew = This insert goes into armor or a jumpsuit.
+survey-infusion-examine = Anomalous insert sewn in: { $line }
+survey-boon-rapid = fire rate (weapon insert only)
+survey-boon-bane = bullet damage to non-humans (weapon insert only)
+survey-plate-wrong-rapid = This insert goes into a firearm.
+survey-plate-wrong-bane = This insert goes into a firearm.
+
+survey-obj-sectors = Mark planet sectors with survey beacons: { $done }/{ $goal }
+survey-beacon-offworld = The beacon only works on an expedition planet.
+survey-beacon-taken = This sector is already mapped. Move on.
+survey-beacon-start = The beacon is sending the map. Stay close for { $seconds } s, the natives will hear it.
+survey-beacon-done = Sector mapped. Bonus: { $money } credits.
+survey-beacon-done-local = The beacon finished transmitting.
+
+survey-radio-raider-patrol-1 = Patrol, { $where }. Clear, moving on.
+survey-radio-raider-patrol-2 = Sweep at { $where }. Nothing. Moving.
+survey-radio-raider-beacon-1 = Someone turned on a transmitter { $where }. Break it.
+survey-radio-raider-beacon-2 = Signal from { $where }. Outsiders are mapping our land, run.
+survey-radio-pirate-patrol-1 = Sweep at { $where }, horizon clear.
+survey-radio-pirate-beacon-1 = A strange tripod is beeping at { $where }. Knock it down.
+survey-radio-factory-beacon-1 = Foreign transmitter: { $where }. Dispose.

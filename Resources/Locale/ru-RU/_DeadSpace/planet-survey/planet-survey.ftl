@@ -491,3 +491,76 @@ cmd-surveydebug-desc = Включает и выключает отладочну
 cmd-surveydebug-help = surveydebug: над туземцами в 25 клетках показываются роль, шаг плана, цель, ход и флаги. Повторный ввод выключает.
 cmd-surveydebug-on = Отладка туземцев включена.
 cmd-surveydebug-off = Отладка туземцев выключена.
+
+survey-obj-artifact = Достать артефакты из аномальных полей: { $done }/{ $goal }
+survey-obj-prototype = Вынести опытные образцы с испытательных полигонов: { $done }/{ $goal }
+survey-place-anomaly = у аномального поля
+survey-fields-shift = Земля дрогнула. Аномалии сместились, в полях могли вызреть новые артефакты.
+survey-fields-shift-factory = Цеха перезапустили полигоны. Ловушки стоят по-новому, образцы снова на местах.
+
+survey-psi-whisper-1 = Сядь. Отдохни. Здесь хорошо.
+survey-psi-whisper-2 = Кто-то идёт за тобой. Не оборачивайся.
+survey-psi-whisper-3 = Ты здесь уже был. Ты отсюда не уходил.
+survey-psi-whisper-4 = Брось оружие. Оно тебе больше не нужно.
+survey-magnet-disarm = Катушка вырывает оружие из рук!
+
+survey-detector-artifact = Сигнал артефакта: около { $distance } м, { $direction }.
+survey-detector-dir-n = на север
+survey-detector-dir-ne = на северо-восток
+survey-detector-dir-e = на восток
+survey-detector-dir-se = на юго-восток
+survey-detector-dir-s = на юг
+survey-detector-dir-sw = на юго-запад
+survey-detector-dir-w = на запад
+survey-detector-dir-nw = на северо-запад
+
+survey-artifact-unknown = [color=#b0a0ff]Артефакт.[/color] Свойства неизвестны: нужен анализатор НИО.
+survey-artifact-tier = [color=#b0a0ff]Артефакт, класс { $tier }.[/color]
+survey-boon-line-good = [color=#7fd87f]+{ $value } { $boon }[/color]
+survey-boon-line-bad = [color=#ff7f7f]-{ $value } { $boon }[/color]
+survey-boon-plating = защита от ударов, порезов и пуль
+survey-boon-insulation = защита от жара, холода и тока
+survey-boon-purity = защита от яда, кислоты и радиации
+survey-boon-swift = скорость
+survey-boon-stamina = выносливость
+survey-boon-mending = лечения каждые 2 секунды
+survey-boon-sinew = шанс, что конечность не оторвёт
+
+survey-analyzer-noaccess = Прибор не включается. Нужен допуск НИО.
+survey-analyzer-done = Анализ завершён.
+survey-analyzer-known = Артефакт уже изучен. Свойства видны при осмотре.
+survey-analyzer-plate = Свойство вставки видно при осмотре.
+survey-stabilizer-unknown = Сначала изучите артефакт анализатором.
+survey-stabilizer-empty = В этом артефакте нечего стабилизировать.
+survey-stabilizer-done = Артефакт распался. Получено: { $count } шт.
+
+survey-plate-name = вставка: { $boon }
+survey-plate-taken = Здесь уже есть вставка.
+survey-plate-done = Вставка вшита.
+survey-plate-wrong-plating = Эта вставка идёт в броню, комбинезон или шлем.
+survey-plate-wrong-insulation = Эта вставка идёт в броню, комбинезон или шлем.
+survey-plate-wrong-purity = Эта вставка идёт в броню, комбинезон или шлем.
+survey-plate-wrong-swift = Эта вставка идёт в обувь.
+survey-plate-wrong-stamina = Эта вставка идёт в броню или комбинезон.
+survey-plate-wrong-mending = Эта вставка идёт в комбинезон.
+survey-plate-wrong-sinew = Эта вставка идёт в броню или комбинезон.
+survey-infusion-examine = Вшита аномальная вставка: { $line }
+survey-boon-rapid = скорострельность (только во вставке в оружие)
+survey-boon-bane = урон пуль по нелюдям (только во вставке в оружие)
+survey-plate-wrong-rapid = Эта вставка идёт в огнестрельное оружие.
+survey-plate-wrong-bane = Эта вставка идёт в огнестрельное оружие.
+
+survey-obj-sectors = Разметить секторы планеты маяками разведки: { $done }/{ $goal }
+survey-beacon-offworld = Маяк нужен на планете экспедиции.
+survey-beacon-taken = Этот сектор уже размечен. Идите дальше.
+survey-beacon-start = Маяк передаёт карту. Держитесь рядом { $seconds } с, туземцы услышат.
+survey-beacon-done = Сектор размечен. Премия: { $money } кредитов.
+survey-beacon-done-local = Маяк закончил передачу.
+
+survey-radio-raider-patrol-1 = Патруль, { $where }. Чисто, идём дальше.
+survey-radio-raider-patrol-2 = Обход { $where }. Ничего. Двигаемся.
+survey-radio-raider-beacon-1 = Кто-то врубил передатчик { $where }. Сломать.
+survey-radio-raider-beacon-2 = Сигнал с { $where }. Чужие метят землю, бегом туда.
+survey-radio-pirate-patrol-1 = Обход { $where }, горизонт чист.
+survey-radio-pirate-beacon-1 = На { $where } пищит чужая тренога. Снести.
+survey-radio-factory-beacon-1 = Посторонний передатчик: { $where }. Утилизировать.
